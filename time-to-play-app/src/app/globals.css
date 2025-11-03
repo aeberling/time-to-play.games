@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default theme: Ocean Breeze */
+  --color-primary-50: #e0f7ff;
+  --color-primary-100: #b3e9ff;
+  --color-primary-200: #80dbff;
+  --color-primary-300: #4dcdff;
+  --color-primary-400: #26c2ff;
+  --color-primary-500: #00b8ff;
+  --color-primary-600: #00a3e6;
+  --color-primary-700: #008acc;
+  --color-primary-800: #0071b3;
+  --color-primary-900: #004d80;
+
+  --color-accent-50: #fff0f5;
+  --color-accent-100: #ffd6e8;
+  --color-accent-200: #ffb3d6;
+  --color-accent-300: #ff8fc4;
+  --color-accent-400: #ff75b7;
+  --color-accent-500: #ff5caa;
+  --color-accent-600: #e6529a;
+  --color-accent-700: #cc4789;
+  --color-accent-800: #b33d78;
+  --color-accent-900: #802b56;
+
+  --color-table-light: #1a9d5c;
+  --color-table-main: #0f7a45;
+  --color-table-dark: #0a5230;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+@layer utilities {
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
