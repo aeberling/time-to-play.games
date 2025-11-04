@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { WarGame } from '@/components/game/WarGame';
+import { HowToPlay } from '@/components/game/HowToPlay';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { GameBoardSkeleton } from '@/components/loading/GameBoardSkeleton';
@@ -97,11 +98,12 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={() => router.push('/games')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Games
           </Button>
+          {game.gameType === 'WAR' && <HowToPlay />}
         </div>
 
         {game.gameType === 'WAR' && <WarGame gameId={gameId} userId={user.id} />}

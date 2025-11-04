@@ -3,9 +3,11 @@
  */
 
 export interface Card {
-  suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
-  rank: '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
+  suit: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker';
+  rank: '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A' | 'JOKER';
   value: number; // For comparison
+  deckNumber?: number; // For multi-deck games (1-based)
+  id: string; // Unique identifier (e.g., "hearts_7_1", "joker_2_1")
 }
 
 export interface Player {

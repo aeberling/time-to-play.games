@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { Toaster } from '@/components/ui/toaster';
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,6 +45,7 @@ export default function RootLayout({
               <Footer />
             </div>
             <Toaster />
+            <OfflineIndicator />
           </SocketProvider>
         </AuthProvider>
       </body>
