@@ -24,12 +24,19 @@ export default function setupSocketHandlers(io: Server) {
     try {
       const token = socket.handshake.auth.token;
 
+      console.log('Socket auth attempt:', {
+        hasToken: !!token,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
+      });
+
       if (!token) {
+        console.error('Socket auth failed: No token provided');
         return next(new Error('Authentication required'));
       }
 
       const payload = verifyAccessToken(token);
       if (!payload) {
+        console.error('Socket auth failed: Invalid token');
         return next(new Error('Invalid token'));
       }
 
@@ -38,6 +45,12 @@ export default function setupSocketHandlers(io: Server) {
       authSocket.userId = payload.userId;
       authSocket.displayName = payload.displayName;
       authSocket.isGuest = payload.isGuest;
+
+      console.log('Socket auth success:', {
+        userId: payload.userId,
+        displayName: payload.displayName,
+        isGuest: payload.isGuest,
+      });
 
       next();
     } catch (error) {

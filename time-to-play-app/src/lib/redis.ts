@@ -6,18 +6,53 @@ import { Redis } from '@upstash/redis';
 // For development, you can use a local Redis instance
 // For production, use Upstash Redis
 
-export const redis = process.env.REDIS_URL?.startsWith('http')
-  ? // Upstash Redis (production)
-    new Redis({
+// Check if we're in development mode without a proper Redis URL
+const isDevelopment = !process.env.REDIS_URL || process.env.REDIS_URL.startsWith('redis://');
+
+// Create a mock Redis client for local development
+const createMockRedis = () => {
+  const store = new Map<string, any>();
+  return {
+    setex: async (key: string, ttl: number, value: string) => {
+      store.set(key, value);
+      setTimeout(() => store.delete(key), ttl * 1000);
+      return 'OK';
+    },
+    get: async (key: string) => store.get(key) || null,
+    set: async (key: string, value: string, options?: any) => {
+      store.set(key, value);
+      if (options?.ex) {
+        setTimeout(() => store.delete(key), options.ex * 1000);
+      }
+      return options?.nx && store.has(key) ? null : 'OK';
+    },
+    del: async (key: string) => {
+      store.delete(key);
+      return 1;
+    },
+    zadd: async (key: string, data: { score: number; member: string }) => {
+      const set = store.get(key) || [];
+      set.push(data);
+      store.set(key, set);
+      return 1;
+    },
+    zrem: async (key: string, member: string) => {
+      const set = store.get(key) || [];
+      store.set(key, set.filter((item: any) => item.member !== member));
+      return 1;
+    },
+    zrange: async (key: string, start: number, end: number) => {
+      const set = store.get(key) || [];
+      return set.map((item: any) => item.member);
+    },
+  };
+};
+
+export const redis = isDevelopment
+  ? createMockRedis()
+  : new Redis({
       url: process.env.REDIS_URL!,
       token: process.env.REDIS_TOKEN!,
-    })
-  : // Local Redis (development) - Note: Upstash client doesn't support redis:// protocol
-    // For local development, you'll need to use ioredis instead
-    // This is a placeholder that will work with Upstash
-    new Redis({
-      url: process.env.REDIS_URL || 'http://localhost:8079',
-      token: 'local-dev-token',
     });
 
 // Helper functions for common Redis operations

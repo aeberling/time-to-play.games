@@ -100,6 +100,7 @@ model Game {
   // Game configuration
   maxPlayers      Int         @default(2)
   currentTurn     Int         @default(0)
+  isPrivate       Boolean     @default(false)
 
   // Timer configuration (JSON)
   timerConfig     Json?

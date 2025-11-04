@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -33,6 +34,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   // Initialize socket connection
   useEffect(() => {
@@ -49,15 +51,26 @@ export function SocketProvider({ children }: SocketProviderProps) {
     // Get access token from cookies
     const getAccessToken = () => {
       const cookies = document.cookie.split(';');
+      console.log('All cookies:', document.cookie);
       const tokenCookie = cookies.find((c) => c.trim().startsWith('access_token='));
-      return tokenCookie ? tokenCookie.split('=')[1] : null;
+      console.log('Found token cookie:', tokenCookie);
+      if (!tokenCookie) return null;
+      const tokenValue = tokenCookie.split('=')[1];
+      // Decode the cookie value in case it's URL-encoded
+      const decoded = decodeURIComponent(tokenValue);
+      console.log('Decoded token length:', decoded.length);
+      return decoded;
     };
 
     const token = getAccessToken();
     if (!token) {
       console.error('No access token available for socket connection');
+      console.error('User is authenticated:', isAuthenticated);
+      console.error('User data:', user);
       return;
     }
+
+    console.log('Attempting socket connection with token:', token.substring(0, 20) + '...');
 
     // Create socket connection
     const socketInstance = io({
@@ -82,10 +95,60 @@ export function SocketProvider({ children }: SocketProviderProps) {
     socketInstance.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
       setIsConnected(false);
+
+      // If it's an invalid token error, suggest refreshing
+      if (error.message === 'Invalid token' || error.message === 'Authentication required') {
+        console.warn('Authentication failed. Your session may have expired. Please refresh the page and log in again.');
+      }
     });
 
     socketInstance.on('error', (error) => {
       console.error('Socket error:', error);
+    });
+
+    // Game event notifications
+    socketInstance.on('player:joined', (data: { userId: string; displayName: string }) => {
+      toast({
+        title: 'Player Joined',
+        description: `${data.displayName} has joined the game`,
+      });
+    });
+
+    socketInstance.on('player:left', (data: { userId: string; displayName: string }) => {
+      toast({
+        title: 'Player Left',
+        description: `${data.displayName} has left the game`,
+        variant: 'destructive',
+      });
+    });
+
+    socketInstance.on('player:disconnected', (data: { userId: string; displayName: string }) => {
+      toast({
+        title: 'Player Disconnected',
+        description: `${data.displayName} has disconnected`,
+        variant: 'destructive',
+      });
+    });
+
+    socketInstance.on('player:reconnected', (data: { userId: string; displayName: string }) => {
+      toast({
+        title: 'Player Reconnected',
+        description: `${data.displayName} has reconnected`,
+      });
+    });
+
+    socketInstance.on('game:started', () => {
+      toast({
+        title: 'Game Started!',
+        description: 'All players are ready. The game has begun!',
+      });
+    });
+
+    socketInstance.on('game:all_ready', () => {
+      toast({
+        title: 'All Players Ready',
+        description: 'All players are ready to start!',
+      });
     });
 
     setSocket(socketInstance);
@@ -94,7 +157,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     return () => {
       socketInstance.disconnect();
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, toast]);
 
   // Join a game room
   const joinGame = useCallback(
