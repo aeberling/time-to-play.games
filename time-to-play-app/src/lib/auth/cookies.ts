@@ -5,7 +5,7 @@ const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
 // Cookie options for production
 const COOKIE_OPTIONS = {
-  httpOnly: true,
+  httpOnly: false, // Set to false to allow Socket.IO to read tokens
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',

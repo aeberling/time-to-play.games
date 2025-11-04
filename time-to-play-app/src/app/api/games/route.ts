@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const { gameType, timerConfig, isPrivate } = body;
 
     // Validate game type
-    const validGameTypes = ['WAR'];
+    const validGameTypes = ['WAR', 'SWOOP', 'OH_HELL'];
     if (!gameType || !validGameTypes.includes(gameType)) {
       return NextResponse.json(
         {

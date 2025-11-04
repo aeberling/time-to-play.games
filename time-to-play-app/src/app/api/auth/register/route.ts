@@ -14,6 +14,7 @@ interface RegisterRequest {
  * POST /api/auth/register
  * Register a new user account
  */
+
 export async function POST(request: Request) {
   try {
     const body: RegisterRequest = await request.json();
@@ -89,15 +90,12 @@ export async function POST(request: Request) {
       data: {
         isGuest: false,
         email: email.toLowerCase(),
-        password: hashedPassword,
+        passwordHash: hashedPassword, // Use passwordHash instead of password
         displayName,
         themeId: 'ocean-breeze', // Default theme
         stats: {
           create: {
-            gamesPlayed: 0,
-            gamesWon: 0,
-            gamesLost: 0,
-            gamesTied: 0,
+            // Initialize with default values (all stats default to 0 in schema)
           },
         },
       },
@@ -133,10 +131,19 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('Registration error:', error);
+
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to register user',
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

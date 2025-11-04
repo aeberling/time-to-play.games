@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     });
 
     // User not found or is a guest (guests can't login)
-    if (!user || user.isGuest || !user.password) {
+    if (!user || user.isGuest || !user.passwordHash) {
       return NextResponse.json(
         {
           success: false,
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const isValidPassword = await verifyPassword(password, user.password);
+    const isValidPassword = await verifyPassword(password, user.passwordHash);
 
     if (!isValidPassword) {
       return NextResponse.json(
@@ -61,10 +61,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update last login time
+    // Update last seen time
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: { lastSeenAt: new Date() },
     });
 
     // Generate JWT tokens
@@ -85,7 +85,6 @@ export async function POST(request: Request) {
           themeId: user.themeId,
           avatarUrl: user.avatarUrl,
           createdAt: user.createdAt,
-          lastLoginAt: new Date(),
         },
         tokens: {
           accessToken: tokens.accessToken,

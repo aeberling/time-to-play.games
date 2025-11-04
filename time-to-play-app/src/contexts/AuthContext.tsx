@@ -10,7 +10,7 @@ export interface User {
   themeId: string;
   avatarUrl?: string | null;
   createdAt: Date;
-  lastLoginAt?: Date | null;
+  lastSeenAt?: Date | null;
 }
 
 interface AuthContextType {

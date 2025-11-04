@@ -80,6 +80,7 @@ export class WarGame implements Game {
           suit,
           rank,
           value: this.RANK_VALUES[rank],
+          id: `${suit}_${rank}_1`, // Format: suit_rank_deckNumber
         });
       }
     }

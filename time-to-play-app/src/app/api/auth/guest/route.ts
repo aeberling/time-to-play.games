@@ -8,6 +8,7 @@ import { setAuthCookies } from '@/lib/auth/cookies';
  * POST /api/auth/guest
  * Create a guest user and return authentication tokens
  */
+
 export async function POST(request: Request) {
   try {
     // Optional: Allow custom display name from request
@@ -27,10 +28,7 @@ export async function POST(request: Request) {
         themeId: 'ocean-breeze', // Default theme
         stats: {
           create: {
-            gamesPlayed: 0,
-            gamesWon: 0,
-            gamesLost: 0,
-            gamesTied: 0,
+            // Initialize with default values (all stats default to 0 in schema)
           },
         },
       },

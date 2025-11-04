@@ -72,7 +72,7 @@ export default function GamesPage() {
     }
   };
 
-  const handleCreateGame = async (gameType: 'WAR' | 'OH_HELL' = 'WAR') => {
+  const handleCreateGame = async (gameType: 'WAR' | 'SWOOP' | 'OH_HELL' = 'WAR') => {
     setIsCreating(true);
     try {
       const res = await fetch('/api/games', {
@@ -176,6 +176,15 @@ export default function GamesPage() {
             >
               <Plus className="w-5 h-5 mr-2" />
               {isCreating ? 'Creating...' : 'War (2 Players)'}
+            </Button>
+            <Button
+              onClick={() => handleCreateGame('SWOOP')}
+              disabled={isCreating}
+              size="lg"
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {isCreating ? 'Creating...' : 'Swoop (3-8 Players)'}
             </Button>
             <Button
               onClick={() => handleCreateGame('OH_HELL')}

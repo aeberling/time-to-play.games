@@ -33,7 +33,7 @@ export async function getCurrentUser(): Promise<User | null> {
         themeId: true,
         avatarUrl: true,
         createdAt: true,
-        lastLoginAt: true,
+        lastSeenAt: true,
       },
     });
 
