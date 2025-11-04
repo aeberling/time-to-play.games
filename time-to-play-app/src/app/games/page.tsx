@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { GameListSkeleton } from '@/components/loading/GameCardSkeleton';
+import { useToast } from '@/hooks/use-toast';
 import { Users, Play, Plus, Clock } from 'lucide-react';
 
 interface Game {
@@ -26,6 +29,7 @@ interface Game {
 export default function GamesPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
   const [games, setGames] = useState<Game[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [loadingGames, setLoadingGames] = useState(true);
@@ -49,9 +53,20 @@ export default function GamesPage() {
       const data = await res.json();
       if (data.success) {
         setGames(data.games);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error Loading Games',
+          description: data.error || 'Failed to load available games. Please try again.',
+        });
       }
     } catch (error) {
       console.error('Error fetching games:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: 'Unable to connect to server. Please check your internet connection.',
+      });
     } finally {
       setLoadingGames(false);
     }
@@ -77,12 +92,25 @@ export default function GamesPage() {
 
       const data = await res.json();
       if (data.success) {
+        toast({
+          title: 'Game Created!',
+          description: 'Redirecting to your new game...',
+        });
         router.push(`/game/${data.game.id}`);
       } else {
-        console.error('Failed to create game:', data.error);
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Create Game',
+          description: data.error || 'Unable to create game. Please try again.',
+        });
       }
     } catch (error) {
       console.error('Error creating game:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: 'Unable to connect to server. Please check your internet connection.',
+      });
     } finally {
       setIsCreating(false);
     }
@@ -97,19 +125,32 @@ export default function GamesPage() {
 
       const data = await res.json();
       if (data.success) {
+        toast({
+          title: 'Joined Game!',
+          description: 'Loading game...',
+        });
         router.push(`/game/${gameId}`);
       } else {
-        console.error('Failed to join game:', data.error);
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Join Game',
+          description: data.error || 'Unable to join game. It may be full or no longer available.',
+        });
       }
     } catch (error) {
       console.error('Error joining game:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: 'Unable to connect to server. Please check your internet connection.',
+      });
     }
   };
 
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center min-h-screen" role="status" aria-live="polite">
+        <LoadingSpinner size="lg" text="Loading..." />
       </div>
     );
   }
@@ -118,10 +159,10 @@ export default function GamesPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Game</h1>
           <p className="text-gray-600">Join an existing game or create a new one</p>
-        </div>
+        </header>
 
         {/* Create Game Button */}
         <div className="mb-8">
@@ -137,12 +178,12 @@ export default function GamesPage() {
         </div>
 
         {/* Available Games */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Available Games</h2>
+        <section aria-labelledby="available-games-heading">
+          <h2 id="available-games-heading" className="text-xl font-semibold mb-4">Available Games</h2>
 
           {loadingGames ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div role="status" aria-live="polite" aria-label="Loading available games">
+              <GameListSkeleton />
             </div>
           ) : games.length === 0 ? (
             <Card>
@@ -190,6 +231,7 @@ export default function GamesPage() {
                         onClick={() => handleJoinGame(game.id)}
                         className="w-full mt-4"
                         disabled={game.status !== 'WAITING'}
+                        aria-label={`Join ${game.gameType} game hosted by ${game.players[0]?.user.displayName}`}
                       >
                         Join Game
                       </Button>

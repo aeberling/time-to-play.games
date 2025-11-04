@@ -46,6 +46,27 @@ body {
   @apply bg-gray-50 text-gray-900;
 }
 
+/* Accessibility: Enhanced focus indicators */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-600;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  @apply absolute -top-full left-0 bg-primary-600 text-white px-4 py-2 z-50;
+  @apply focus:top-0 focus:outline-none;
+  transition: top 0.1s ease-in-out;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer utilities {
   .backface-hidden {
     backface-visibility: hidden;

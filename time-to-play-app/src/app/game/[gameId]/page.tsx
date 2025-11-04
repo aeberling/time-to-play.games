@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { WarGame } from '@/components/game/WarGame';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { GameBoardSkeleton } from '@/components/loading/GameBoardSkeleton';
 import { ArrowLeft } from 'lucide-react';
 
 interface GameData {
@@ -57,7 +59,7 @@ export default function GamePage() {
   if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <LoadingSpinner size="lg" text="Loading..." />
       </div>
     );
   }
@@ -78,8 +80,16 @@ export default function GamePage() {
 
   if (!game) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="mb-6">
+            <Button variant="ghost" onClick={() => router.push('/games')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Games
+            </Button>
+          </div>
+          <GameBoardSkeleton />
+        </div>
       </div>
     );
   }
