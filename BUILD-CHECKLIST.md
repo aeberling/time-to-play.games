@@ -12,9 +12,9 @@
 - **Phase 2: Real-Time System** → ✅ Complete (10/10 tasks)
 - **Phase 3: War Game** → ✅ Complete (12/12 tasks)
 - **Phase 4: Features** → ✅ Complete (10/10 tasks)
-- **Phase 5: Polish & Deploy** → 🟡 In Progress (19/27 tasks - 70%)
+- **Phase 5: Polish & Deploy** → 🟡 In Progress (22/27 tasks - 81%)
 
-**Total Progress**: 96/119 tasks (81%)
+**Total Progress**: 99/119 tasks (83%)
 
 ---
 
@@ -408,7 +408,7 @@ For now, can proceed with development without Redis.
 - [x] Add user-friendly error messages ✅
 - [x] Create error boundary components ✅
 - [x] Add retry mechanisms ✅
-- [ ] Add offline detection
+- [x] Add offline detection ✅
 - [x] Test error scenarios ✅
 
 #### 9.3 Mobile Responsive Design
@@ -439,10 +439,10 @@ For now, can proceed with development without Redis.
 - [x] Test notifications ✅
 
 #### 9.7 Create Tutorial/Help
-- [ ] Create how-to-play guide
+- [x] Create how-to-play guide ✅
 - [ ] Add tooltips for UI elements
 - [ ] Create FAQ section
-- [ ] Test tutorial flow
+- [x] Test tutorial flow ✅
 
 #### 9.8 Final Testing
 - [ ] Test all features end-to-end
@@ -771,6 +771,23 @@ Ready for Phase 2: Real-Time System (Socket.io)
 - Mobile responsiveness verified (already responsive from Phases 1-4)
 - 19/27 Phase 5 tasks complete (70%)
 
+**12:00 AM** - More Phase 5 Polish Complete! ✅
+- Added offline detection system
+  - useOnlineStatus hook monitors navigator.onLine
+  - OfflineIndicator component with toast notifications
+  - Visual "No Internet Connection" badge in bottom-left
+  - "Back online" notification when reconnected
+  - Integrated globally in layout
+- Created comprehensive How-to-Play guide
+  - Modal component with game rules
+  - Covers setup, gameplay, war situations, winning conditions
+  - Explains all game features (timer, chat, cards)
+  - Accessible via button on game page
+  - Beautiful modal with backdrop
+  - Keyboard and screen reader accessible
+- 22/27 Phase 5 tasks complete (81%)
+- Overall: 99/119 tasks (83%)
+
 ---
 
 ## 🎯 Quick Commands Reference
@@ -803,6 +820,6 @@ git push origin develop       # Push to develop branch
 
 ---
 
-**Last Updated**: November 3, 2025 11:45 PM
+**Last Updated**: November 4, 2025 12:00 AM
 **Current Phase**: Phase 5 - Polish & Deploy
-**Next Task**: 9.5 Performance Optimization (Lighthouse audit)
+**Next Task**: 9.5 Performance Optimization OR 10.1 Prepare for Production
