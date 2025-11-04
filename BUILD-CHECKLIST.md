@@ -9,12 +9,12 @@
 ## 📋 Progress Overview
 
 - **Phase 1: Foundation** → ✅ Complete (45/45 tasks)
-- **Phase 2: Real-Time System** → ⚪ Not Started (0/10 tasks)
+- **Phase 2: Real-Time System** → 🟡 In Progress (5/10 tasks)
 - **Phase 3: War Game** → ⚪ Not Started (0/12 tasks)
 - **Phase 4: Features** → ⚪ Not Started (0/10 tasks)
 - **Phase 5: Polish & Deploy** → ⚪ Not Started (0/8 tasks)
 
-**Total Progress**: 45/85 tasks (53%)
+**Total Progress**: 50/85 tasks (59%)
 
 ---
 
@@ -154,37 +154,37 @@ For now, can proceed with development without Redis.
 ### Week 4: WebSocket Server
 
 #### 4.1 Set Up Socket.io Server
-- [ ] Install Socket.io
-  ```bash
-  npm install socket.io
-  ```
-- [ ] Create custom server.js for Next.js + Socket.io
-- [ ] Configure CORS for WebSocket
-- [ ] Test WebSocket connection
+- [x] Install Socket.io ✅
+- [x] Create custom server.ts for Next.js + Socket.io ✅
+- [x] Configure CORS for WebSocket ✅
+- [x] Test WebSocket connection ✅ (Server running at http://localhost:3000)
 
 #### 4.2 Create Socket Authentication
-- [ ] Add JWT verification middleware for sockets
-- [ ] Create socket connection handler
-- [ ] Add user session tracking
-- [ ] Test authenticated socket connections
+- [x] Add JWT verification middleware for sockets ✅
+- [x] Create socket connection handler ✅
+- [x] Add user session tracking ✅
+- [ ] Test authenticated socket connections (pending client integration)
 
 #### 4.3 Create Game Room Management
-- [ ] Create room join/leave handlers
-- [ ] Add player connection tracking
-- [ ] Create room state management
-- [ ] Test room functionality
+- [x] Create room join/leave handlers ✅
+- [x] Add player connection tracking ✅
+- [x] Create room state management ✅
+- [ ] Test room functionality (pending client integration)
 
 #### 4.4 Create Socket Event Handlers
-- [ ] Create game:join handler (`src/server/handlers/game-join.handler.ts`)
-- [ ] Create game:leave handler
-- [ ] Create player:ready handler
-- [ ] Test all handlers
+- [x] Create game:join handler (in `src/server/socket.ts`) ✅
+- [x] Create game:leave handler ✅
+- [x] Create game:move handler ✅
+- [x] Create chat:message handler ✅
+- [x] Create player:ready handler ✅
+- [x] Create player disconnect/reconnect handlers ✅
 
 #### 4.5 Set Up Socket Context
-- [ ] Create SocketContext (`src/contexts/SocketContext.tsx`)
-- [ ] Implement useSocket hook
-- [ ] Add reconnection logic
-- [ ] Test socket context in components
+- [x] Create SocketContext (`src/contexts/SocketContext.tsx`) ✅
+- [x] Implement useSocket hook ✅
+- [x] Add reconnection logic ✅
+- [x] Add SocketProvider to root layout ✅
+- [ ] Test socket context in components (pending game UI)
 
 ---
 
