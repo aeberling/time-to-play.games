@@ -22,8 +22,8 @@ export async function POST(request: Request) {
       data: {
         isGuest: true,
         displayName,
-        email: null, // Guests don't have email
-        password: null, // Guests don't have password
+        username: null, // Guests don't have username
+        passwordHash: null, // Guests don't have password
         themeId: 'ocean-breeze', // Default theme
         stats: {
           create: {

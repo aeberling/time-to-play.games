@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { WarGame } from '@/components/game/WarGame';
+import { OhHellGame } from '@/components/game/OhHellGame';
 import { HowToPlay } from '@/components/game/HowToPlay';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -103,10 +104,12 @@ export default function GamePage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Games
           </Button>
-          {game.gameType === 'WAR' && <HowToPlay />}
+          {game.gameType === 'WAR' && <HowToPlay gameType="WAR" />}
+          {game.gameType === 'OH_HELL' && <HowToPlay gameType="OH_HELL" />}
         </div>
 
         {game.gameType === 'WAR' && <WarGame gameId={gameId} userId={user.id} />}
+        {game.gameType === 'OH_HELL' && <OhHellGame gameId={gameId} userId={user.id} />}
       </div>
     </div>
   );

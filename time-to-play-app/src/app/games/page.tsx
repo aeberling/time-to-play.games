@@ -72,7 +72,7 @@ export default function GamesPage() {
     }
   };
 
-  const handleCreateGame = async () => {
+  const handleCreateGame = async (gameType: 'WAR' | 'OH_HELL' = 'WAR') => {
     setIsCreating(true);
     try {
       const res = await fetch('/api/games', {
@@ -82,7 +82,7 @@ export default function GamesPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          gameType: 'WAR',
+          gameType,
           timerConfig: {
             type: 'CASUAL',
           },
@@ -164,17 +164,29 @@ export default function GamesPage() {
           <p className="text-gray-600">Join an existing game or create a new one</p>
         </header>
 
-        {/* Create Game Button */}
+        {/* Create Game Buttons */}
         <div className="mb-8">
-          <Button
-            onClick={handleCreateGame}
-            disabled={isCreating}
-            size="lg"
-            className="bg-accent-600 hover:bg-accent-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            {isCreating ? 'Creating...' : 'Create New Game'}
-          </Button>
+          <h2 className="text-lg font-semibold mb-4">Create New Game</h2>
+          <div className="flex flex-wrap gap-4">
+            <Button
+              onClick={() => handleCreateGame('WAR')}
+              disabled={isCreating}
+              size="lg"
+              className="bg-accent-600 hover:bg-accent-700"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {isCreating ? 'Creating...' : 'War (2 Players)'}
+            </Button>
+            <Button
+              onClick={() => handleCreateGame('OH_HELL')}
+              disabled={isCreating}
+              size="lg"
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {isCreating ? 'Creating...' : 'Oh Hell! (3-5 Players)'}
+            </Button>
+          </div>
         </div>
 
         {/* Available Games */}
@@ -241,7 +253,7 @@ export default function GamesPage() {
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

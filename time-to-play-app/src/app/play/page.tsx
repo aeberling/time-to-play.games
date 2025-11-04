@@ -11,13 +11,6 @@ export default function PlayPage() {
   const { user, isLoading, loginAsGuest } = useAuth();
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
 
-  useEffect(() => {
-    // If not authenticated and not loading, create guest account
-    if (!isLoading && !user) {
-      handleGuestLogin();
-    }
-  }, [isLoading, user]);
-
   const handleGuestLogin = async () => {
     try {
       setIsCreatingGuest(true);
@@ -28,6 +21,14 @@ export default function PlayPage() {
       setIsCreatingGuest(false);
     }
   };
+
+  useEffect(() => {
+    // If not authenticated and not loading, create guest account
+    if (!isLoading && !user && !isCreatingGuest) {
+      handleGuestLogin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, user]);
 
   if (isLoading || isCreatingGuest) {
     return (
@@ -85,7 +86,7 @@ export default function PlayPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-2 hover:border-primary-500 transition-colors cursor-pointer">
+          <Card className="border-2 hover:border-primary-500 transition-colors">
             <CardHeader>
               <CardTitle>War</CardTitle>
               <CardDescription>
@@ -93,13 +94,16 @@ export default function PlayPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                Coming Soon
+              <Button
+                className="w-full"
+                onClick={() => router.push('/games')}
+              >
+                Browse Games
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary-500 transition-colors cursor-pointer opacity-60">
+          <Card className="border-2 hover:border-primary-500 transition-colors opacity-60">
             <CardHeader>
               <CardTitle>More Games Coming</CardTitle>
               <CardDescription>
