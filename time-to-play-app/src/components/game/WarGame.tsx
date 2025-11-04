@@ -6,6 +6,8 @@ import { GameState } from '@/lib/game/state';
 import { WarGameData } from '@/lib/games/war/WarGame';
 import { Card } from './Card';
 import { Button } from '@/components/ui/button';
+import { GameChat } from './GameChat';
+import { TurnTimer } from './TurnTimer';
 import { Users, Trophy } from 'lucide-react';
 
 interface WarGameProps {
@@ -87,10 +89,13 @@ export function WarGame({ gameId, userId }: WarGameProps) {
   const iWon = winner === (isPlayer1 ? 'player1' : 'player2');
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Game Area */}
+        <div className="lg:col-span-2 space-y-6">
       {/* Game Status */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary-600" />
             <h2 className="text-xl font-semibold">War - Card Battle</h2>
@@ -103,6 +108,14 @@ export function WarGame({ gameId, userId }: WarGameProps) {
             )}
           </div>
         </div>
+        {!isGameOver && gameState.turnStartedAt && gameState.timerConfig && (
+          <TurnTimer
+            turnStartedAt={gameState.turnStartedAt}
+            timeLimit={gameState.timerConfig.timePerTurn}
+            isMyTurn={gameState.currentTurn === playerNumber}
+            timerType={gameState.timerConfig.type}
+          />
+        )}
       </div>
 
       {/* Game Board */}
@@ -214,7 +227,7 @@ export function WarGame({ gameId, userId }: WarGameProps) {
       </div>
 
       {/* Game Info */}
-      <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+      <div className="bg-white rounded-lg shadow-md p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-sm text-gray-600">Your Cards</p>
@@ -228,6 +241,13 @@ export function WarGame({ gameId, userId }: WarGameProps) {
             <p className="text-sm text-gray-600">Opponent Cards</p>
             <p className="text-2xl font-bold text-gray-600">{opponentTotalCards}</p>
           </div>
+        </div>
+      </div>
+        </div>
+
+        {/* Chat Sidebar */}
+        <div className="lg:col-span-1">
+          <GameChat gameId={gameId} userId={userId} className="h-[600px]" />
         </div>
       </div>
     </div>

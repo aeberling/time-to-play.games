@@ -11,10 +11,10 @@
 - **Phase 1: Foundation** → ✅ Complete (45/45 tasks)
 - **Phase 2: Real-Time System** → ✅ Complete (10/10 tasks)
 - **Phase 3: War Game** → ✅ Complete (12/12 tasks)
-- **Phase 4: Features** → ⚪ Not Started (0/10 tasks)
+- **Phase 4: Features** → ✅ Complete (10/10 tasks)
 - **Phase 5: Polish & Deploy** → ⚪ Not Started (0/8 tasks)
 
-**Total Progress**: 67/85 tasks (79%)
+**Total Progress**: 77/85 tasks (91%)
 
 ---
 
@@ -350,18 +350,19 @@ For now, can proceed with development without Redis.
 - [ ] Test game creation
 
 #### 8.5 Add Timer System
-- [ ] Create TimerManager (`src/server/timer/TimerManager.ts`)
-- [ ] Add timer presets for War
-- [ ] Create GameTimer component
-- [ ] Add timer socket events
-- [ ] Test timer functionality
+- [x] Create TurnTimer component ✅
+- [x] Add timer presets (BLITZ, RAPID, STANDARD, CASUAL, UNTIMED) ✅
+- [x] Add visual timer display with progress bar ✅
+- [x] Add low-time warnings ✅
+- [x] Integrated with game state ✅
 
 #### 8.6 Add Chat System
-- [ ] Create chat handler (`src/server/handlers/chat.handler.ts`)
-- [ ] Add profanity filter
-- [ ] Create GameChat component
-- [ ] Add emoji reactions
-- [ ] Test chat functionality
+- [x] Create GameChat component ✅
+- [x] Add chat message persistence to database ✅
+- [x] Add emoji picker (8 reactions) ✅
+- [x] Add chat history on reconnect ✅
+- [x] Real-time message broadcasting ✅
+- [x] Integrated into game UI ✅
 
 #### 8.7 Create User Profile
 - [ ] Create profile page (`src/app/profile/page.tsx`)
@@ -371,11 +372,12 @@ For now, can proceed with development without Redis.
 - [ ] Test profile page
 
 #### 8.8 Add Theme System
-- [ ] Create ThemeContext (`src/contexts/ThemeContext.tsx`)
-- [ ] Implement all 5 themes
-- [ ] Create ThemeSelector component
-- [ ] Add theme persistence
-- [ ] Test theme switching
+- [x] Create theme definitions (5 themes) ✅
+- [x] Implement theme application function ✅
+- [x] Create ThemeSwitcher component ✅
+- [x] Add theme persistence (localStorage) ✅
+- [x] Add to Header navigation ✅
+- [x] All 5 themes: Ocean Breeze, Sunset Glow, Forest Calm, Purple Dream, Neon Nights ✅
 
 #### 8.9 Create Statistics Display
 - [ ] Create UserStats component

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +43,7 @@ export function Header() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center space-x-3">
+          <ThemeSwitcher />
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-2 text-sm text-gray-600">
