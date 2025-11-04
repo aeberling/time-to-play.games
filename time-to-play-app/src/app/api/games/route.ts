@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/server';
 import { prisma } from '@/lib/db';
+import { GameFactory } from '@/lib/games/core/Game.interface';
+import { registerGames } from '@/lib/games/registry';
+import { GameStateManager } from '@/lib/game/state';
+
+// Ensure games are registered
+registerGames();
 
 /**
  * POST /api/games
@@ -35,13 +41,38 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create game
+    // Initialize game state using game engine
+    const gameInstance = GameFactory.create(gameType);
+    if (!gameInstance) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to create game instance',
+        },
+        { status: 500 }
+      );
+    }
+
+    const initialGameData = gameInstance.initialize({
+      gameType,
+      players: [
+        {
+          userId: user.id,
+          displayName: user.displayName,
+          playerNumber: 1,
+        },
+      ],
+      timerConfig,
+    });
+
+    // Create game in database
     const game = await prisma.game.create({
       data: {
         gameType,
         status: 'WAITING',
         timerConfig: timerConfig || null,
         isPrivate: isPrivate || false,
+        stateSnapshot: initialGameData,
         players: {
           create: {
             userId: user.id,
@@ -63,6 +94,26 @@ export async function POST(request: Request) {
           },
         },
       },
+    });
+
+    // Initialize game state in Redis
+    await GameStateManager.setState(game.id, {
+      gameId: game.id,
+      gameType,
+      status: 'WAITING',
+      players: [
+        {
+          userId: user.id,
+          displayName: user.displayName,
+          playerNumber: 1,
+          isReady: true,
+          isConnected: false,
+        },
+      ],
+      gameData: initialGameData,
+      timerConfig,
+      createdAt: game.createdAt.getTime(),
+      updatedAt: game.updatedAt.getTime(),
     });
 
     return NextResponse.json(

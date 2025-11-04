@@ -1,7 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { verifyAccessToken } from '@/lib/auth/jwt';
-import { GameStateManager, BaseMoveValidator } from '@/lib/game/state';
+import { GameStateManager } from '@/lib/game/state';
 import { prisma } from '@/lib/db';
+import { registerGames, validatorRegistry } from '@/lib/games/registry';
 
 // Extended Socket type with custom properties
 interface AuthenticatedSocket extends Socket {
@@ -14,8 +15,8 @@ interface AuthenticatedSocket extends Socket {
 // Store for active connections
 const userSockets = new Map<string, AuthenticatedSocket>();
 
-// Move validator
-const moveValidator = new BaseMoveValidator();
+// Register all games
+registerGames();
 
 export default function setupSocketHandlers(io: Server) {
   // Authentication middleware
@@ -142,8 +143,15 @@ export default function setupSocketHandlers(io: Server) {
           return;
         }
 
+        // Get game-specific validator
+        const validator = validatorRegistry.get(gameState.gameType);
+        if (!validator) {
+          authSocket.emit('error', { message: 'Game type not supported' });
+          return;
+        }
+
         // Validate the move
-        const validation = await moveValidator.validate(
+        const validation = await validator.validate(
           gameState,
           move,
           authSocket.userId
