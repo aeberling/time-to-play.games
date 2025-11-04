@@ -8,13 +8,13 @@
 
 ## 📋 Progress Overview
 
-- **Phase 1: Foundation** → 🟡 In Progress (38/45 tasks)
+- **Phase 1: Foundation** → 🟡 In Progress (43/45 tasks)
 - **Phase 2: Real-Time System** → ⚪ Not Started (0/10 tasks)
 - **Phase 3: War Game** → ⚪ Not Started (0/12 tasks)
 - **Phase 4: Features** → ⚪ Not Started (0/10 tasks)
 - **Phase 5: Polish & Deploy** → ⚪ Not Started (0/8 tasks)
 
-**Total Progress**: 38/85 tasks (45%)
+**Total Progress**: 43/85 tasks (51%)
 
 ---
 
@@ -101,11 +101,14 @@ For now, can proceed with development without Redis.
 - [x] Test auth context throughout app ✅
 
 #### 2.5 Create Auth UI
-- [ ] Create login page (`src/app/(auth)/login/page.tsx`)
-- [ ] Create registration page (`src/app/(auth)/register/page.tsx`)
-- [ ] Create guest play button on landing page
-- [ ] Add form validation with Zod
-- [ ] Test all auth UI flows
+- [x] Install Zod and React Hook Form ✅
+- [x] Create Input component (`src/components/ui/input.tsx`) ✅
+- [x] Create Label component (`src/components/ui/label.tsx`) ✅
+- [x] Create login page (`src/app/login/page.tsx`) ✅
+- [x] Create registration page (`src/app/register/page.tsx`) ✅
+- [x] Create play page with auto guest auth (`src/app/play/page.tsx`) ✅
+- [x] Update Header with auth-aware navigation ✅
+- [x] Add form validation with Zod ✅
 
 ---
 
@@ -615,7 +618,48 @@ This allows development to continue on other features.
   - Returns current user data from access token
 - Added AuthProvider to root layout
 - Development server running successfully with auth system
-Next: Week 2.5 - Create Auth UI pages (login, register)
+
+**9:35 PM** - Week 2.5 Complete ✅ (Week 2 COMPLETE!)
+- Installed Zod and React Hook Form for form validation
+- Created Input and Label UI components
+- Created complete login page (`src/app/login/page.tsx`):
+  - Email/password form with Zod validation
+  - Error handling and loading states
+  - Link to registration page
+  - "Play as Guest" option
+  - Redirects to /play on success
+- Created complete registration page (`src/app/register/page.tsx`):
+  - Display name, email, password, confirm password
+  - Comprehensive Zod validation (8+ chars, uppercase, lowercase, number)
+  - Password matching validation
+  - Error messages for all fields
+  - Link to login page
+  - "Play as Guest" option
+- Created play page with automatic guest authentication (`src/app/play/page.tsx`):
+  - Auto-creates guest account if not authenticated
+  - Welcome message with user's display name
+  - Prompt to create account for guests
+  - Game selection cards (War coming soon)
+  - Loading states during guest creation
+- Updated Header component with auth-aware navigation:
+  - Shows user display name when authenticated
+  - Logout button for authenticated users
+  - Login/Play Now for unauthenticated
+  - Works on both desktop and mobile
+- All forms use React Hook Form with Zod validation
+- Complete authentication flow working end-to-end!
+
+**WEEK 2 COMPLETE! Full authentication system working:**
+✅ JWT token system with refresh
+✅ Guest and registered user support
+✅ Login, register, logout API routes
+✅ React Context for client-side auth
+✅ Beautiful UI pages for all auth flows
+✅ Auto-refresh tokens every 14 minutes
+✅ Protected routes
+✅ Auth-aware navigation
+
+Next: Week 3 - Core API & Database (User Management, Game Management)
 
 ---
 
@@ -649,6 +693,6 @@ git push origin develop       # Push to develop branch
 
 ---
 
-**Last Updated**: November 3, 2025 9:10 PM
-**Current Phase**: Phase 1 - Foundation (Week 2)
-**Next Task**: 2.5 Create Auth UI
+**Last Updated**: November 3, 2025 9:35 PM
+**Current Phase**: Phase 1 - Foundation (Week 3)
+**Next Task**: 3.1 Complete Database Schema

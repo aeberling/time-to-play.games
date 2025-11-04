@@ -1,12 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Header() {
+  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -33,12 +42,27 @@ export function Header() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center space-x-3">
-          <Button variant="ghost" asChild>
-            <Link href="/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/play">Play Now</Link>
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="w-4 h-4" />
+                <span>{user?.displayName}</span>
+              </div>
+              <Button variant="ghost" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/play">Play Now</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -80,12 +104,27 @@ export function Header() {
               About
             </Link>
             <div className="pt-3 space-y-2">
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button className="w-full" asChild>
-                <Link href="/play">Play Now</Link>
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600">
+                    <User className="w-4 h-4" />
+                    <span>{user?.displayName}</span>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button className="w-full" asChild>
+                    <Link href="/play">Play Now</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
