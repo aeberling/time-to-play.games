@@ -1,0 +1,204 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Services\GameService;
+use App\Models\Game;
+use App\Games\GameRegistry;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
+/**
+ * GameController
+ *
+ * Handles game CRUD operations and game management endpoints
+ */
+class GameController extends Controller
+{
+    public function __construct(
+        private GameService $gameService,
+        private GameRegistry $gameRegistry
+    ) {}
+
+    /**
+     * Get list of available game types
+     *
+     * GET /api/games/types
+     */
+    public function types(): JsonResponse
+    {
+        $games = $this->gameRegistry->getGamesList();
+
+        return response()->json([
+            'games' => $games,
+        ]);
+    }
+
+    /**
+     * Get list of games (with filters)
+     *
+     * GET /api/games
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Game::with(['gamePlayers.user', 'winner'])
+            ->orderBy('created_at', 'desc');
+
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by game type
+        if ($request->has('game_type')) {
+            $query->where('game_type', $request->game_type);
+        }
+
+        // Filter by user participation
+        if ($request->has('user_id')) {
+            $query->whereHas('gamePlayers', function ($q) use ($request) {
+                $q->where('user_id', $request->user_id);
+            });
+        }
+
+        $games = $query->paginate(20);
+
+        return response()->json($games);
+    }
+
+    /**
+     * Create a new game
+     *
+     * POST /api/games
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'game_type' => 'required|string|in:WAR,SWOOP,OH_HELL',
+            'max_players' => 'required|integer|min:2|max:8',
+            'timer_config' => 'nullable|array',
+            'timer_config.turn_time' => 'nullable|integer|min:10|max:300',
+            'timer_config.total_time' => 'nullable|integer|min:60',
+        ]);
+
+        $user = $request->user();
+
+        $game = $this->gameService->createGame(
+            $validated['game_type'],
+            $user->id,
+            $validated['max_players'],
+            $validated['timer_config'] ?? null
+        );
+
+        $game->load(['gamePlayers.user']);
+
+        return response()->json([
+            'game' => $game,
+            'message' => 'Game created successfully',
+        ], 201);
+    }
+
+    /**
+     * Get a specific game
+     *
+     * GET /api/games/{id}
+     */
+    public function show(int $id): JsonResponse
+    {
+        $game = Game::with(['gamePlayers.user', 'winner', 'gameMoves'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'game' => $game,
+        ]);
+    }
+
+    /**
+     * Get game state for current player
+     *
+     * GET /api/games/{id}/state
+     */
+    public function state(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        $playerView = $this->gameService->getPlayerView($id, $user->id);
+
+        return response()->json([
+            'state' => $playerView,
+        ]);
+    }
+
+    /**
+     * Start a game
+     *
+     * POST /api/games/{id}/start
+     */
+    public function start(int $id): JsonResponse
+    {
+        try {
+            $state = $this->gameService->startGame($id);
+
+            return response()->json([
+                'message' => 'Game started',
+                'state' => $state,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Delete/abandon a game
+     *
+     * DELETE /api/games/{id}
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $game = Game::findOrFail($id);
+
+        // Only allow deletion if game hasn't started
+        if ($game->status !== 'WAITING') {
+            return response()->json([
+                'message' => 'Cannot delete a game in progress',
+            ], 400);
+        }
+
+        $game->update(['status' => 'ABANDONED']);
+
+        return response()->json([
+            'message' => 'Game abandoned',
+        ]);
+    }
+
+    /**
+     * Get game statistics
+     *
+     * GET /api/games/{id}/stats
+     */
+    public function stats(int $id): JsonResponse
+    {
+        $game = Game::with(['gamePlayers.user', 'gameMoves'])->findOrFail($id);
+
+        $stats = [
+            'total_moves' => $game->gameMoves()->count(),
+            'duration' => $game->status === 'COMPLETED'
+                ? $game->updated_at->diffInSeconds($game->created_at)
+                : null,
+            'players' => $game->gamePlayers->map(function ($gp) use ($game) {
+                return [
+                    'user_id' => $gp->user_id,
+                    'name' => $gp->user->display_name ?? $gp->user->username,
+                    'placement' => $gp->placement,
+                    'score' => $gp->score,
+                    'moves_made' => $game->gameMoves()->where('user_id', $gp->user_id)->count(),
+                ];
+            }),
+        ];
+
+        return response()->json($stats);
+    }
+}
