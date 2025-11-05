@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, SwoopGameState, Card } from '@/types';
 import { useGameStore } from '@/store';
+import { useTheme } from '@/contexts/ThemeContext';
+import GameCard from '@/Components/GameCard';
 
 /**
  * Swoop Game Component
@@ -30,8 +32,10 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         unsubscribeFromGame,
         toggleReady,
         makeMove,
+        cancelGame,
     } = useGameStore();
 
+    const { theme } = useTheme();
     const [selectedCards, setSelectedCards] = useState<number[]>([]);
 
     // Fetch game state and subscribe to updates on mount
@@ -56,6 +60,19 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
 
     const handleLeaveGame = () => {
         router.visit('/games/lobby');
+    };
+
+    const handleCancelGame = async () => {
+        if (!confirm('Are you sure you want to cancel this game? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await cancelGame(gameId);
+            router.visit('/games/lobby');
+        } catch (err) {
+            console.error('Failed to cancel game:', err);
+        }
     };
 
     const handleCardSelect = (index: number) => {
@@ -126,40 +143,33 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         return playerColors[pIndex % playerColors.length];
     };
 
+    // Player colors for visual identification
+    const playerColors = [
+        'rgb(59, 130, 246)',  // blue
+        'rgb(239, 68, 68)',   // red
+        'rgb(34, 197, 94)',   // green
+        'rgb(168, 85, 247)',  // purple
+        'rgb(251, 146, 60)',  // orange
+    ];
+
+    const getPlayerColor = (pIndex: number) => {
+        return playerColors[pIndex % playerColors.length];
+    };
+
     const renderCard = (card: Card, onClick?: () => void, selected = false, faceDown = false, borderColor?: string) => {
-        if (faceDown || (card as any).hidden) {
-            return (
-                <div
-                    className="w-16 h-24 bg-blue-800 rounded-lg border-2 border-blue-900 flex items-center justify-center cursor-default"
-                >
-                    <div className="text-white text-2xl font-bold">?</div>
-                </div>
-            );
-        }
-
-        const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
-
         return (
             <div
                 onClick={onClick}
-                className={`w-16 h-24 bg-white rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all ${
-                    selected
-                        ? 'border-blue-500 ring-2 ring-blue-400 -translate-y-2 shadow-lg'
-                        : borderColor
-                        ? ''
-                        : 'border-gray-300 hover:border-gray-400'
+                className={`transition-all ${
+                    selected ? '-translate-y-2 shadow-lg' : ''
                 } ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
-                style={borderColor && !selected ? { borderColor, borderWidth: '3px' } : {}}
+                style={borderColor && !selected ? { borderColor, borderWidth: '3px', borderRadius: '0.5rem' } : {}}
             >
-                <div style={{ color: isRed ? 'rgb(220, 38, 38)' : 'rgb(17, 24, 39)' }} className="text-2xl font-bold">
-                    {card.rank}
-                </div>
-                <div style={{ color: isRed ? 'rgb(220, 38, 38)' : 'rgb(17, 24, 39)' }} className="text-xl">
-                    {card.suit === 'hearts' && '♥'}
-                    {card.suit === 'diamonds' && '♦'}
-                    {card.suit === 'clubs' && '♣'}
-                    {card.suit === 'spades' && '♠'}
-                </div>
+                <GameCard
+                    card={card}
+                    faceDown={faceDown || (card as any).hidden}
+                    size="small"
+                />
             </div>
         );
     };
