@@ -203,6 +203,9 @@ export default function Lobby({ auth }: PageProps) {
                                     );
                                     const isFull =
                                         game.game_players.length >= game.max_players;
+                                    const isPlayerInGame = game.game_players.some(
+                                        (p) => p.user_id === auth.user.id
+                                    );
 
                                     return (
                                         <div
@@ -224,6 +227,11 @@ export default function Lobby({ auth }: PageProps) {
                                                         >
                                                             {game.status}
                                                         </span>
+                                                        {isPlayerInGame && (
+                                                            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+                                                                You're in this game
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
                                                         <span>
@@ -245,17 +253,26 @@ export default function Lobby({ auth }: PageProps) {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleJoinGame(game.id)}
-                                                    disabled={isFull}
-                                                    className={`px-4 py-2 rounded-md font-medium ${
-                                                        isFull
-                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                                    }`}
-                                                >
-                                                    {isFull ? 'Full' : 'Join'}
-                                                </button>
+                                                {isPlayerInGame ? (
+                                                    <button
+                                                        onClick={() => router.visit(`/games/${game.id}`)}
+                                                        className="px-4 py-2 rounded-md font-medium bg-green-600 text-white hover:bg-green-700"
+                                                    >
+                                                        View Game
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleJoinGame(game.id)}
+                                                        disabled={isFull}
+                                                        className={`px-4 py-2 rounded-md font-medium ${
+                                                            isFull
+                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                        }`}
+                                                    >
+                                                        {isFull ? 'Full' : 'Join'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
