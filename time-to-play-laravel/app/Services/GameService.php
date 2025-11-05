@@ -246,6 +246,14 @@ class GameService
         $game = Game::findOrFail($gameId);
         $gamePlayer = $game->gamePlayers()->where('user_id', $userId)->firstOrFail();
 
+        // If game hasn't started yet, return empty state
+        if ($game->current_state === null) {
+            return [
+                'status' => $game->status,
+                'message' => 'Game has not started yet',
+            ];
+        }
+
         $engine = $this->registry->get($game->game_type);
         $state = $engine->deserializeState($game->current_state);
 
