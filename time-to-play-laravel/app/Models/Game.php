@@ -13,6 +13,7 @@ class Game extends Model
         'status',
         'max_players',
         'timer_config',
+        'game_options',
         'current_state',
         'state_snapshot',
         'winner_id',
@@ -20,6 +21,7 @@ class Game extends Model
 
     protected $casts = [
         'timer_config' => 'array',
+        'game_options' => 'array',
         'current_state' => 'string', // JSON string for game engine
         'state_snapshot' => 'string', // Final state when game ends
     ];

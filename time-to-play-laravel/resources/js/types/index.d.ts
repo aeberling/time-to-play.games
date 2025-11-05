@@ -9,6 +9,7 @@ export interface User {
     username?: string;
     avatar_url?: string;
     is_guest?: boolean;
+    theme_id?: string;
 }
 
 export type PageProps<
@@ -96,6 +97,7 @@ export interface Game {
     status: GameStatus;
     max_players: number;
     timer_config: TimerConfig | null;
+    game_options?: Record<string, any> | null;
     current_state: string | null;
     winner_id: number | null;
     created_at: string;
@@ -161,20 +163,22 @@ export interface OhHellGameState {
     isAscending: boolean;
     trumpSuit: string | null;
     trumpCard: Card | null;
+    trumpBroken: boolean;
     dealerIndex: number;
     playerHands: Card[][];
     phase: 'BIDDING' | 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
     bids: (number | null)[];
     currentBidder: number | null;
     currentTrick: {
-        cards: Card[];
-        playerIndices: number[];
+        cards: Array<{ playerIndex: number; card: Card }>;
         leadSuit: string | null;
+        currentPlayer: number;
     };
     tricksWon: number[];
     completedTricks: any[];
     scores: number[];
     roundScores: number[];
+    playersReadyToContinue: boolean[];
     lastAction: {
         type: string;
         playerIndex?: number;

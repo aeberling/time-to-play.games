@@ -62,6 +62,11 @@ class GameController extends Controller
             });
         }
 
+        // Exclude completed/abandoned games
+        if ($request->boolean('exclude_completed')) {
+            $query->whereNotIn('status', ['COMPLETED', 'ABANDONED']);
+        }
+
         $games = $query->paginate(20);
 
         return response()->json($games);
@@ -80,15 +85,42 @@ class GameController extends Controller
             'timer_config' => 'nullable|array',
             'timer_config.turn_time' => 'nullable|integer|min:10|max:300',
             'timer_config.total_time' => 'nullable|integer|min:60',
+            'game_options' => 'nullable|array',
+            'game_options.startingHandSize' => 'nullable|integer|min:1|max:13',
+            'game_options.endingHandSize' => 'nullable|integer|min:1|max:13',
+            'game_options.scoringVariant' => 'nullable|string|in:standard,partial',
         ]);
 
         $user = $request->user();
+
+        // Additional validation for Oh Hell specific options
+        if ($validated['game_type'] === 'OH_HELL' && isset($validated['game_options'])) {
+            $options = $validated['game_options'];
+            $maxPlayers = $validated['max_players'];
+
+            if (isset($options['startingHandSize']) || isset($options['endingHandSize'])) {
+                $startingHandSize = $options['startingHandSize'] ?? 10;
+                $endingHandSize = $options['endingHandSize'] ?? 1;
+                $maxCardsPerRound = max($startingHandSize, $endingHandSize);
+                $maxPossibleCards = floor(52 / $maxPlayers);
+
+                if ($maxCardsPerRound > $maxPossibleCards) {
+                    return response()->json([
+                        'message' => "With {$maxPlayers} players, maximum hand size is {$maxPossibleCards} (using a 52-card deck)",
+                        'errors' => [
+                            'game_options' => ["Maximum hand size exceeded for {$maxPlayers} players"]
+                        ]
+                    ], 422);
+                }
+            }
+        }
 
         $game = $this->gameService->createGame(
             $validated['game_type'],
             $user->id,
             $validated['max_players'],
-            $validated['timer_config'] ?? null
+            $validated['timer_config'] ?? null,
+            $validated['game_options'] ?? null
         );
 
         $game->load(['gamePlayers.user']);
@@ -156,21 +188,32 @@ class GameController extends Controller
      *
      * DELETE /api/games/{id}
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $game = Game::findOrFail($id);
+        $game = Game::with('gamePlayers')->findOrFail($id);
+        $user = $request->user();
 
-        // Only allow deletion if game hasn't started
-        if ($game->status !== 'WAITING') {
+        // Check if user is the creator (player_index 0)
+        $creator = $game->gamePlayers()->where('player_index', 0)->first();
+
+        if (!$creator || $creator->user_id !== $user->id) {
             return response()->json([
-                'message' => 'Cannot delete a game in progress',
+                'message' => 'Only the game creator can cancel the game',
+            ], 403);
+        }
+
+        // Only allow cancellation if game hasn't started or is still in waiting/ready
+        if (!in_array($game->status, ['WAITING', 'READY'])) {
+            return response()->json([
+                'message' => 'Cannot cancel a game that is already in progress',
             ], 400);
         }
 
+        // Mark game as abandoned
         $game->update(['status' => 'ABANDONED']);
 
         return response()->json([
-            'message' => 'Game abandoned',
+            'message' => 'Game cancelled successfully',
         ]);
     }
 

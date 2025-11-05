@@ -16,6 +16,7 @@ interface GameStore {
     currentGame: Game | null;
     gameState: GameState | null;
     playerIndex: number | null;
+    currentUserId: number | null;
     isConnected: boolean;
     isReady: boolean;
     error: string | null;
@@ -32,12 +33,13 @@ interface GameStore {
     reset: () => void;
 
     // Game Actions
-    createGame: (gameType: GameType, maxPlayers: number) => Promise<void>;
+    createGame: (gameType: GameType, maxPlayers: number, gameOptions?: Record<string, any>) => Promise<void>;
     joinGame: (gameId: number) => Promise<void>;
     leaveGame: (gameId: number) => Promise<void>;
+    cancelGame: (gameId: number) => Promise<void>;
     toggleReady: (gameId: number) => Promise<void>;
     makeMove: (gameId: number, move: Record<string, any>) => Promise<void>;
-    fetchGameState: (gameId: number) => Promise<void>;
+    fetchGameState: (gameId: number, currentUserId?: number) => Promise<void>;
 
     // WebSocket
     subscribeToGame: (gameId: number) => void;
@@ -48,6 +50,7 @@ const initialState = {
     currentGame: null,
     gameState: null,
     playerIndex: null,
+    currentUserId: null,
     isConnected: false,
     isReady: false,
     error: null,
@@ -73,12 +76,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     /**
      * Create a new game
      */
-    createGame: async (gameType, maxPlayers) => {
+    createGame: async (gameType, maxPlayers, gameOptions) => {
         set({ loading: true, error: null });
         try {
             const response = await window.axios.post('/api/games', {
                 game_type: gameType,
                 max_players: maxPlayers,
+                game_options: gameOptions,
             });
 
             const game: Game = response.data.game;
@@ -150,6 +154,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
     },
 
     /**
+     * Cancel a game (creator only)
+     */
+    cancelGame: async (gameId) => {
+        set({ loading: true, error: null });
+        try {
+            await window.axios.delete(`/api/games/${gameId}`);
+
+            // Unsubscribe from WebSocket
+            get().unsubscribeFromGame(gameId);
+
+            // Reset state
+            set({
+                ...initialState,
+                loading: false
+            });
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Failed to cancel game';
+            set({ error: message, loading: false });
+            throw error;
+        }
+    },
+
+    /**
      * Toggle ready status
      */
     toggleReady: async (gameId) => {
@@ -190,7 +217,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     /**
      * Fetch current game state
      */
-    fetchGameState: async (gameId) => {
+    fetchGameState: async (gameId, currentUserId) => {
         set({ loading: true, error: null });
         try {
             const [gameResponse, stateResponse] = await Promise.all([
@@ -201,9 +228,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
             const game: Game = gameResponse.data.game;
             const state: GameState = stateResponse.data.state;
 
+            // Use provided currentUserId or fall back to stored value
+            const userId = currentUserId ?? get().currentUserId;
+
+            // Calculate player index based on current user
+            let playerIndex = -1;
+            let isReady = false;
+
+            if (userId) {
+                // Find the current player's game_player record
+                const currentPlayer = game.game_players.find(
+                    (p) => p.user_id === userId
+                );
+
+                if (currentPlayer) {
+                    // Use the player_index from the database, not array position
+                    playerIndex = currentPlayer.player_index;
+                    isReady = currentPlayer.is_ready || false;
+                }
+            }
+
             set({
                 currentGame: game,
                 gameState: state,
+                playerIndex: playerIndex >= 0 ? playerIndex : null,
+                currentUserId: userId ?? null,
+                isReady,
                 loading: false
             });
         } catch (error: any) {
@@ -251,7 +301,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         window.Echo.private(`game.${gameId}.private`)
             .listen('.game.state.updated', (e: any) => {
                 console.log('GameStateUpdated event:', e);
-                set({ gameState: e.gameState });
+                // Refresh full game data to get updated status
+                get().fetchGameState(gameId);
             })
             .listen('.game.move.made', (e: any) => {
                 console.log('MoveMade event:', e);
