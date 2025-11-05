@@ -46,21 +46,45 @@ class OhHellEngine implements GameEngineInterface
             throw new \InvalidArgumentException('Oh Hell requires 3-5 players');
         }
 
-        $maxCards = 10; // For 3-5 players
-        $totalRounds = ($maxCards * 2) - 1; // 19 rounds
+        // Get configurable options with defaults
+        $startingHandSize = $options['startingHandSize'] ?? 10;
+        $endingHandSize = $options['endingHandSize'] ?? 1;
         $scoringVariant = $options['scoringVariant'] ?? 'standard';
+
+        // Validate hand sizes
+        if ($startingHandSize < 1 || $startingHandSize > 13) {
+            throw new \InvalidArgumentException('Starting hand size must be between 1 and 13');
+        }
+        if ($endingHandSize < 1 || $endingHandSize > 13) {
+            throw new \InvalidArgumentException('Ending hand size must be between 1 and 13');
+        }
+
+        // Validate max cards based on player count (52 cards in deck)
+        $maxCardsPerRound = max($startingHandSize, $endingHandSize);
+        $maxPossibleCards = floor(52 / $playerCount);
+        if ($maxCardsPerRound > $maxPossibleCards) {
+            throw new \InvalidArgumentException(
+                "With {$playerCount} players, maximum hand size is {$maxPossibleCards} (using a 52-card deck)"
+            );
+        }
+
+        // Determine round progression
+        $isAscending = $startingHandSize < $endingHandSize;
+        $totalRounds = abs($endingHandSize - $startingHandSize) + 1;
 
         $state = [
             'players' => $players,
             'playerCount' => $playerCount,
-            'maxCards' => $maxCards,
+            'startingHandSize' => $startingHandSize,
+            'endingHandSize' => $endingHandSize,
             'scoringVariant' => $scoringVariant,
             'currentRound' => 1,
             'totalRounds' => $totalRounds,
-            'cardsThisRound' => $maxCards,
-            'isAscending' => false,
+            'cardsThisRound' => $startingHandSize,
+            'isAscending' => $isAscending,
             'trumpSuit' => null,
             'trumpCard' => null,
+            'trumpBroken' => false,
             'dealerIndex' => 0,
             'playerHands' => [],
             'phase' => 'BIDDING',
@@ -75,6 +99,7 @@ class OhHellEngine implements GameEngineInterface
             'completedTricks' => [],
             'scores' => array_fill(0, $playerCount, 0),
             'roundScores' => array_fill(0, $playerCount, 0),
+            'playersReadyToContinue' => array_fill(0, $playerCount, false),
             'lastAction' => null,
         ];
 
@@ -98,6 +123,8 @@ class OhHellEngine implements GameEngineInterface
         $state['tricksWon'] = array_fill(0, $state['playerCount'], 0);
         $state['completedTricks'] = [];
         $state['roundScores'] = array_fill(0, $state['playerCount'], 0);
+        $state['trumpBroken'] = false;
+        $state['playersReadyToContinue'] = array_fill(0, $state['playerCount'], false);
 
         $state['currentTrick'] = [
             'cards' => [],
@@ -201,6 +228,37 @@ class OhHellEngine implements GameEngineInterface
                 }
             }
 
+            // Check trump breaking rule - can't lead with trump until trump is broken
+            if (!$leadSuit && $state['trumpSuit'] && $card->getSuit() === $state['trumpSuit'] && !$state['trumpBroken']) {
+                \Log::info('Trump breaking validation', [
+                    'player_index' => $playerIndex,
+                    'trump_suit' => $state['trumpSuit'],
+                    'card_suit' => $card->getSuit(),
+                    'trump_broken' => $state['trumpBroken'],
+                ]);
+
+                // Leading with trump when trump hasn't been broken - check if player has only trump cards
+                $hasNonTrump = false;
+                foreach ($state['playerHands'][$playerIndex] as $handCard) {
+                    if ($handCard['suit'] !== $state['trumpSuit']) {
+                        $hasNonTrump = true;
+                        break;
+                    }
+                }
+
+                if ($hasNonTrump) {
+                    return ValidationResult::invalid("Cannot lead with trump until trump is broken");
+                }
+            }
+
+            return ValidationResult::valid();
+        }
+
+        if ($state['phase'] === 'ROUND_OVER') {
+            if (($move['action'] ?? null) !== 'CONTINUE_ROUND') {
+                return ValidationResult::invalid('Must continue to next round');
+            }
+
             return ValidationResult::valid();
         }
 
@@ -269,6 +327,16 @@ class OhHellEngine implements GameEngineInterface
                 $move['card']
             );
 
+            // Check if trump is being broken
+            if ($state['trumpSuit'] && $card->getSuit() === $state['trumpSuit'] && !$state['trumpBroken']) {
+                $state['trumpBroken'] = true;
+                \Log::info('Trump has been broken!', [
+                    'player_index' => $playerIndex,
+                    'card' => $move['card'],
+                    'lead_suit' => $state['currentTrick']['leadSuit'] ?? null,
+                ]);
+            }
+
             // Add to current trick
             $state['currentTrick']['cards'][] = [
                 'playerIndex' => $playerIndex,
@@ -327,6 +395,33 @@ class OhHellEngine implements GameEngineInterface
                 // Next player's turn
                 $state['currentTrick']['currentPlayer'] =
                     ($state['currentTrick']['currentPlayer'] + 1) % $state['playerCount'];
+            }
+
+            return $state;
+        }
+
+        if (($move['action'] ?? null) === 'CONTINUE_ROUND') {
+            // Mark this player as ready to continue
+            $state['playersReadyToContinue'][$playerIndex] = true;
+
+            $state['lastAction'] = [
+                'type' => 'PLAYER_READY_TO_CONTINUE',
+                'playerIndex' => $playerIndex,
+                'timestamp' => now()->toISOString(),
+            ];
+
+            // Check if all players are ready to continue
+            $allReady = true;
+            foreach ($state['playersReadyToContinue'] as $ready) {
+                if (!$ready) {
+                    $allReady = false;
+                    break;
+                }
+            }
+
+            // If all players are ready, advance to next round
+            if ($allReady) {
+                return $this->advanceToNextRound($state);
             }
 
             return $state;
@@ -435,12 +530,8 @@ class OhHellEngine implements GameEngineInterface
         // Advance dealer
         $state['dealerIndex'] = ($state['dealerIndex'] + 1) % $state['playerCount'];
 
-        // Determine cards for next round
-        if ($state['cardsThisRound'] === 1) {
-            // Switch from descending to ascending
-            $state['isAscending'] = true;
-            $state['cardsThisRound'] = 2;
-        } elseif ($state['isAscending']) {
+        // Determine cards for next round based on configuration
+        if ($state['isAscending']) {
             $state['cardsThisRound']++;
         } else {
             $state['cardsThisRound']--;
