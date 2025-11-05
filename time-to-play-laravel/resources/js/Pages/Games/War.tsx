@@ -67,7 +67,7 @@ export default function War({ auth, gameId }: WarProps) {
         router.visit('/games/lobby');
     };
 
-    if (!currentGame || !warState) {
+    if (!currentGame) {
         return (
             <AuthenticatedLayout
                 header={
@@ -88,20 +88,22 @@ export default function War({ auth, gameId }: WarProps) {
         );
     }
 
-    const isWaiting = currentGame.status === 'WAITING';
-    const isMyTurn = warState.waitingFor === `PLAYER_${(playerIndex ?? 0) + 1}` ||
-        warState.waitingFor === 'BOTH';
-    const isGameOver = warState.phase === 'GAME_OVER';
+    const isWaiting = currentGame.status === 'WAITING' || currentGame.status === 'READY';
 
-    // Get player decks
-    const myDeck = playerIndex === 0 ? warState.player1Deck : warState.player2Deck;
-    const opponentDeck = playerIndex === 0 ? warState.player2Deck : warState.player1Deck;
-    const myCardsInPlay = playerIndex === 0
+    // Only access warState properties if game has started
+    const isMyTurn = warState ? (warState.waitingFor === `PLAYER_${(playerIndex ?? 0) + 1}` ||
+        warState.waitingFor === 'BOTH') : false;
+    const isGameOver = warState ? warState.phase === 'GAME_OVER' : false;
+
+    // Get player decks (only if warState exists)
+    const myDeck = warState && playerIndex !== null ? (playerIndex === 0 ? warState.player1Deck : warState.player2Deck) : [];
+    const opponentDeck = warState && playerIndex !== null ? (playerIndex === 0 ? warState.player2Deck : warState.player1Deck) : [];
+    const myCardsInPlay = warState && playerIndex !== null ? (playerIndex === 0
         ? warState.cardsInPlay.player1
-        : warState.cardsInPlay.player2;
-    const opponentCardsInPlay = playerIndex === 0
+        : warState.cardsInPlay.player2) : [];
+    const opponentCardsInPlay = warState && playerIndex !== null ? (playerIndex === 0
         ? warState.cardsInPlay.player2
-        : warState.cardsInPlay.player1;
+        : warState.cardsInPlay.player1) : [];
 
     const renderCard = (card: Card | string, faceDown = false) => {
         if (typeof card === 'string' || faceDown) {
@@ -200,7 +202,7 @@ export default function War({ auth, gameId }: WarProps) {
                     )}
 
                     {/* Game Board */}
-                    {!isWaiting && (
+                    {!isWaiting && warState && (
                         <div className="bg-white p-6 shadow sm:rounded-lg">
                             {/* Game Status */}
                             <div className="text-center mb-6">
