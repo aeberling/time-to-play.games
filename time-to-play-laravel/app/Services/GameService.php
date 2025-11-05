@@ -31,7 +31,8 @@ class GameService
         string $gameType,
         int $hostUserId,
         int $maxPlayers,
-        ?array $timerConfig = null
+        ?array $timerConfig = null,
+        ?array $gameOptions = null
     ): Game {
         // Verify game type exists
         $engine = $this->registry->get($gameType);
@@ -41,6 +42,7 @@ class GameService
             'status' => 'WAITING',
             'max_players' => $maxPlayers,
             'timer_config' => $timerConfig,
+            'game_options' => $gameOptions,
         ]);
 
         // Add host as first player
@@ -148,8 +150,11 @@ class GameService
             ])
             ->toArray();
 
-        // Initialize game state
-        $gameState = $engine->initializeGame($players);
+        // Get game options (if any)
+        $gameOptions = $game->game_options ?? [];
+
+        // Initialize game state with options
+        $gameState = $engine->initializeGame($players, $gameOptions);
 
         // Save state to database
         $game->update([
@@ -179,11 +184,22 @@ class GameService
             $gamePlayer = $game->gamePlayers()->where('user_id', $userId)->firstOrFail();
             $playerIndex = $gamePlayer->player_index;
 
+            \Log::info('Move validation debug', [
+                'user_id' => $userId,
+                'player_index' => $playerIndex,
+                'waiting_for' => $game->current_state['waitingFor'] ?? 'unknown',
+            ]);
+
             // Get game engine
             $engine = $this->registry->get($game->game_type);
 
             // Deserialize current state
             $currentState = $engine->deserializeState($game->current_state);
+
+            \Log::info('Deserialized state', [
+                'waiting_for' => $currentState['waitingFor'] ?? 'unknown',
+                'phase' => $currentState['phase'] ?? 'unknown',
+            ]);
 
             // Validate move
             $validation = $engine->validateMove($currentState, $moveData, $playerIndex);

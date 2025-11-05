@@ -102,9 +102,14 @@ class WarEngine implements GameEngineInterface
             $deckKey = $playerIndex === 0 ? 'player1Deck' : 'player2Deck';
             $playKey = $playerIndex === 0 ? 'player1' : 'player2';
 
+            \Log::info("Player {$playerIndex} flipping. Deck has " . count($state[$deckKey]) . " cards");
+            \Log::info("Top card in deck: " . json_encode($state[$deckKey][0] ?? 'none'));
+
             // Get top card from player's deck
             $deck = Deck::fromArray($state[$deckKey]);
             $result = $deck->dealOne();
+
+            \Log::info("Card dealt: " . json_encode($result['card']->toArray()));
 
             // Add card to play area
             $state['cardsInPlay'][$playKey][] = $result['card']->toArray();
@@ -152,6 +157,12 @@ class WarEngine implements GameEngineInterface
             $state['cardsInPlay']['player2']
         );
 
+        // Store the played cards before clearing them (for frontend animation)
+        $playedCards = [
+            'player1' => $state['cardsInPlay']['player1'],
+            'player2' => $state['cardsInPlay']['player2'],
+        ];
+
         // Add to winner's deck (at bottom)
         $deckKey = $winnerIndex === 0 ? 'player1Deck' : 'player2Deck';
         $state[$deckKey] = array_merge($state[$deckKey], $allCards);
@@ -168,8 +179,10 @@ class WarEngine implements GameEngineInterface
 
         $state['lastAction'] = [
             'type' => 'WIN_ROUND',
-            'winner' => $winnerIndex === 0 ? 'PLAYER_1' : 'PLAYER_2',
+            'winner' => $winnerIndex,
+            'winnerName' => $winnerIndex === 0 ? 'PLAYER_1' : 'PLAYER_2',
             'cardsWon' => count($allCards),
+            'playedCards' => $playedCards,
             'timestamp' => now()->toISOString(),
         ];
 

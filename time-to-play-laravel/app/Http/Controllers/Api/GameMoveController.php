@@ -32,6 +32,12 @@ class GameMoveController extends Controller
         try {
             $user = $request->user();
 
+            \Log::info('Making move', [
+                'game_id' => $gameId,
+                'user_id' => $user->id,
+                'move_data' => $validated['move'],
+            ]);
+
             $newState = $this->gameService->makeMove(
                 $gameId,
                 $user->id,
@@ -43,6 +49,11 @@ class GameMoveController extends Controller
                 'state' => $newState,
             ]);
         } catch (\Exception $e) {
+            \Log::error('Move failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'message' => $e->getMessage(),
                 'error' => $e->getMessage(),
