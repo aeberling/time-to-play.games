@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\GameMoveController;
 Route::get('/games/types', [GameController::class, 'types']);
 
 // Protected routes (require authentication)
-Route::middleware('auth:sanctum')->group(function () {
+// Using 'auth' middleware for session-based authentication (Inertia SPA)
+Route::middleware('auth')->group(function () {
     // User endpoint
     Route::get('/user', function (Request $request) {
         return $request->user();
