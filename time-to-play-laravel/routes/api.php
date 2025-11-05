@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GamePlayerController;
 use App\Http\Controllers\Api\GameMoveController;
+use App\Http\Controllers\Api\GameTestController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UserThemeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,10 +26,16 @@ Route::get('/games/types', [GameController::class, 'types']);
 // Protected routes (require authentication)
 // Using 'auth' middleware for session-based authentication (Inertia SPA)
 Route::middleware('auth')->group(function () {
-    // User endpoint
+    // User endpoints
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::get('/users/online', [UserController::class, 'online']);
+    Route::post('/users/heartbeat', [UserController::class, 'heartbeat']);
+
+    // Theme endpoints
+    Route::get('/user/theme', [UserThemeController::class, 'show']);
+    Route::put('/user/theme', [UserThemeController::class, 'update']);
 
     // Game management
     Route::prefix('games')->group(function () {
@@ -49,5 +58,11 @@ Route::middleware('auth')->group(function () {
 
         // Game moves
         Route::post('/{gameId}/move', [GameMoveController::class, 'store']);
+
+        // Test/Debug endpoints (development only)
+        Route::prefix('/{gameId}/test')->group(function () {
+            Route::post('/setup-war', [GameTestController::class, 'setupWarScenario']);
+            Route::post('/set-state', [GameTestController::class, 'setGameState']);
+        });
     });
 });

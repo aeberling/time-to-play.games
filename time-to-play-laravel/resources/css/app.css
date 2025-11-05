@@ -1,3 +1,109 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Game Theme CSS Variables */
+:root {
+    /* Default theme values (Ocean Breeze) */
+    --game-bg: rgb(239, 246, 255);
+    --game-bg-secondary: rgb(219, 234, 254);
+    --game-card-bg: rgb(255, 255, 255);
+    --game-card-border: rgb(209, 213, 219);
+    --game-card-back: rgb(30, 64, 175);
+    --game-card-back-border: rgb(29, 78, 216);
+    --game-suit-red: rgb(220, 38, 38);
+    --game-suit-black: rgb(17, 24, 39);
+    --game-primary: rgb(59, 130, 246);
+    --game-primary-hover: rgb(37, 99, 235);
+    --game-success: rgb(34, 197, 94);
+    --game-success-hover: rgb(22, 163, 74);
+    --game-danger: rgb(239, 68, 68);
+    --game-danger-hover: rgb(220, 38, 38);
+    --game-text-primary: rgb(17, 24, 39);
+    --game-text-secondary: rgb(75, 85, 99);
+    --game-text-muted: rgb(156, 163, 175);
+    --game-highlight: rgb(96, 165, 250);
+    --game-winner: rgb(34, 197, 94);
+    --game-active: rgb(59, 130, 246);
+    --game-border: rgb(209, 213, 219);
+    --game-border-light: rgb(229, 231, 235);
+}
+
+/* Game Theme Utility Classes */
+@layer utilities {
+    /* Backgrounds */
+    .game-bg {
+        background-color: var(--game-bg);
+    }
+    .game-bg-secondary {
+        background-color: var(--game-bg-secondary);
+    }
+
+    /* Card Styles */
+    .game-card {
+        background-color: var(--game-card-bg);
+        border-color: var(--game-card-border);
+    }
+    .game-card-back {
+        background-color: var(--game-card-back);
+        border-color: var(--game-card-back-border);
+    }
+
+    /* Suit Colors */
+    .game-suit-red {
+        color: var(--game-suit-red);
+    }
+    .game-suit-black {
+        color: var(--game-suit-black);
+    }
+
+    /* Interactive Elements */
+    .game-btn-primary {
+        background-color: var(--game-primary);
+    }
+    .game-btn-primary:hover:not(:disabled) {
+        background-color: var(--game-primary-hover);
+    }
+    .game-btn-success {
+        background-color: var(--game-success);
+    }
+    .game-btn-success:hover:not(:disabled) {
+        background-color: var(--game-success-hover);
+    }
+    .game-btn-danger {
+        background-color: var(--game-danger);
+    }
+    .game-btn-danger:hover:not(:disabled) {
+        background-color: var(--game-danger-hover);
+    }
+
+    /* Text Colors */
+    .game-text-primary {
+        color: var(--game-text-primary);
+    }
+    .game-text-secondary {
+        color: var(--game-text-secondary);
+    }
+    .game-text-muted {
+        color: var(--game-text-muted);
+    }
+
+    /* State Colors */
+    .game-highlight {
+        color: var(--game-highlight);
+    }
+    .game-winner {
+        color: var(--game-winner);
+    }
+    .game-active {
+        color: var(--game-active);
+    }
+
+    /* Borders */
+    .game-border {
+        border-color: var(--game-border);
+    }
+    .game-border-light {
+        border-color: var(--game-border-light);
+    }
+}

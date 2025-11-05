@@ -26,7 +26,7 @@ class User extends Authenticatable
         'avatar_url',
         'is_guest',
         'guest_token',
-        'theme_preference',
+        'theme_id',
     ];
 
     /**
