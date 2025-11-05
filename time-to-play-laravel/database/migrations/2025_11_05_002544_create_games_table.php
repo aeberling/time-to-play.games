@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('is_private')->default(false);
             $table->json('timer_config')->nullable();
             $table->json('timer_state')->nullable();
+            $table->json('current_state')->nullable(); // Current game state during play
             $table->json('state_snapshot')->nullable(); // Final state after game ends
             $table->foreignId('winner_id')->nullable()->constrained('users');
             $table->timestamp('started_at')->nullable();
