@@ -28,6 +28,10 @@ export default function Lobby({ auth }: PageProps) {
     const [startingHandSize, setStartingHandSize] = useState(10);
     const [endingHandSize, setEndingHandSize] = useState(1);
 
+    // Swoop specific options
+    const [scoreLimit, setScoreLimit] = useState(300);
+    const [scoringMethod, setScoringMethod] = useState<'beginner' | 'normal'>('beginner');
+
     const gameStore = useGameStore();
     const hasFetchedOnce = useRef(false);
 
@@ -123,12 +127,17 @@ export default function Lobby({ auth }: PageProps) {
 
     const handleCreateGame = async () => {
         try {
-            // Build game options for Oh Hell
+            // Build game options based on game type
             let gameOptions = undefined;
             if (selectedGameType === 'OH_HELL') {
                 gameOptions = {
                     startingHandSize,
                     endingHandSize,
+                };
+            } else if (selectedGameType === 'SWOOP') {
+                gameOptions = {
+                    scoreLimit,
+                    scoringMethod,
                 };
             }
 
@@ -289,6 +298,94 @@ export default function Lobby({ auth }: PageProps) {
                                                 : startingHandSize > endingHandSize
                                                 ? `Descending (${startingHandSize} → ${endingHandSize})`
                                                 : `Fixed (${startingHandSize} cards all rounds)`}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Swoop Specific Options */}
+                            {selectedGameType === 'SWOOP' && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <h4 className="font-medium text-gray-900">Game Options</h4>
+
+                                    {/* Scoring Method */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Scoring Method
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setScoringMethod('beginner')}
+                                                className={`p-3 border-2 rounded-lg text-left transition-all ${
+                                                    scoringMethod === 'beginner'
+                                                        ? 'border-indigo-500 bg-indigo-50'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                            >
+                                                <div className="font-semibold text-sm">Beginner</div>
+                                                <div className="text-xs text-gray-600 mt-1">
+                                                    Numbers/Ace: 5 pts<br />
+                                                    Face cards: 10 pts<br />
+                                                    10s & Jokers: 50 pts
+                                                </div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setScoringMethod('normal')}
+                                                className={`p-3 border-2 rounded-lg text-left transition-all ${
+                                                    scoringMethod === 'normal'
+                                                        ? 'border-indigo-500 bg-indigo-50'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                            >
+                                                <div className="font-semibold text-sm">Normal</div>
+                                                <div className="text-xs text-gray-600 mt-1">
+                                                    Traditional scoring<br />
+                                                    (Face value & bonuses)
+                                                </div>
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            {scoringMethod === 'beginner'
+                                                ? 'Simplified scoring: Numbers (2-9) and Aces are 5 points, face cards (J, Q, K) are 10 points, 10s and Jokers are 50 points.'
+                                                : 'Traditional scoring: Numbers worth face value (2-9), Aces and face cards worth 10, 10s and Jokers worth 50.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Score Limit */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Score Limit: {scoreLimit} points
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={50}
+                                            max={500}
+                                            step={50}
+                                            value={scoreLimit}
+                                            onChange={(e) => setScoreLimit(parseInt(e.target.value))}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Game ends when a player reaches {scoreLimit} points. The player with the lowest score wins.
+                                        </p>
+                                    </div>
+
+                                    {/* Game Summary */}
+                                    <div className="p-3 bg-white rounded border border-gray-200">
+                                        <p className="text-sm text-gray-700">
+                                            <strong>Win Condition:</strong> Lowest score when any player reaches {scoreLimit} points
+                                        </p>
+                                        <p className="text-sm text-gray-700 mt-1">
+                                            <strong>Game Length:</strong>{' '}
+                                            {scoreLimit <= 100
+                                                ? 'Quick (1-3 rounds)'
+                                                : scoreLimit <= 250
+                                                ? 'Medium (3-5 rounds)'
+                                                : scoreLimit <= 400
+                                                ? 'Long (5-8 rounds)'
+                                                : 'Extended (8+ rounds)'}
                                         </p>
                                     </div>
                                 </div>

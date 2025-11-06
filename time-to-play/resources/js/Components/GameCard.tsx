@@ -28,9 +28,9 @@ export default function GameCard({
     if (typeof card === 'string' || faceDown || (card as any).hidden) {
         return (
             <div
-                className={`${small ? 'w-12 h-16' : 'w-24 h-32'} game-card-back rounded-lg border-2 flex items-center justify-center cursor-default ${className}`}
+                className={`${small ? 'w-16 h-24' : 'w-24 h-32'} game-card-back rounded-lg border-2 flex items-center justify-center cursor-default ${className}`}
             >
-                <div className={`text-white ${small ? 'text-xl' : 'text-3xl'} font-bold`}>?</div>
+                <div className={`text-white ${small ? 'text-2xl' : 'text-3xl'} font-bold`}>?</div>
             </div>
         );
     }
