@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/state', [GameController::class, 'state']);
         Route::get('/{id}/stats', [GameController::class, 'stats']);
         Route::post('/{id}/start', [GameController::class, 'start']);
+        Route::post('/{id}/continue', [GameController::class, 'continueToNextRound']);
 
         // Player actions
         Route::post('/{gameId}/join', [GamePlayerController::class, 'join']);

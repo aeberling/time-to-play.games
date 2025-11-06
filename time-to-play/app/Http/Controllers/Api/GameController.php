@@ -244,4 +244,25 @@ class GameController extends Controller
 
         return response()->json($stats);
     }
+
+    /**
+     * Continue to next round
+     *
+     * POST /api/games/{id}/continue
+     */
+    public function continueToNextRound(int $id): JsonResponse
+    {
+        try {
+            $state = $this->gameService->continueToNextRound($id);
+
+            return response()->json([
+                'message' => 'Next round started',
+                'state' => $state,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
 }

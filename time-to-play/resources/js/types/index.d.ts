@@ -143,12 +143,14 @@ export interface SwoopGameState {
     phase: 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
     round: number;
     scores: number[];
+    scoreLimit: number;
+    scoringMethod: 'beginner' | 'normal';
     lastAction: {
         type: string;
         playerIndex?: number;
         cards?: Card[];
     };
-    recentSwoop: boolean;
+    recentSwoop: string | null;
 }
 
 // Oh Hell Game State

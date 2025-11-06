@@ -16,6 +16,23 @@ use App\Games\ValueObjects\ValidationResult;
  */
 class SwoopEngine implements GameEngineInterface
 {
+    // Normal/Traditional scoring
+    private const NORMAL_CARD_POINTS = [
+        'A' => 10,
+        '2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, '8' => 8, '9' => 9,
+        'J' => 10, 'Q' => 10, 'K' => 10,
+        '10' => 50, // Special card
+    ];
+
+    // Beginner scoring - simplified
+    private const BEGINNER_CARD_POINTS = [
+        'A' => 5,
+        '2' => 5, '3' => 5, '4' => 5, '5' => 5, '6' => 5, '7' => 5, '8' => 5, '9' => 5,
+        'J' => 10, 'Q' => 10, 'K' => 10,
+        '10' => 50, // Special card (Jokers also worth 50)
+    ];
+
+    // Legacy CARD_POINTS for backward compatibility (used for card values in gameplay, not scoring)
     private const CARD_POINTS = [
         'A' => 1,
         '2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, '8' => 8, '9' => 9,
@@ -52,6 +69,12 @@ class SwoopEngine implements GameEngineInterface
         if ($playerCount < 3 || $playerCount > 8) {
             throw new \InvalidArgumentException('Swoop requires 3-8 players');
         }
+
+        // Get score limit from options (default 300)
+        $scoreLimit = $options['scoreLimit'] ?? 300;
+
+        // Get scoring method from options (default 'beginner')
+        $scoringMethod = $options['scoringMethod'] ?? 'beginner';
 
         // Determine number of decks based on player count
         $deckCount = $this->getDeckCount($playerCount);
@@ -96,8 +119,10 @@ class SwoopEngine implements GameEngineInterface
             'phase' => 'PLAYING',
             'round' => 1,
             'scores' => $scores,
+            'scoreLimit' => $scoreLimit,
+            'scoringMethod' => $scoringMethod,
             'lastAction' => null,
-            'recentSwoop' => false,
+            'recentSwoop' => null,
         ];
     }
 
@@ -151,10 +176,6 @@ class SwoopEngine implements GameEngineInterface
 
         $action = $move['action'] ?? null;
 
-        if ($action === 'SKIP') {
-            return ValidationResult::valid(); // Skipping is always valid
-        }
-
         if ($action === 'PICKUP') {
             if (empty($state['playPile'])) {
                 return ValidationResult::invalid('No pile to pick up');
@@ -172,18 +193,30 @@ class SwoopEngine implements GameEngineInterface
                 return ValidationResult::invalid('You do not have these cards');
             }
 
-            // All cards must be same rank
+            // All cards must be same rank (excluding wild cards: 10s and Jokers)
             $cards = array_map(fn($cardData) => Card::fromArray($cardData), $move['cards']);
-            $firstRank = $cards[0]->getRank();
-            foreach ($cards as $card) {
-                if ($card->getRank() !== $firstRank) {
-                    return ValidationResult::invalid('All cards must have the same rank');
+
+            // Filter out wild cards to get the base rank
+            $nonWildCards = array_filter($cards, fn($card) => !$this->isSpecialCard($card));
+
+            if (count($nonWildCards) > 0) {
+                // If there are non-wild cards, they must all have the same rank
+                $firstRank = array_values($nonWildCards)[0]->getRank();
+                foreach ($nonWildCards as $card) {
+                    if ($card->getRank() !== $firstRank) {
+                        return ValidationResult::invalid('All non-wild cards must have the same rank');
+                    }
                 }
             }
+            // If all cards are wild, that's valid (e.g., playing multiple 10s or Jokers)
 
             // Check if play is valid against pile
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
             if (!$isValidPlay['valid']) {
+                // Special case: if playing from mystery cards, this is valid but triggers auto-pickup
+                if ($move['fromMystery'] ?? false) {
+                    return ValidationResult::valid(); // Will be handled in applyMove
+                }
                 return ValidationResult::invalid($isValidPlay['error']);
             }
 
@@ -208,28 +241,36 @@ class SwoopEngine implements GameEngineInterface
     {
         $cardIds = array_map(fn($c) => $c['suit'] . '_' . $c['rank'], $move['cards']);
 
-        // Check hand
+        // Build a list of all available card IDs from the specified sources
+        $availableCards = [];
+
+        // Add cards from hand if specified
         if ($move['fromHand'] ?? false) {
             $hand = array_map(fn($c) => $c['suit'] . '_' . $c['rank'], $state['playerHands'][$playerIndex]);
-            foreach ($cardIds as $id) {
-                if (!in_array($id, $hand)) return false;
-            }
+            $availableCards = array_merge($availableCards, $hand);
         }
 
-        // Check face-up
-        if (!empty($move['fromFaceUp'])) {
-            $faceUp = $state['faceUpCards'][$playerIndex];
-            foreach ($move['fromFaceUp'] as $idx) {
-                if ($idx < 0 || $idx >= count($faceUp)) return false;
-            }
+        // Add cards from face-up if specified
+        if ($move['fromFaceUp'] ?? false) {
+            $faceUp = array_map(fn($c) => $c['suit'] . '_' . $c['rank'], $state['faceUpCards'][$playerIndex]);
+            $availableCards = array_merge($availableCards, $faceUp);
         }
 
-        // Check mystery
-        if (isset($move['fromMystery'])) {
-            $mystery = $state['mysteryCards'][$playerIndex];
-            if ($move['fromMystery'] < 0 || $move['fromMystery'] >= count($mystery)) {
+        // Add cards from mystery if specified
+        if ($move['fromMystery'] ?? false) {
+            $mystery = array_map(fn($c) => $c['suit'] . '_' . $c['rank'], $state['mysteryCards'][$playerIndex]);
+            $availableCards = array_merge($availableCards, $mystery);
+        }
+
+        // Check that all cards being played are available from the specified sources
+        foreach ($cardIds as $id) {
+            $key = array_search($id, $availableCards);
+            if ($key === false) {
                 return false;
             }
+            // Remove the card from available cards (to handle duplicate ranks)
+            unset($availableCards[$key]);
+            $availableCards = array_values($availableCards);
         }
 
         return true;
@@ -251,12 +292,24 @@ class SwoopEngine implements GameEngineInterface
         $topCard = Card::fromArray($pile[count($pile) - 1]);
 
         // Cannot play higher rank (unless it's a special card)
-        if ($cards[0]->getValue() > $topCard->getValue()) {
+        // Use Swoop-specific card values (A=1, not 14)
+        $playedValue = $this->getSwoopValue($cards[0]);
+        $topValue = $this->getSwoopValue($topCard);
+
+        if ($playedValue > $topValue) {
             return ['valid' => false, 'error' => 'Card is higher than pile top - you must pick up the pile'];
         }
 
         // Equal or lower is valid
         return ['valid' => true];
+    }
+
+    /**
+     * Get the Swoop-specific value for a card (A=1, not 14)
+     */
+    private function getSwoopValue(Card $card): int
+    {
+        return self::CARD_POINTS[$card->getRank()] ?? $card->getValue();
     }
 
     private function isSpecialCard(Card $card): bool
@@ -293,17 +346,6 @@ class SwoopEngine implements GameEngineInterface
     {
         $action = $move['action'];
 
-        if ($action === 'SKIP') {
-            $state['lastAction'] = [
-                'type' => 'SKIP',
-                'playerIndex' => $playerIndex,
-                'timestamp' => now()->toISOString(),
-            ];
-
-            $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
-            return $state;
-        }
-
         if ($action === 'PICKUP') {
             // Add pile to player's hand
             $state['playerHands'][$playerIndex] = array_merge(
@@ -324,13 +366,42 @@ class SwoopEngine implements GameEngineInterface
         }
 
         if ($action === 'PLAY') {
-            // Remove cards from player's areas
+            $cards = array_map(fn($cardData) => Card::fromArray($cardData), $move['cards']);
+
+            // Check if this is a mystery card that can't be played (auto-pickup case)
+            $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
+            $isFromMystery = $move['fromMystery'] ?? false;
+
+            if (!$isValidPlay['valid'] && $isFromMystery) {
+                // Mystery card can't be played - pick up pile + mystery card
+                $state = $this->removeCardsFromPlayer($state, $playerIndex, $move);
+
+                // Add pile AND the mystery card to player's hand
+                $state['playerHands'][$playerIndex] = array_merge(
+                    $state['playerHands'][$playerIndex],
+                    $state['playPile'],
+                    $move['cards'] // Add the revealed mystery card
+                );
+
+                $state['playPile'] = [];
+
+                $state['lastAction'] = [
+                    'type' => 'PICKUP',
+                    'playerIndex' => $playerIndex,
+                    'cardsPlayed' => 0,
+                    'timestamp' => now()->toISOString(),
+                ];
+
+                $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
+                return $state;
+            }
+
+            // Normal play - Remove cards from player's areas
             $state = $this->removeCardsFromPlayer($state, $playerIndex, $move);
 
             // Add cards to pile
             $state['playPile'] = array_merge($state['playPile'], $move['cards']);
 
-            $cards = array_map(fn($cardData) => Card::fromArray($cardData), $move['cards']);
             $isSwoopCard = $this->isSpecialCard($cards[0]);
 
             // Check for swoop
@@ -340,6 +411,7 @@ class SwoopEngine implements GameEngineInterface
                 'type' => $swoopTriggered ? 'SWOOP' : 'PLAY',
                 'playerIndex' => $playerIndex,
                 'swoopTriggered' => $swoopTriggered,
+                'cardsPlayed' => count($move['cards']),
                 'timestamp' => now()->toISOString(),
             ];
 
@@ -347,10 +419,9 @@ class SwoopEngine implements GameEngineInterface
                 // Remove pile from game
                 $state['removedCards'] = array_merge($state['removedCards'], $state['playPile']);
                 $state['playPile'] = [];
-                $state['recentSwoop'] = true;
+                $state['recentSwoop'] = now()->toISOString();
                 // Same player goes again - don't increment turn
             } else {
-                $state['recentSwoop'] = false;
                 // Next player's turn
                 $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
             }
@@ -372,25 +443,62 @@ class SwoopEngine implements GameEngineInterface
 
         // Remove from hand
         if ($move['fromHand'] ?? false) {
-            $state['playerHands'][$playerIndex] = array_filter(
-                $state['playerHands'][$playerIndex],
-                fn($c) => !in_array($c['suit'] . '_' . $c['rank'], $cardIds)
-            );
-            $state['playerHands'][$playerIndex] = array_values($state['playerHands'][$playerIndex]);
+            $remainingCards = [];
+            $cardsToRemove = $cardIds; // Make a copy to track what still needs removing
+
+            foreach ($state['playerHands'][$playerIndex] as $card) {
+                $cardId = $card['suit'] . '_' . $card['rank'];
+                $key = array_search($cardId, $cardsToRemove);
+                if ($key !== false) {
+                    // This card should be removed
+                    unset($cardsToRemove[$key]);
+                    $cardsToRemove = array_values($cardsToRemove);
+                } else {
+                    // Keep this card
+                    $remainingCards[] = $card;
+                }
+            }
+            $state['playerHands'][$playerIndex] = $remainingCards;
         }
 
         // Remove from face-up
-        if (!empty($move['fromFaceUp'])) {
-            $indices = $move['fromFaceUp'];
-            rsort($indices); // Remove from end first
-            foreach ($indices as $idx) {
-                array_splice($state['faceUpCards'][$playerIndex], $idx, 1);
+        if ($move['fromFaceUp'] ?? false) {
+            $remainingCards = [];
+            $cardsToRemove = $cardIds; // Make a copy to track what still needs removing
+
+            foreach ($state['faceUpCards'][$playerIndex] as $card) {
+                $cardId = $card['suit'] . '_' . $card['rank'];
+                $key = array_search($cardId, $cardsToRemove);
+                if ($key !== false) {
+                    // This card should be removed
+                    unset($cardsToRemove[$key]);
+                    $cardsToRemove = array_values($cardsToRemove);
+                } else {
+                    // Keep this card
+                    $remainingCards[] = $card;
+                }
             }
+            $state['faceUpCards'][$playerIndex] = $remainingCards;
         }
 
         // Remove from mystery
-        if (isset($move['fromMystery'])) {
-            array_splice($state['mysteryCards'][$playerIndex], $move['fromMystery'], 1);
+        if ($move['fromMystery'] ?? false) {
+            $remainingCards = [];
+            $cardsToRemove = $cardIds; // Make a copy to track what still needs removing
+
+            foreach ($state['mysteryCards'][$playerIndex] as $card) {
+                $cardId = $card['suit'] . '_' . $card['rank'];
+                $key = array_search($cardId, $cardsToRemove);
+                if ($key !== false) {
+                    // This card should be removed
+                    unset($cardsToRemove[$key]);
+                    $cardsToRemove = array_values($cardsToRemove);
+                } else {
+                    // Keep this card
+                    $remainingCards[] = $card;
+                }
+            }
+            $state['mysteryCards'][$playerIndex] = $remainingCards;
         }
 
         return $state;
@@ -400,13 +508,27 @@ class SwoopEngine implements GameEngineInterface
     {
         if (count($pile) < 4) return false;
 
-        // Check if top 4 cards are equal
+        // Check if top 4 cards are equal (treating wild cards as matching)
         $top4 = array_slice($pile, -4);
         $cards = array_map(fn($cardData) => Card::fromArray($cardData), $top4);
 
-        $firstRank = $cards[0]->getRank();
+        // Find the base rank (first non-wild card, or null if all wild)
+        $baseRank = null;
         foreach ($cards as $card) {
-            if ($card->getRank() !== $firstRank) {
+            if (!$this->isSpecialCard($card)) {
+                $baseRank = $card->getRank();
+                break;
+            }
+        }
+
+        // If all cards are wild (all 10s/Jokers), that counts as a swoop
+        if ($baseRank === null) {
+            return true;
+        }
+
+        // Check if all non-wild cards match the base rank
+        foreach ($cards as $card) {
+            if (!$this->isSpecialCard($card) && $card->getRank() !== $baseRank) {
                 return false;
             }
         }
@@ -423,28 +545,38 @@ class SwoopEngine implements GameEngineInterface
 
     private function endRound(array $state, int $winnerIndex): array
     {
-        // Calculate scores for all other players
-        for ($i = 0; $i < $state['playerCount']; $i++) {
-            if ($i === $winnerIndex) continue;
+        // Calculate scores for all players and track their remaining cards
+        $roundResults = [];
+        $scoringMethod = $state['scoringMethod'] ?? 'beginner';
 
+        for ($i = 0; $i < $state['playerCount']; $i++) {
             $allCards = array_merge(
                 $state['playerHands'][$i],
                 $state['faceUpCards'][$i],
                 $state['mysteryCards'][$i]
             );
 
-            $points = $this->calculatePoints($allCards);
+            $points = $i === $winnerIndex ? 0 : $this->calculatePoints($allCards, $scoringMethod);
             $state['scores'][$i] += $points;
+
+            $roundResults[] = [
+                'playerIndex' => $i,
+                'remainingCards' => $allCards,
+                'pointsThisRound' => $points,
+                'totalScore' => $state['scores'][$i],
+            ];
         }
 
-        // Check if game is over (someone reached 500+)
+        // Check if game is over (someone reached the score limit)
+        $scoreLimit = $state['scoreLimit'] ?? 300;
         $maxScore = max($state['scores']);
-        if ($maxScore >= 500) {
+        if ($maxScore >= $scoreLimit) {
             $state['phase'] = 'GAME_OVER';
         } else {
             $state['phase'] = 'ROUND_OVER';
         }
 
+        $state['roundResults'] = $roundResults;
         $state['lastAction'] = [
             'type' => 'ROUND_END',
             'playerIndex' => $winnerIndex,
@@ -454,13 +586,83 @@ class SwoopEngine implements GameEngineInterface
         return $state;
     }
 
-    private function calculatePoints(array $cardDataArray): int
+    /**
+     * Start the next round after round ends
+     */
+    public function startNextRound(array $state): array
     {
+        if ($state['phase'] !== 'ROUND_OVER') {
+            throw new \RuntimeException('Can only start next round when phase is ROUND_OVER');
+        }
+
+        // Increment round number
+        $state['round']++;
+
+        // Determine number of decks based on player count
+        $deckCount = $this->getDeckCount($state['playerCount']);
+
+        // Create and shuffle new decks
+        $deck = $this->createDecks($deckCount)->shuffle();
+
+        // Deal 19 cards to each player
+        $playerHands = [];
+        $faceUpCards = [];
+        $mysteryCards = [];
+
+        for ($i = 0; $i < $state['playerCount']; $i++) {
+            $playerCards = $deck->deal(19);
+            $deck = $playerCards['remaining'];
+
+            $cards = Deck::fromArray($playerCards['dealt']->toArray());
+
+            // 4 mystery cards (face down)
+            $mystery = $cards->deal(4);
+            $mysteryCards[] = $mystery['dealt']->toArray();
+
+            // 4 face-up cards
+            $remaining = $mystery['remaining'];
+            $faceUp = $remaining->deal(4);
+            $faceUpCards[] = $faceUp['dealt']->toArray();
+
+            // 11 hand cards
+            $playerHands[] = $faceUp['remaining']->toArray();
+        }
+
+        // Reset game state for new round
+        $state['playerHands'] = $playerHands;
+        $state['faceUpCards'] = $faceUpCards;
+        $state['mysteryCards'] = $mysteryCards;
+        $state['playPile'] = [];
+        $state['removedCards'] = [];
+        $state['currentPlayerIndex'] = 0;
+        $state['phase'] = 'PLAYING';
+        $state['lastAction'] = [
+            'type' => 'ROUND_START',
+            'playerIndex' => null,
+            'timestamp' => now()->toISOString(),
+        ];
+        $state['recentSwoop'] = null;
+        $state['roundResults'] = null; // Clear previous round results
+
+        return $state;
+    }
+
+    private function calculatePoints(array $cardDataArray, string $scoringMethod = 'beginner'): int
+    {
+        $pointsTable = $scoringMethod === 'normal'
+            ? self::NORMAL_CARD_POINTS
+            : self::BEGINNER_CARD_POINTS;
+
         $total = 0;
         foreach ($cardDataArray as $cardData) {
             $card = Card::fromArray($cardData);
             $rank = $card->getRank();
-            $total += self::CARD_POINTS[$rank] ?? 0;
+            // Handle Jokers (value 0)
+            if ($card->getValue() === 0) {
+                $total += 50; // Jokers always worth 50
+            } else {
+                $total += $pointsTable[$rank] ?? 0;
+            }
         }
         return $total;
     }

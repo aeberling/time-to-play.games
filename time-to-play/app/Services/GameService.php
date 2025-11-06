@@ -318,4 +318,42 @@ class GameService
             ->where('user_id', $userId)
             ->update(['is_connected' => $connected]);
     }
+
+    /**
+     * Continue to the next round
+     */
+    public function continueToNextRound(int $gameId): array
+    {
+        return DB::transaction(function () use ($gameId) {
+            $game = Game::lockForUpdate()->findOrFail($gameId);
+
+            if ($game->status !== 'IN_PROGRESS') {
+                throw new \Exception('Game is not in progress');
+            }
+
+            // Get game engine
+            $engine = $this->registry->get($game->game_type);
+
+            // Deserialize current state
+            $currentState = $engine->deserializeState($game->current_state);
+
+            // Check if we can start next round (must be in ROUND_OVER phase)
+            if (($currentState['phase'] ?? null) !== 'ROUND_OVER') {
+                throw new \Exception('Cannot start next round - current round is not over');
+            }
+
+            // Start next round using the engine
+            $newState = $engine->startNextRound($currentState);
+
+            // Update game state
+            $game->update([
+                'current_state' => $engine->serializeState($newState),
+            ]);
+
+            // Broadcast new state to all players
+            broadcast(new GameStateUpdated($gameId, $newState));
+
+            return $newState;
+        });
+    }
 }
