@@ -213,8 +213,8 @@ class SwoopEngine implements GameEngineInterface
             // Check if play is valid against pile
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
             if (!$isValidPlay['valid']) {
-                // Special case: if playing from mystery cards, this is valid but triggers auto-pickup
-                if ($move['fromMystery'] ?? false) {
+                // Special case: if playing from mystery or face-up cards, this is valid but triggers auto-pickup
+                if ($move['fromMystery'] ?? false || $move['fromFaceUp'] ?? false) {
                     return ValidationResult::valid(); // Will be handled in applyMove
                 }
                 return ValidationResult::invalid($isValidPlay['error']);
@@ -368,19 +368,20 @@ class SwoopEngine implements GameEngineInterface
         if ($action === 'PLAY') {
             $cards = array_map(fn($cardData) => Card::fromArray($cardData), $move['cards']);
 
-            // Check if this is a mystery card that can't be played (auto-pickup case)
+            // Check if this is a card that can't be played (auto-pickup case)
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
             $isFromMystery = $move['fromMystery'] ?? false;
+            $isFromFaceUp = $move['fromFaceUp'] ?? false;
 
-            if (!$isValidPlay['valid'] && $isFromMystery) {
-                // Mystery card can't be played - pick up pile + mystery card
+            if (!$isValidPlay['valid'] && ($isFromMystery || $isFromFaceUp)) {
+                // Card can't be played - pick up pile + the played card(s)
                 $state = $this->removeCardsFromPlayer($state, $playerIndex, $move);
 
-                // Add pile AND the mystery card to player's hand
+                // Add pile AND the played card(s) to player's hand
                 $state['playerHands'][$playerIndex] = array_merge(
                     $state['playerHands'][$playerIndex],
                     $state['playPile'],
-                    $move['cards'] // Add the revealed mystery card
+                    $move['cards'] // Add the revealed card(s)
                 );
 
                 $state['playPile'] = [];
@@ -388,7 +389,7 @@ class SwoopEngine implements GameEngineInterface
                 $state['lastAction'] = [
                     'type' => 'PICKUP',
                     'playerIndex' => $playerIndex,
-                    'cardsPlayed' => 0,
+                    'cardsPlayed' => count($move['cards']), // Track how many cards were attempted
                     'timestamp' => now()->toISOString(),
                 ];
 
