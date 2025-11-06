@@ -13,6 +13,14 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * The number of minutes the remember me cookie should be valid for.
+     * Set to 5 years (2628000 minutes) for persistent login.
+     *
+     * @var int
+     */
+    protected $rememberTokenLifetime = 2628000;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
