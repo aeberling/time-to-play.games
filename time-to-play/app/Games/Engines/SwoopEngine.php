@@ -213,9 +213,13 @@ class SwoopEngine implements GameEngineInterface
             // Check if play is valid against pile
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
             if (!$isValidPlay['valid']) {
-                // Special case: if playing from mystery or face-up cards, this is valid but triggers auto-pickup
-                if ($move['fromMystery'] ?? false || $move['fromFaceUp'] ?? false) {
-                    return ValidationResult::valid(); // Will be handled in applyMove
+                // Special case: if playing from mystery or face-up cards, allow the play
+                // The card(s) will be played and then auto-pickup will trigger in applyMove
+                $fromMystery = $move['fromMystery'] ?? false;
+                $fromFaceUp = $move['fromFaceUp'] ?? false;
+
+                if ($fromMystery || $fromFaceUp) {
+                    return ValidationResult::valid(); // Will trigger auto-pickup in applyMove
                 }
                 return ValidationResult::invalid($isValidPlay['error']);
             }
@@ -374,22 +378,23 @@ class SwoopEngine implements GameEngineInterface
             $isFromFaceUp = $move['fromFaceUp'] ?? false;
 
             if (!$isValidPlay['valid'] && ($isFromMystery || $isFromFaceUp)) {
-                // Card can't be played - pick up pile + the played card(s)
+                // Card is higher than pile - remove it from player's area and add to hand with pile
                 $state = $this->removeCardsFromPlayer($state, $playerIndex, $move);
 
-                // Add pile AND the played card(s) to player's hand
+                // Add the current pile AND the played card(s) to player's hand
+                // This allows the player to get face-up/mystery cards into their hand
                 $state['playerHands'][$playerIndex] = array_merge(
                     $state['playerHands'][$playerIndex],
                     $state['playPile'],
-                    $move['cards'] // Add the revealed card(s)
+                    $move['cards'] // Add the revealed card(s) to hand
                 );
 
                 $state['playPile'] = [];
 
                 $state['lastAction'] = [
-                    'type' => 'PICKUP',
+                    'type' => 'AUTO_PICKUP',
                     'playerIndex' => $playerIndex,
-                    'cardsPlayed' => count($move['cards']), // Track how many cards were attempted
+                    'cardsRevealed' => count($move['cards']),
                     'timestamp' => now()->toISOString(),
                 ];
 

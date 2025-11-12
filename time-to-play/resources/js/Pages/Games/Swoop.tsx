@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { PageProps, SwoopGameState, Card } from '@/types';
+import type { PageProps, SwoopGameState, Card } from '@/types/index';
 import { useGameStore } from '@/store';
 import { useTheme } from '@/contexts/ThemeContext';
 import GameCard from '@/Components/GameCard';
@@ -127,6 +127,112 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
             console.error('Failed to continue to next round:', err);
             alert(err instanceof Error ? err.message : 'Failed to continue to next round');
         }
+    };
+
+    const handleCopyGameState = () => {
+        if (!swoopState || playerIndex === null) {
+            alert('Game state not available');
+            return;
+        }
+
+        // Format card array for display
+        const formatCards = (cards: Card[]) => {
+            if (cards.length === 0) return 'None';
+            return cards.map(c => `${c.rank}${c.suit.charAt(0).toUpperCase()}`).join(', ');
+        };
+
+        // Build game state text
+        let stateText = '=== SWOOP GAME STATE ===\n\n';
+
+        // Game info
+        stateText += `Round: ${swoopState.round}\n`;
+        stateText += `Phase: ${swoopState.phase}\n`;
+        stateText += `Score Limit: ${swoopState.scoreLimit}\n`;
+        stateText += `Scoring Method: ${swoopState.scoringMethod}\n\n`;
+
+        // Current turn
+        const currentPlayer = swoopState.players[swoopState.currentPlayerIndex];
+        stateText += `Current Turn: ${currentPlayer.name} (Player ${swoopState.currentPlayerIndex + 1})\n\n`;
+
+        // Play pile
+        stateText += `Play Pile (${swoopState.playPile.length} cards):\n`;
+        if (swoopState.playPile.length > 0) {
+            const lastAction = swoopState.lastAction?.cardsPlayed || 1;
+            const recentCards = swoopState.playPile.slice(-lastAction);
+            const olderCards = swoopState.playPile.slice(0, -lastAction);
+
+            stateText += `  Recent: ${formatCards(recentCards as Card[])}\n`;
+            if (olderCards.length > 0) {
+                stateText += `  Older: ${formatCards(olderCards as Card[])}\n`;
+            }
+        } else {
+            stateText += '  Empty\n';
+        }
+        stateText += '\n';
+
+        // All players
+        stateText += '=== PLAYERS ===\n\n';
+        swoopState.players.forEach((player, idx) => {
+            const isMe = idx === playerIndex;
+            const isActive = idx === swoopState.currentPlayerIndex;
+
+            stateText += `Player ${idx + 1}: ${player.name}${isMe ? ' (ME)' : ''}${isActive ? ' [ACTIVE]' : ''}\n`;
+            stateText += `  Score: ${swoopState.scores[idx]} pts\n`;
+            stateText += `  Hand: ${swoopState.playerHands[idx].length} cards`;
+
+            if (isMe) {
+                const myHandCards = swoopState.playerHands[idx] as Card[];
+                stateText += ` - ${formatCards(sortCards(myHandCards))}`;
+            }
+            stateText += '\n';
+
+            stateText += `  Face-up: ${swoopState.faceUpCards[idx].length} cards`;
+            if (isMe && swoopState.faceUpCards[idx].length > 0) {
+                const myFaceUpCards = swoopState.faceUpCards[idx] as Card[];
+                stateText += ` - ${formatCards(myFaceUpCards)}`;
+            }
+            stateText += '\n';
+
+            stateText += `  Mystery: ${swoopState.mysteryCards[idx].length} cards\n`;
+            stateText += '\n';
+        });
+
+        // Last action
+        if (swoopState.lastAction) {
+            stateText += '=== LAST ACTION ===\n';
+            stateText += `Type: ${swoopState.lastAction.type}\n`;
+            if (swoopState.lastAction.playerIndex !== null && swoopState.lastAction.playerIndex !== undefined) {
+                stateText += `Player: ${swoopState.players[swoopState.lastAction.playerIndex].name}\n`;
+            }
+            if (swoopState.lastAction.cardsPlayed) {
+                stateText += `Cards Played: ${swoopState.lastAction.cardsPlayed}\n`;
+            }
+            if (swoopState.lastAction.swoopTriggered) {
+                stateText += `Swoop Triggered: Yes\n`;
+            }
+            stateText += '\n';
+        }
+
+        // Round results if available
+        if (swoopState.roundResults) {
+            stateText += '=== ROUND RESULTS ===\n\n';
+            swoopState.roundResults.forEach((result: any) => {
+                const player = swoopState.players[result.playerIndex];
+                stateText += `${player.name}: +${result.pointsThisRound} pts (Total: ${result.totalScore})\n`;
+                if (result.remainingCards.length > 0) {
+                    const remainingCards = result.remainingCards as Card[];
+                    stateText += `  Remaining: ${formatCards(remainingCards)}\n`;
+                }
+            });
+        }
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(stateText).then(() => {
+            alert('Game state copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy to clipboard:', err);
+            alert('Failed to copy to clipboard. See console for details.');
+        });
     };
 
     const handleCardSelect = (source: 'hand' | 'faceup' | 'mystery', index: number) => {
@@ -367,6 +473,12 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 Cancel Game
                             </button>
                         )}
+                        <button
+                            onClick={handleCopyGameState}
+                            className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                        >
+                            Copy Game State
+                        </button>
                         <button
                             onClick={handleLeaveGame}
                             className="text-sm text-red-600 hover:text-red-800 font-medium"
