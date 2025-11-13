@@ -126,6 +126,6 @@
     }
 
     .animate-swoop {
-        animation: swoop 2s ease-in-out forwards;
+        animation: swoop 3s ease-in-out forwards;
     }
 }
