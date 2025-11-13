@@ -137,7 +137,7 @@ export interface SwoopGameState {
     playerHands: Card[][];
     faceUpCards: Card[][];
     mysteryCards: Card[][];
-    playPile: Card[];
+    playPile: Array<{cards: Card[], rank: string}>;
     removedCards: Card[];
     currentPlayerIndex: number;
     phase: 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
@@ -145,12 +145,21 @@ export interface SwoopGameState {
     scores: number[];
     scoreLimit: number;
     scoringMethod: 'beginner' | 'normal';
+    playersReadyToContinue: boolean[];
     lastAction: {
         type: string;
         playerIndex?: number;
         cards?: Card[];
+        cardsPlayed?: number;
+        swoopTriggered?: boolean;
     };
     recentSwoop: string | null;
+    roundResults?: Array<{
+        playerIndex: number;
+        remainingCards: Card[];
+        pointsThisRound: number;
+        totalScore: number;
+    }>;
 }
 
 // Oh Hell Game State
