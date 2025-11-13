@@ -141,11 +141,19 @@ export default function Lobby({ auth }: PageProps) {
                 };
             }
 
-            await gameStore.createGame(selectedGameType, maxPlayers, gameOptions);
-            // Navigate to the game page
-            if (gameStore.currentGame) {
-                router.visit(`/games/${gameStore.currentGame.id}`);
-            }
+            const response = await window.axios.post('/api/games', {
+                game_type: selectedGameType,
+                max_players: maxPlayers,
+                game_options: gameOptions,
+            });
+
+            const game = response.data.game;
+
+            // Update the store
+            gameStore.setCurrentGame(game);
+
+            // Navigate to the game page immediately
+            router.visit(`/games/${game.id}`);
         } catch (err: any) {
             console.error('Failed to create game:', err);
             setError(err.response?.data?.message || 'Failed to create game');
@@ -158,6 +166,22 @@ export default function Lobby({ auth }: PageProps) {
             router.visit(`/games/${gameId}`);
         } catch (err: any) {
             console.error('Failed to join game:', err);
+        }
+    };
+
+    const handleArchiveGame = async (gameId: number) => {
+        if (!confirm('Are you sure you want to end this game? This action cannot be undone and the game will be moved to the archive.')) {
+            return;
+        }
+
+        try {
+            await window.axios.post(`/api/games/${gameId}/archive`);
+            // Refresh the games list to remove the archived game
+            fetchMyGames();
+            setError(null);
+        } catch (err: any) {
+            console.error('Failed to archive game:', err);
+            setError(err.response?.data?.message || 'Failed to archive game');
         }
     };
 
@@ -427,6 +451,10 @@ export default function Lobby({ auth }: PageProps) {
                                         const gameTypeInfo = gameTypes.find(
                                             (gt) => gt.type === game.game_type
                                         );
+                                        // Check if current user is the creator (player_index 0)
+                                        const isCreator = game.game_players.some(
+                                            (p) => p.player_index === 0 && p.user_id === auth.user.id
+                                        );
 
                                         return (
                                             <div
@@ -452,6 +480,11 @@ export default function Lobby({ auth }: PageProps) {
                                                             >
                                                                 {game.status}
                                                             </span>
+                                                            {isCreator && (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800">
+                                                                    Host
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
                                                             <span>
@@ -478,12 +511,23 @@ export default function Lobby({ auth }: PageProps) {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => router.visit(`/games/${game.id}`)}
-                                                        className="px-4 py-2 rounded-md font-medium bg-indigo-600 text-white hover:bg-indigo-700"
-                                                    >
-                                                        {game.status === 'IN_PROGRESS' ? 'Resume Game' : 'View Game'}
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => router.visit(`/games/${game.id}`)}
+                                                            className="px-4 py-2 rounded-md font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                                                        >
+                                                            {game.status === 'IN_PROGRESS' ? 'Resume Game' : 'View Game'}
+                                                        </button>
+                                                        {isCreator && (
+                                                            <button
+                                                                onClick={() => handleArchiveGame(game.id)}
+                                                                className="px-4 py-2 rounded-md font-medium bg-red-600 text-white hover:bg-red-700"
+                                                                title="End and archive this game"
+                                                            >
+                                                                End Game
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

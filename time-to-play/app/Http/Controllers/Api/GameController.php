@@ -67,6 +67,11 @@ class GameController extends Controller
             $query->whereNotIn('status', ['COMPLETED', 'ABANDONED']);
         }
 
+        // Exclude archived games by default (unless specifically requesting archived games)
+        if (!$request->boolean('include_archived')) {
+            $query->where('is_archived', false);
+        }
+
         $games = $query->paginate(20);
 
         return response()->json($games);
@@ -89,6 +94,8 @@ class GameController extends Controller
             'game_options.startingHandSize' => 'nullable|integer|min:1|max:13',
             'game_options.endingHandSize' => 'nullable|integer|min:1|max:13',
             'game_options.scoringVariant' => 'nullable|string|in:standard,partial',
+            'game_options.scoreLimit' => 'nullable|integer|min:100|max:1000',
+            'game_options.scoringMethod' => 'nullable|string|in:beginner,normal',
         ]);
 
         $user = $request->user();
@@ -264,5 +271,43 @@ class GameController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    /**
+     * Archive a game (end game early)
+     *
+     * POST /api/games/{id}/archive
+     */
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        $game = Game::with('gamePlayers')->findOrFail($id);
+        $user = $request->user();
+
+        // Check if user is the creator (player_index 0)
+        $creator = $game->gamePlayers()->where('player_index', 0)->first();
+
+        if (!$creator || $creator->user_id !== $user->id) {
+            return response()->json([
+                'message' => 'Only the game creator can end the game',
+            ], 403);
+        }
+
+        // Don't allow archiving already archived or completed games
+        if ($game->is_archived) {
+            return response()->json([
+                'message' => 'Game is already archived',
+            ], 400);
+        }
+
+        // Archive the game
+        $game->update([
+            'is_archived' => true,
+            'archived_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Game archived successfully',
+            'game' => $game,
+        ]);
     }
 }
