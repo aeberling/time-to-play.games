@@ -39,8 +39,14 @@ class GameServiceProvider extends ServiceProvider
 
         // Register all game engines
         // To add a new game, just add one line here!
-        $registry->register(new WarEngine());
-        $registry->register(new SwoopEngine());
-        $registry->register(new OhHellEngine());
+        if (!$registry->has('WAR')) {
+            $registry->register(new WarEngine());
+        }
+        if (!$registry->has('SWOOP')) {
+            $registry->register(new SwoopEngine());
+        }
+        if (!$registry->has('OH_HELL')) {
+            $registry->register(new OhHellEngine());
+        }
     }
 }
