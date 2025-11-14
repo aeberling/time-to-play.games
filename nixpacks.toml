@@ -4,7 +4,7 @@ nixPkgs = ["...", "postgresql"]
 [phases.install]
 cmds = [
     "composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist",
-    "npm ci"
+    "npm ci --include=dev"
 ]
 
 [phases.build]
