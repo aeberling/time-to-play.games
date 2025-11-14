@@ -127,6 +127,11 @@ export interface WarGameState {
         playerIndex?: number;
         cards?: Card[];
         winner?: number;
+        timestamp?: number;
+        playedCards?: {
+            player1: Card[];
+            player2: Card[];
+        };
     };
 }
 

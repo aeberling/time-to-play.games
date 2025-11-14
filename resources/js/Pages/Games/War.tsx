@@ -39,7 +39,7 @@ export default function War({ auth, gameId }: WarProps) {
     const [roundWinner, setRoundWinner] = useState<number | null>(null);
     const [showingResult, setShowingResult] = useState(false);
     const [animationCards, setAnimationCards] = useState<{player1: Card[], player2: Card[]} | null>(null);
-    const [lastShownTimestamp, setLastShownTimestamp] = useState<string | null>(null);
+    const [lastShownTimestamp, setLastShownTimestamp] = useState<number | null>(null);
 
     // Fetch game state and subscribe to updates on mount
     useEffect(() => {
