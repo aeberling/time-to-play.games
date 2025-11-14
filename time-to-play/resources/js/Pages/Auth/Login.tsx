@@ -102,6 +102,15 @@ export default function Login({
                     </PrimaryButton>
                 </div>
             </form>
+
+            <div className="mt-6 text-center">
+                <Link
+                    href={route('login.secret-phrase')}
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                    Or... Speak Friend and Enter
+                </Link>
+            </div>
         </GuestLayout>
     );
 }

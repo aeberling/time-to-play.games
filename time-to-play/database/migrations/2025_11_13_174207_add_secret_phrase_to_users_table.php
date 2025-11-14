@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('games', function (Blueprint $table) {
-            if (!Schema::hasColumn('games', 'current_state')) {
-                $table->json('current_state')->nullable()->after('timer_state');
-            }
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('secret_phrase')->nullable()->after('password');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('games', function (Blueprint $table) {
-            $table->dropColumn('current_state');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('secret_phrase');
         });
     }
 };
