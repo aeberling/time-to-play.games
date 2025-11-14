@@ -11,16 +11,8 @@ cmds = [
 cmds = [
     "npm run build",
     "mkdir -p storage/app storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache",
-    "chmod -R 775 storage bootstrap/cache",
-    "php artisan config:cache",
-    "php artisan route:cache",
-    "php artisan view:cache"
+    "chmod -R 775 storage bootstrap/cache"
 ]
 
 [start]
 cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
-
-[variables]
-APP_ENV = "production"
-APP_DEBUG = "false"
-NODE_ENV = "production"
