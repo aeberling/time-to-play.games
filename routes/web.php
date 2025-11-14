@@ -19,7 +19,7 @@ Route::get('/debug-env', function () {
         'APP_ENV' => env('APP_ENV'),
         'APP_KEY' => env('APP_KEY') ? 'SET' : 'NOT SET',
     ]);
-})->withoutMiddleware();
+})->middleware([]);
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
