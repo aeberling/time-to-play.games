@@ -5,6 +5,21 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Temporary debug route
+Route::get('/debug-db', function () {
+    return response()->json([
+        'DB_HOST' => config('database.connections.pgsql.host'),
+        'DB_PORT' => config('database.connections.pgsql.port'),
+        'DB_DATABASE' => config('database.connections.pgsql.database'),
+        'DB_USERNAME' => config('database.connections.pgsql.username'),
+        'DB_PASSWORD' => config('database.connections.pgsql.password') ? 'SET' : 'NOT SET',
+        'PGSSLMODE' => env('PGSSLMODE'),
+        'PGSSLROOTCERT' => env('PGSSLROOTCERT'),
+        'APP_DEBUG' => config('app.debug'),
+        'APP_ENV' => config('app.env'),
+    ]);
+});
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
