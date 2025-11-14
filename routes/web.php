@@ -5,20 +5,21 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Temporary debug route
-Route::get('/debug-db', function () {
+// Temporary debug route - no middleware to avoid database calls
+Route::get('/debug-env', function () {
     return response()->json([
-        'DB_HOST' => config('database.connections.pgsql.host'),
-        'DB_PORT' => config('database.connections.pgsql.port'),
-        'DB_DATABASE' => config('database.connections.pgsql.database'),
-        'DB_USERNAME' => config('database.connections.pgsql.username'),
-        'DB_PASSWORD' => config('database.connections.pgsql.password') ? 'SET' : 'NOT SET',
+        'DB_HOST' => env('DB_HOST'),
+        'DB_PORT' => env('DB_PORT'),
+        'DB_DATABASE' => env('DB_DATABASE'),
+        'DB_USERNAME' => env('DB_USERNAME'),
+        'DB_PASSWORD' => env('DB_PASSWORD') ? 'SET (' . strlen(env('DB_PASSWORD')) . ' chars)' : 'NOT SET',
         'PGSSLMODE' => env('PGSSLMODE'),
         'PGSSLROOTCERT' => env('PGSSLROOTCERT'),
-        'APP_DEBUG' => config('app.debug'),
-        'APP_ENV' => config('app.env'),
+        'APP_DEBUG' => env('APP_DEBUG'),
+        'APP_ENV' => env('APP_ENV'),
+        'APP_KEY' => env('APP_KEY') ? 'SET' : 'NOT SET',
     ]);
-});
+})->withoutMiddleware();
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
