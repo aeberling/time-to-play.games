@@ -30,44 +30,55 @@ Kinsta should auto-detect the Laravel application and use Nixpacks. If not, conf
 
 ### 3. Environment Variables
 
-Copy all variables from `.env.production` to Kinsta's Environment Variables section:
+Copy all variables from your local `.env.production` file to Kinsta's Environment Variables section.
 
 **Required Variables:**
 ```
 APP_NAME=Time to Play
 APP_ENV=production
-APP_KEY=base64:ljjh/qz6II7rwkoLP4u0zxRklgiAF+zLB/qjAHFshW0=
+APP_KEY=[Your generated application key]
 APP_DEBUG=false
 APP_URL=https://time-to-play.games
 
 DB_CONNECTION=pgsql
-DB_HOST=db.nugnekxpwsvyoxajodmu.supabase.co
+DB_HOST=[Your Supabase database host]
 DB_PORT=5432
 DB_DATABASE=postgres
 DB_USERNAME=postgres
-DB_PASSWORD=X!gjQII^g8K9LT%u
+DB_PASSWORD=[Your Supabase database password]
 PGSSLMODE=require
 PGSSLROOTCERT=storage/app/prod-ca-2021.crt
 
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.postmarkapp.com
 MAIL_PORT=587
-MAIL_USERNAME=fa52582c-00fc-4e1d-aa77-7cb9e49d60ed
-MAIL_PASSWORD=fa52582c-00fc-4e1d-aa77-7cb9e49d60ed
-MAIL_FROM_ADDRESS=hello@time-to-play.games
+MAIL_USERNAME=[Your Postmark server token]
+MAIL_PASSWORD=[Your Postmark server token]
+MAIL_FROM_ADDRESS=[Your verified sender email]
 
-REVERB_APP_ID=577160
-REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
-REVERB_APP_SECRET=010d238607af751bab87b263
+REVERB_APP_ID=[Your Reverb app ID]
+REVERB_APP_KEY=[Your Reverb app key]
+REVERB_APP_SECRET=[Your Reverb app secret]
 REVERB_HOST=time-to-play.games
 REVERB_PORT=443
 REVERB_SCHEME=https
 
-VITE_REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
+VITE_REVERB_APP_KEY=[Your Reverb app key - same as above]
 VITE_REVERB_HOST=time-to-play.games
 VITE_REVERB_PORT=443
 VITE_REVERB_SCHEME=https
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+BROADCAST_CONNECTION=reverb
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+LOG_CHANNEL=stack
+LOG_LEVEL=error
 ```
+
+**Important:** Use the actual values from your local `.env.production` file. Never commit `.env.production` to git.
 
 ### 4. SSL Certificate Upload
 
