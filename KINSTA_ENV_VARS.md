@@ -5,8 +5,8 @@ Set these environment variables in your Kinsta Application dashboard:
 ## Database (Kinsta PostgreSQL)
 ```
 DB_CONNECTION=pgsql
-DB_HOST=time-to-play-games-q1724-postgresql.time-to-play-games-q1724.svc.cluster.local
-DB_PORT=5432
+DB_HOST=us-west1-001.proxy.kinsta.app
+DB_PORT=30085
 DB_DATABASE=time-to-play-games
 DB_USERNAME=time2play
 DB_PASSWORD=gY9-kD2=pG7+wY7=vS9=
@@ -55,7 +55,7 @@ LOG_LEVEL=error
 ```
 
 ## Notes
-- Database uses internal Kinsta hostname (works within Kinsta cluster)
+- Database uses public proxy URL (required when app and database are in different data centers)
 - No SSL certificate needed for Kinsta PostgreSQL
 - Migrations already run on database
 - Set APP_DEBUG=false for production (use true temporarily for debugging)
