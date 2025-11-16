@@ -74,19 +74,31 @@ git push
 ### Step 3: Deploy to Kinsta
 Trigger a redeploy in Kinsta dashboard.
 
-### Step 4: Configure TCP Proxy (CRITICAL!)
-After deployment, you MUST configure the TCP proxy for Reverb to be publicly accessible:
+### Step 4: Create Background Worker for Reverb (CRITICAL!)
+After deployment, you MUST manually create a background worker process for Reverb:
 
 1. Go to your Kinsta Application dashboard
-2. Navigate to **Settings** → **Networking**
-3. Click **"Add TCP proxy"**
-4. Configure the proxy:
-   - **Process**: Select `reverb` (from your Procfile)
-   - **Port**: Choose a port (e.g., `8080`) - avoid reserved ports: 15000, 15001, 15004, 15006, 15008, 15009, 15020, 15021, 15053, 15090
-5. Click **Save**
-6. Kinsta will provide you with a **hostname** for the WebSocket connection (e.g., `reverb-abc123.kinsta.app`)
+2. Navigate to **Processes**
+3. Click **Create process** → **Background worker**
+4. Configure the worker:
+   - **Name**: `reverb` (or any descriptive name)
+   - **Custom start command**: `php artisan reverb:start --host=0.0.0.0 --port=8080`
+   - **Instance count**: 1
+   - **Instance size**: Choose based on your needs (Hobby or higher)
+5. Click **Create process**
 
-### Step 5: Update Environment Variables with TCP Proxy Hostname
+### Step 5: Configure TCP Proxy (CRITICAL!)
+Now configure the TCP proxy to make Reverb publicly accessible:
+
+1. Navigate to **Settings** → **Networking**
+2. Click **"Add TCP proxy"**
+3. Configure the proxy:
+   - **Process**: Select `reverb` (the background worker you just created)
+   - **Port**: `8080` - avoid reserved ports: 15000, 15001, 15004, 15006, 15008, 15009, 15020, 15021, 15053, 15090
+4. Click **Save**
+5. Kinsta will provide you with a **hostname** for the WebSocket connection (e.g., `reverb-abc123.kinsta.app`)
+
+### Step 6: Update Environment Variables with TCP Proxy Hostname
 After getting the TCP proxy hostname from Kinsta:
 
 1. Go back to **Environment Variables**

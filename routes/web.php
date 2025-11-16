@@ -21,6 +21,19 @@ Route::get('/debug-env', function () {
     ]);
 })->middleware([]);
 
+// WebSocket connection test page
+Route::get('/test-websocket', function () {
+    return Inertia::render('TestWebSocket', [
+        'reverbConfig' => [
+            'host' => env('REVERB_HOST'),
+            'port' => env('REVERB_PORT'),
+            'scheme' => env('REVERB_SCHEME'),
+            'app_key' => env('REVERB_APP_KEY'),
+            'app_id' => env('REVERB_APP_ID'),
+        ],
+    ]);
+})->middleware([]);
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
