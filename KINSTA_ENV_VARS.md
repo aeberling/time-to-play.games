@@ -38,15 +38,21 @@ REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
 REVERB_APP_SECRET=010d238607af751bab87b263
 REVERB_HOST=us-west4-001.proxy.kinsta.app
 REVERB_PORT=30763
-REVERB_SCHEME=https
+REVERB_SCHEME=http
 REVERB_SERVER_HOST=0.0.0.0
 REVERB_SERVER_PORT=8080
 
 VITE_REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
 VITE_REVERB_HOST=us-west4-001.proxy.kinsta.app
 VITE_REVERB_PORT=30763
-VITE_REVERB_SCHEME=https
+VITE_REVERB_SCHEME=http
 ```
+
+**IMPORTANT:**
+- Host should be ONLY the hostname: `us-west4-001.proxy.kinsta.app`
+- Port should be ONLY the port number: `30763`
+- Scheme should be `http` (not `https`) - Kinsta's TCP proxy handles the connection
+- Do NOT include the port in the host field!
 
 ## Other Required Variables
 ```
