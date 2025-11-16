@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Touch Optimization */
+html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+body {
+    touch-action: manipulation;
+    overscroll-behavior-y: contain;
+}
+
+/* Prevent unwanted pull-to-refresh */
+html, body {
+    overflow-x: hidden;
+}
+
+/* Ensure buttons and interactive elements are touch-friendly */
+button, a, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 /* Game Theme CSS Variables */
 :root {
     /* Default theme values (Ocean Breeze) */

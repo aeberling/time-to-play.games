@@ -39,6 +39,8 @@ REVERB_APP_SECRET=010d238607af751bab87b263
 REVERB_HOST=time-to-play.games
 REVERB_PORT=443
 REVERB_SCHEME=https
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
 
 VITE_REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
 VITE_REVERB_HOST=time-to-play.games
@@ -59,3 +61,5 @@ LOG_LEVEL=error
 - No SSL certificate needed for Kinsta PostgreSQL
 - Migrations already run on database
 - Set APP_DEBUG=false for production (use true temporarily for debugging)
+- Reverb WebSocket server runs alongside the main app server (configured in Procfile and nixpacks.toml)
+- After updating these environment variables, you MUST redeploy the application on Kinsta for changes to take effect
