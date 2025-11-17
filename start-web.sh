@@ -18,6 +18,11 @@ if [ "$CURRENT_USER" = "root" ]; then
     fi
     FPM_USER="app"
     FPM_GROUP="app"
+
+    # Fix permissions for Laravel storage directories
+    echo "Fixing storage directory permissions for app user..."
+    chown -R app:app /app/storage /app/bootstrap/cache
+    chmod -R 775 /app/storage /app/bootstrap/cache
 else
     FPM_USER="$CURRENT_USER"
     FPM_GROUP="$CURRENT_GROUP"
