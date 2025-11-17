@@ -57,9 +57,9 @@ php-fpm -y /tmp/php-fpm.conf &
 # Wait a moment for PHP-FPM to start
 sleep 2
 
-# Start Reverb in the background
-echo "Starting Reverb WebSocket server..."
-php artisan reverb:start --host=127.0.0.1 --port=8080 &
+# Start Reverb in the background on internal port 6001
+echo "Starting Reverb WebSocket server on 127.0.0.1:6001..."
+php artisan reverb:start --host=127.0.0.1 --port=6001 &
 
 # Wait a moment for Reverb to start
 sleep 2

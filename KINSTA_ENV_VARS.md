@@ -40,7 +40,7 @@ REVERB_HOST=time-to-play.games
 REVERB_PORT=443
 REVERB_SCHEME=https
 REVERB_SERVER_HOST=127.0.0.1
-REVERB_SERVER_PORT=8080
+REVERB_SERVER_PORT=6001
 
 VITE_REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
 VITE_REVERB_HOST=time-to-play.games
@@ -52,11 +52,11 @@ VITE_REVERB_SCHEME=https
 - `REVERB_HOST` = Main domain (time-to-play.games) - public facing domain
 - `REVERB_PORT` = HTTPS port (443) - standard HTTPS port
 - `REVERB_SERVER_HOST` = Internal bind address (127.0.0.1) - only accessible via Nginx proxy
-- `REVERB_SERVER_PORT` = Internal server port (8080) - what Reverb binds to internally
+- `REVERB_SERVER_PORT` = Internal server port (6001) - what Reverb binds to internally
 - Nginx handles TLS termination and proxies WebSocket connections to Reverb
 - PHP-FPM runs on port 9000 (internal)
-- Reverb runs on port 8080 (internal)
-- Nginx runs on Kinsta's PORT (8080) and handles all incoming traffic
+- Reverb runs on port 6001 (internal)
+- Nginx runs on Kinsta's PORT (8080 external) and handles all incoming traffic
 - Scheme MUST be `https` (browsers require wss:// when page is https://)
 - WebSocket connections use wss://time-to-play.games/app/...
 - **NO TCP Proxy needed** - Nginx handles everything in the web process
@@ -75,7 +75,7 @@ After setting all environment variables in Kinsta:
 
 1. **Delete the Background Worker** (if previously configured) - not needed with Nginx architecture
 2. **Remove TCP Proxy** (if previously configured) - not needed with Nginx
-3. **Update environment variables** to match above (especially REVERB_SERVER_HOST=127.0.0.1, REVERB_SERVER_PORT=8080)
+3. **Update environment variables** to match above (especially REVERB_SERVER_HOST=127.0.0.1, REVERB_SERVER_PORT=6001)
 4. **Redeploy application** on Kinsta (to rebuild with new VITE_ variables and Nginx config)
 5. **Check all processes are running**:
    - Check application logs for "Starting PHP-FPM..."
