@@ -144,9 +144,10 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         }
 
         // Format card array for display
-        const formatCards = (cards: Card[]) => {
-            if (cards.length === 0) return 'None';
-            return cards.map(c => `${c.rank}${c.suit.charAt(0).toUpperCase()}`).join(', ');
+        const formatCards = (cards: (Card | null)[]) => {
+            const validCards = cards.filter((c): c is Card => c !== null);
+            if (validCards.length === 0) return 'None';
+            return validCards.map(c => `${c.rank}${c.suit.charAt(0).toUpperCase()}`).join(', ');
         };
 
         // Build game state text
@@ -407,7 +408,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
     };
 
     // Sort cards by rank (lowest to highest), with 10s and Jokers at the end since they're wild
-    const sortCards = (cards: Card[]) => {
+    const sortCards = (cards: (Card | null)[]) => {
         const rankOrder: { [key: string]: number } = {
             'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
             'J': 11, 'Q': 12, 'K': 13,
@@ -415,7 +416,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
             'Joker': 101
         };
 
-        return [...cards].sort((a, b) => {
+        return [...cards].filter((c): c is Card => c !== null).sort((a, b) => {
             return rankOrder[a.rank] - rankOrder[b.rank];
         });
     };
