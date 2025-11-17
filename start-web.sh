@@ -9,18 +9,34 @@ CURRENT_GROUP=$(id -gn)
 
 echo "Running as user: $CURRENT_USER (group: $CURRENT_GROUP)"
 
+# PHP-FPM refuses to run as root, so we need to create a non-root user if running as root
+if [ "$CURRENT_USER" = "root" ]; then
+    echo "Running as root - creating app user for PHP-FPM..."
+    # Create app user if it doesn't exist
+    if ! id -u app >/dev/null 2>&1; then
+        useradd -r -s /bin/false app || true
+    fi
+    FPM_USER="app"
+    FPM_GROUP="app"
+else
+    FPM_USER="$CURRENT_USER"
+    FPM_GROUP="$CURRENT_GROUP"
+fi
+
+echo "PHP-FPM will run as: $FPM_USER (group: $FPM_GROUP)"
+
 # Create temporary directories for Nginx
 mkdir -p /tmp/client_body /tmp/proxy /tmp/fastcgi /tmp/uwsgi /tmp/scgi
 
-# Generate PHP-FPM config with current user/group
+# Generate PHP-FPM config with appropriate user/group
 cat > /tmp/php-fpm.conf <<EOF
 [global]
 pid = /tmp/php-fpm.pid
 error_log = /dev/stderr
 
 [www]
-user = $CURRENT_USER
-group = $CURRENT_GROUP
+user = $FPM_USER
+group = $FPM_GROUP
 listen = 127.0.0.1:9000
 
 pm = dynamic
