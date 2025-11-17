@@ -44,6 +44,9 @@ user = $FPM_USER
 group = $FPM_GROUP
 listen = 127.0.0.1:9000
 
+; Pass environment variables to PHP
+clear_env = no
+
 pm = dynamic
 pm.max_children = 10
 pm.start_servers = 2
