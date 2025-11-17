@@ -5,8 +5,8 @@ Set these environment variables in your Kinsta Application dashboard:
 ## Database (Kinsta PostgreSQL)
 ```
 DB_CONNECTION=pgsql
-DB_HOST=us-west1-001.proxy.kinsta.app
-DB_PORT=30085
+DB_HOST=us-west4-001.proxy.kinsta.app
+DB_PORT=30224
 DB_DATABASE=time-to-play-games
 DB_USERNAME=time2play
 DB_PASSWORD=gY9-kD2=pG7+wY7=vS9=
@@ -31,7 +31,7 @@ MAIL_PASSWORD=fa52582c-00fc-4e1d-aa77-7cb9e49d60ed
 MAIL_FROM_ADDRESS=hello@time-to-play.games
 ```
 
-## WebSockets (Reverb)
+## WebSockets (Reverb) - CRITICAL CONFIGURATION
 ```
 REVERB_APP_ID=577160
 REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
@@ -48,12 +48,14 @@ VITE_REVERB_PORT=30763
 VITE_REVERB_SCHEME=https
 ```
 
-**IMPORTANT:**
-- Host should be ONLY the hostname: `us-west4-001.proxy.kinsta.app`
-- Port should be ONLY the port number: `30763`
-- Scheme should be `https` (required when site is served over HTTPS)
-- Do NOT include the port in the host field!
-- The browser requires wss:// (secure WebSocket) when page is loaded over https://
+**IMPORTANT REVERB NOTES:**
+- `REVERB_HOST` = TCP proxy hostname (us-west4-001.proxy.kinsta.app)
+- `REVERB_PORT` = TCP proxy external port (30763) - what browsers connect to
+- `REVERB_SERVER_HOST` = Internal bind address (0.0.0.0) - allows all connections
+- `REVERB_SERVER_PORT` = Internal server port (8080) - what Reverb binds to internally
+- The TCP proxy forwards port 30763 → 8080 internally
+- Scheme MUST be `https` (browsers require wss:// when page is https://)
+- Do NOT include port in hostname!
 
 ## Other Required Variables
 ```
@@ -63,10 +65,34 @@ CACHE_STORE=database
 LOG_LEVEL=error
 ```
 
+## Deployment Checklist
+
+After setting all environment variables in Kinsta:
+
+1. **Commit and push code changes** (Procfile fix)
+2. **Redeploy application** on Kinsta
+3. **Verify TCP proxy is configured**:
+   - External port: 30763
+   - Internal port: 8080
+   - Protocol: TCP
+4. **Check Reverb process is running**:
+   - In Kinsta dashboard, verify the `reverb` process from Procfile is active
+   - Check application logs for "Reverb server started"
+5. **Test WebSocket connection** at https://time-to-play.games/test-websocket
+
+## Troubleshooting
+
+If WebSocket still fails after deployment:
+
+1. Check Kinsta logs: `Logs > Application` in dashboard
+2. Verify Reverb process is listed and running
+3. Confirm TCP proxy configuration matches above
+4. Test direct connection: `wss://us-west4-001.proxy.kinsta.app:30763/app/5fe7c22bad16f626d3fb296f`
+5. Ensure firewall allows outbound WebSocket connections
+
 ## Notes
-- Database uses public proxy URL (required when app and database are in different data centers)
+- Database uses public proxy URL (us-west4-001.proxy.kinsta.app)
 - No SSL certificate needed for Kinsta PostgreSQL
 - Migrations already run on database
-- Set APP_DEBUG=false for production (use true temporarily for debugging)
-- Reverb WebSocket server runs alongside the main app server (configured in Procfile and nixpacks.toml)
-- After updating these environment variables, you MUST redeploy the application on Kinsta for changes to take effect
+- Reverb WebSocket server runs as separate process (configured in Procfile)
+- Both `web` and `reverb` processes must be running simultaneously
