@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "supervisor"]
+nixPkgs = ["...", "python311Packages.supervisor"]
 
 [phases.install]
 cmds = [
