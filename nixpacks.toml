@@ -15,5 +15,5 @@ cmds = [
 ]
 
 [start]
-# Kinsta will use the Procfile to start multiple processes
-cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+# Use Supervisor to run both web server and Reverb in the same process
+cmd = "bash start-server.sh"
