@@ -15,5 +15,4 @@ cmds = [
 ]
 
 [start]
-# Kinsta manages processes via Procfile - this is just the fallback
-cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "bash start-web.sh"
