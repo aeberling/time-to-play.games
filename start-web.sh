@@ -64,6 +64,10 @@ php artisan reverb:start --host=127.0.0.1 --port=8080 &
 # Wait a moment for Reverb to start
 sleep 2
 
+# Generate Nginx config with PORT variable substituted
+echo "Generating Nginx config for port ${PORT}..."
+sed "s/\${PORT}/${PORT}/g" /app/nginx.conf > /tmp/nginx.conf
+
 # Start Nginx in the foreground (this keeps the container running)
 echo "Starting Nginx on port ${PORT}..."
-nginx -c /app/nginx.conf -g "daemon off;"
+nginx -c /tmp/nginx.conf -g "daemon off;"
