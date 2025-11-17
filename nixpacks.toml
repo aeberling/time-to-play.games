@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "python311Packages.supervisor"]
+nixPkgs = ["..."]
 
 [phases.install]
 cmds = [
@@ -15,5 +15,5 @@ cmds = [
 ]
 
 [start]
-# Use Supervisor to run both web server and Reverb in the same process
-cmd = "bash start-server.sh"
+# Kinsta manages processes via Procfile - this is just the fallback
+cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
