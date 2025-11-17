@@ -39,8 +39,8 @@ REVERB_APP_SECRET=010d238607af751bab87b263
 REVERB_HOST=time-to-play.games
 REVERB_PORT=443
 REVERB_SCHEME=https
-REVERB_SERVER_HOST=0.0.0.0
-REVERB_SERVER_PORT=8081
+REVERB_SERVER_HOST=127.0.0.1
+REVERB_SERVER_PORT=8080
 
 VITE_REVERB_APP_KEY=5fe7c22bad16f626d3fb296f
 VITE_REVERB_HOST=time-to-play.games
@@ -48,15 +48,18 @@ VITE_REVERB_PORT=443
 VITE_REVERB_SCHEME=https
 ```
 
-**IMPORTANT REVERB NOTES:**
-- `REVERB_HOST` = Main domain (time-to-play.games) - uses Kinsta's HTTPS routing
+**IMPORTANT REVERB NOTES (Updated for Nginx Architecture):**
+- `REVERB_HOST` = Main domain (time-to-play.games) - public facing domain
 - `REVERB_PORT` = HTTPS port (443) - standard HTTPS port
-- `REVERB_SERVER_HOST` = Internal bind address (0.0.0.0) - allows all connections
-- `REVERB_SERVER_PORT` = Internal server port (8081) - what Reverb binds to internally
-- Kinsta's HTTP proxy routes WebSocket upgrades to Reverb on port 8081
-- PHP server runs on port 8080 (Kinsta's PORT env var)
+- `REVERB_SERVER_HOST` = Internal bind address (127.0.0.1) - only accessible via Nginx proxy
+- `REVERB_SERVER_PORT` = Internal server port (8080) - what Reverb binds to internally
+- Nginx handles TLS termination and proxies WebSocket connections to Reverb
+- PHP-FPM runs on port 9000 (internal)
+- Reverb runs on port 8080 (internal)
+- Nginx runs on Kinsta's PORT (8080) and handles all incoming traffic
 - Scheme MUST be `https` (browsers require wss:// when page is https://)
-- WebSocket connections use wss://time-to-play.games/app/... (no TCP proxy needed)
+- WebSocket connections use wss://time-to-play.games/app/...
+- **NO TCP Proxy needed** - Nginx handles everything in the web process
 
 ## Other Required Variables
 ```
@@ -70,16 +73,16 @@ LOG_LEVEL=error
 
 After setting all environment variables in Kinsta:
 
-1. **Remove TCP proxy** (if previously configured) - not needed with standard HTTPS routing
-2. **Update environment variables** to use main domain (time-to-play.games, port 443)
-3. **Redeploy application** on Kinsta (to rebuild with new VITE_ variables)
-4. **Check both processes are running via Supervisor**:
-   - Check application logs for "supervisord started"
-   - Check application logs for "php-server entered RUNNING state"
-   - Check application logs for "reverb entered RUNNING state"
-   - Check application logs for "Server running on 0.0.0.0:8080" (PHP)
-   - Check application logs for "Starting server on 0.0.0.0:8081" (Reverb)
-5. **Test WebSocket connection** at https://time-to-play.games/test-websocket
+1. **Delete the Background Worker** (if previously configured) - not needed with Nginx architecture
+2. **Remove TCP Proxy** (if previously configured) - not needed with Nginx
+3. **Update environment variables** to match above (especially REVERB_SERVER_HOST=127.0.0.1, REVERB_SERVER_PORT=8080)
+4. **Redeploy application** on Kinsta (to rebuild with new VITE_ variables and Nginx config)
+5. **Check all processes are running**:
+   - Check application logs for "Starting PHP-FPM..."
+   - Check application logs for "Starting Reverb WebSocket server..."
+   - Check application logs for "Starting Nginx on port..."
+   - All three should start successfully in the web process
+6. **Test WebSocket connection** at https://time-to-play.games/test-websocket
    - Should connect to wss://time-to-play.games/app/...
 
 ## Troubleshooting
@@ -87,15 +90,19 @@ After setting all environment variables in Kinsta:
 If WebSocket still fails after deployment:
 
 1. Check Kinsta logs: `Logs > Application` in dashboard
-2. Verify both PHP server and Reverb are running via Supervisor
-3. Ensure Reverb is listening on port 8081 (check logs for "Starting server on 0.0.0.0:8081")
+2. Verify all three processes started:
+   - PHP-FPM on port 9000
+   - Reverb on port 8080 (internal)
+   - Nginx on Kinsta's PORT (external)
+3. Check logs for errors in any of the three processes
 4. Verify environment variables are correct (especially VITE_ vars require rebuild)
 5. Test connection: `wss://time-to-play.games/app/5fe7c22bad16f626d3fb296f`
-6. Check Kinsta's HTTP proxy is routing WebSocket upgrades to internal port 8081
+6. Check browser console for WebSocket connection errors
 
 ## Notes
 - Database uses public proxy URL (us-west4-001.proxy.kinsta.app)
 - No SSL certificate needed for Kinsta PostgreSQL
 - Migrations already run on database
-- Reverb WebSocket server runs as separate process (configured in Procfile)
-- Both `web` and `reverb` processes must be running simultaneously
+- All processes (Nginx, PHP-FPM, Reverb) run in the single web process
+- Nginx handles TLS termination and proxies WebSocket connections to Reverb
+- No background workers or TCP proxies needed with this architecture
