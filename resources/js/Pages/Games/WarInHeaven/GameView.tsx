@@ -561,7 +561,8 @@ export default function GameView() {
                                     key={token.id}
                                     className="panel-card-token"
                                     style={{
-                                        left: `${tokenIndex * 8}px`,
+                                        left: `${tokenIndex * 8 + 5}px`,
+                                        top: '50px',
                                         cursor: 'pointer',
                                     }}
                                     draggable
