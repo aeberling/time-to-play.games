@@ -50,7 +50,8 @@ class MoveMade implements ShouldBroadcastNow
             'gameId' => $this->gameId,
             'playerIndex' => $this->playerIndex,
             'move' => $this->move,
-            'newGameState' => $this->newGameState,
+            // Note: newGameState removed to avoid Pusher payload size limits
+            // Clients should refetch state when receiving this event
             'timestamp' => now()->toISOString(),
         ];
     }

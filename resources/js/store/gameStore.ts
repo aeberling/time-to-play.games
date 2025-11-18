@@ -306,7 +306,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
             })
             .listen('.game.move.made', (e: any) => {
                 console.log('MoveMade event:', e);
-                set({ gameState: e.newGameState });
+                // Refetch game state instead of using broadcasted state
+                // (to avoid Pusher payload size limits)
+                get().fetchGameState(gameId);
             });
 
         // Update connection status
