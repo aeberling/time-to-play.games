@@ -78,6 +78,11 @@ Route::get('/dev/war-in-heaven/player-hand', function () {
     return Inertia::render('Games/WarInHeaven/PlayerHand');
 })->name('dev.war-in-heaven.player-hand');
 
+// War in Heaven Game View (Development)
+Route::get('/dev/war-in-heaven/game-view', function () {
+    return Inertia::render('Games/WarInHeaven/GameView');
+})->name('dev.war-in-heaven.game-view');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

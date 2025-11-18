@@ -1,0 +1,169 @@
+.game-view {
+    width: 100vw;
+    height: 100vh;
+    background: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-view-board {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 80px; /* Space for collapsed panel */
+    transition: padding-bottom 0.3s ease;
+}
+
+.game-view-board.panel-expanded {
+    padding-bottom: 350px; /* Space for expanded panel */
+}
+
+/* Collapsible Card Panel */
+.card-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #2a2a2a;
+    border-top: 3px solid #FFB200;
+    transition: height 0.3s ease;
+    z-index: 100;
+}
+
+.card-panel-collapsed {
+    height: 80px;
+}
+
+.card-panel-expanded {
+    height: 350px;
+}
+
+/* Toggle Button */
+.panel-toggle-btn {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 32px;
+    background: #FFB200;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: #000;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.panel-toggle-btn:hover {
+    background: #FFC933;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+/* Panel Tabs */
+.panel-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0.5rem 1rem 0 1rem;
+}
+
+.panel-tab {
+    padding: 0.5rem 1.5rem;
+    background: #1a1a1a;
+    color: #999;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.panel-tab:hover {
+    background: #333;
+    color: #fff;
+}
+
+.panel-tab-active {
+    background: #2a2a2a;
+    color: #FFB200;
+    border-bottom: 2px solid #FFB200;
+}
+
+/* Cards Display */
+.panel-cards {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: calc(100% - 60px);
+}
+
+.panel-card-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding-top: 20px;
+    padding-left: 20px;
+}
+
+.panel-card-wrapper:hover {
+    transform: translateY(-8px);
+}
+
+.panel-card-token {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 50px;
+    height: 50px;
+}
+
+.panel-card-image {
+    width: 140px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: block;
+}
+
+/* Tooltip */
+.card-tooltip {
+    position: fixed;
+    background: #333;
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    borderRadius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Scrollbar Styling */
+.panel-cards::-webkit-scrollbar {
+    height: 8px;
+}
+
+.panel-cards::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+.panel-cards::-webkit-scrollbar-thumb {
+    background: #FFB200;
+    border-radius: 4px;
+}
+
+.panel-cards::-webkit-scrollbar-thumb:hover {
+    background: #FFC933;
+}
