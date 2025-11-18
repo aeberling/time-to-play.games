@@ -316,7 +316,7 @@ export default function GameView() {
             attack: 3,
             defense: 2,
             icon: '/assets/games/war-in-heaven/icons/iconuriel.png',
-            isActive: false, // This one is flipped (depleted)
+            isActive: true,
         };
         initialHexes['C6'].occupiedBy = {
             id: 'demon_fallen_token_0',
@@ -357,22 +357,13 @@ export default function GameView() {
     const handleHexClick = (coordinate: HexCoordinate) => {
         const hex = hexes[coordinate];
 
-        // If we have a token on the hex, select it or flip it
+        // If we have a token on the hex, select it
         if (hex.occupiedBy) {
+            // Click on token: select it (or deselect if already selected)
             if (selectedToken === hex.occupiedBy.id) {
-                // Double-click behavior: flip the token
-                setHexes({
-                    ...hexes,
-                    [coordinate]: {
-                        ...hex,
-                        occupiedBy: hex.occupiedBy ? {
-                            ...hex.occupiedBy,
-                            isActive: !hex.occupiedBy.isActive,
-                        } : null,
-                    },
-                });
+                setSelectedToken(null);
+                setSelectedHex(null);
             } else {
-                // Single click: select the token
                 setSelectedToken(hex.occupiedBy.id);
                 setSelectedHex(coordinate);
             }
@@ -580,26 +571,29 @@ export default function GameView() {
                                 >
                                     <svg width="50" height="50" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
                                         <circle cx="32" cy="32" r="31" fill="#000" />
-                                        <circle cx="32" cy="32" r="29" fill={token.isActive ? (card.faction === 'angels' ? '#FFB200' : '#7F0212') : '#D2D2D2'} />
-                                        <circle cx="32" cy="32" r="28" fill={token.isActive ? (card.faction === 'angels' ? '#FFB200' : '#7F0212') : '#D2D2D2'}
+                                        {/* Top section - always shows faction color and character icon */}
+                                        <circle cx="32" cy="32" r="29" fill={token.isActive ? (card.faction === 'angels' ? '#FFB200' : '#7F0212') : '#D2D2D2'}
                                                 clipPath={`url(#clip-top-mini-${token.id})`} />
                                         <clipPath id={`clip-top-mini-${token.id}`}>
                                             <rect x="0" y="0" width="64" height="38.4" />
                                         </clipPath>
+                                        {/* Bottom section - always grey-blue */}
                                         <circle cx="32" cy="32" r="29" fill="#5A6C7D"
                                                 clipPath={`url(#clip-bottom-mini-${token.id})`} />
                                         <clipPath id={`clip-bottom-mini-${token.id}`}>
                                             <rect x="0" y="38.4" width="64" height="25.6" />
                                         </clipPath>
+                                        {/* Character icon - always on top */}
                                         <image
-                                            href={token.isActive ? card.iconUrl : '/assets/games/war-in-heaven/icons/refresh.png'}
+                                            href={card.iconUrl}
                                             x="17.6"
-                                            y={token.isActive ? "6.4" : "11.4"}
-                                            width={token.isActive ? "28.8" : "18.8"}
-                                            height={token.isActive ? "28.8" : "18.8"}
-                                            clipPath={token.isActive ? `url(#clip-top-mini-${token.id})` : undefined}
+                                            y="6.4"
+                                            width="28.8"
+                                            height="28.8"
+                                            clipPath={`url(#clip-top-mini-${token.id})`}
                                             preserveAspectRatio="xMidYMid meet"
                                         />
+                                        {/* Bottom section content - changes based on active state */}
                                         {token.isActive ? (
                                             <>
                                                 <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"

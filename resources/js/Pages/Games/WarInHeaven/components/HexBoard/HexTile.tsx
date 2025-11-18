@@ -179,16 +179,16 @@ export const HexTile: React.FC<HexTileProps> = ({
         </text>
       )}
 
-      {/* Token (if hex is occupied) */}
+      {/* Token (if hex is occupied) - always shows active state */}
       {hexState.occupiedBy && (
         <g pointerEvents="none">
-          {/* Token background */}
+          {/* Token background - black border */}
           <circle r={HEX_SIZE * 0.65} fill="#000" />
+
+          {/* Top section - 3/5 of token with faction color */}
           <circle
             r={HEX_SIZE * 0.62}
-            fill={hexState.occupiedBy.isActive
-              ? (hexState.occupiedBy.faction === 'angels' ? '#FFB200' : '#7F0212')
-              : '#D2D2D2'}
+            fill={hexState.occupiedBy.faction === 'angels' ? '#FFB200' : '#7F0212'}
             clipPath={`url(#token-top-${coordinate})`}
           />
           <clipPath id={`token-top-${coordinate}`}>
@@ -199,6 +199,8 @@ export const HexTile: React.FC<HexTileProps> = ({
               height={HEX_SIZE * 0.744}
             />
           </clipPath>
+
+          {/* Bottom section - 2/5 of token with grey-blue */}
           <circle
             r={HEX_SIZE * 0.62}
             fill="#5A6C7D"
@@ -213,55 +215,40 @@ export const HexTile: React.FC<HexTileProps> = ({
             />
           </clipPath>
 
-          {/* Token icon */}
+          {/* Character icon in top section */}
           <image
-            href={hexState.occupiedBy.isActive
-              ? hexState.occupiedBy.icon
-              : '/assets/games/war-in-heaven/icons/refresh.png'}
-            x={hexState.occupiedBy.isActive ? -HEX_SIZE * 0.35 : -HEX_SIZE * 0.25}
-            y={hexState.occupiedBy.isActive ? -HEX_SIZE * 0.5 : -HEX_SIZE * 0.35}
-            width={hexState.occupiedBy.isActive ? HEX_SIZE * 0.7 : HEX_SIZE * 0.5}
-            height={hexState.occupiedBy.isActive ? HEX_SIZE * 0.7 : HEX_SIZE * 0.5}
-            clipPath={hexState.occupiedBy.isActive ? `url(#token-top-${coordinate})` : undefined}
+            href={hexState.occupiedBy.icon}
+            x={-HEX_SIZE * 0.35}
+            y={-HEX_SIZE * 0.5}
+            width={HEX_SIZE * 0.7}
+            height={HEX_SIZE * 0.7}
+            clipPath={`url(#token-top-${coordinate})`}
             preserveAspectRatio="xMidYMid meet"
           />
 
-          {/* Stats or refresh icon */}
-          {hexState.occupiedBy.isActive ? (
-            <>
-              <text
-                x={-HEX_SIZE * 0.35}
-                y={HEX_SIZE * 0.35}
-                textAnchor="middle"
-                fontSize={HEX_SIZE * 0.35}
-                fill="#FFF"
-                fontWeight="bold"
-                filter={`url(#token-shadow-${coordinate})`}
-              >
-                {hexState.occupiedBy.attack}
-              </text>
-              <text
-                x={HEX_SIZE * 0.35}
-                y={HEX_SIZE * 0.35}
-                textAnchor="middle"
-                fontSize={HEX_SIZE * 0.35}
-                fill="#FFF"
-                fontWeight="bold"
-                filter={`url(#token-shadow-${coordinate})`}
-              >
-                {hexState.occupiedBy.defense}
-              </text>
-            </>
-          ) : (
-            <image
-              href="/assets/games/war-in-heaven/icons/refresh.png"
-              x={-HEX_SIZE * 0.25}
-              y={HEX_SIZE * 0.05}
-              width={HEX_SIZE * 0.5}
-              height={HEX_SIZE * 0.5}
-              clipPath={`url(#token-bottom-${coordinate})`}
-            />
-          )}
+          {/* Attack and Defense stats in bottom section */}
+          <text
+            x={-HEX_SIZE * 0.35}
+            y={HEX_SIZE * 0.35}
+            textAnchor="middle"
+            fontSize={HEX_SIZE * 0.35}
+            fill="#FFF"
+            fontWeight="bold"
+            filter={`url(#token-shadow-${coordinate})`}
+          >
+            {hexState.occupiedBy.attack}
+          </text>
+          <text
+            x={HEX_SIZE * 0.35}
+            y={HEX_SIZE * 0.35}
+            textAnchor="middle"
+            fontSize={HEX_SIZE * 0.35}
+            fill="#FFF"
+            fontWeight="bold"
+            filter={`url(#token-shadow-${coordinate})`}
+          >
+            {hexState.occupiedBy.defense}
+          </text>
 
           <defs>
             <filter id={`token-shadow-${coordinate}`}>
