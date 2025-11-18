@@ -3,8 +3,51 @@ import { HexBoard } from './components/HexBoard';
 import { Card, CardData } from './components/Card';
 import { TokenData } from './components/Token';
 import { PlayerPanel, GameInfo, GameControls, GateControl, GamePhase } from './components/UI';
-import { Faction, HexCoordinate } from './types/HexTypes';
+import { Faction, HexCoordinate, HexState } from './types/HexTypes';
 import './GameLayout.css';
+
+// Initialize hex states for the board
+const initializeHexes = (): Record<string, HexState> => {
+    const hexes: Record<string, HexState> = {};
+
+    // Define gate hexes (A5, B5, C5, D5)
+    const gateHexes = ['A5', 'B5', 'C5', 'D5'];
+
+    // Define deploy hexes (A1, B1 for Angels; A9, B9 for Demons)
+    const angelDeployHexes = ['A1', 'B1'];
+    const demonDeployHexes = ['A9', 'B9'];
+
+    // All hexes in the board
+    const allHexes = [
+        'A1', 'B1',
+        'A2', 'B2', 'C2',
+        'A3', 'B3', 'C3', 'D3',
+        'A4', 'B4', 'C4', 'D4', 'E4',
+        'A5', 'B5', 'C5', 'D5',
+        'A6', 'B6', 'C6', 'D6', 'E6',
+        'A7', 'B7', 'C7', 'D7',
+        'A8', 'B8', 'C8',
+        'A9', 'B9',
+    ];
+
+    allHexes.forEach(coordinate => {
+        let type: 'standard' | 'deploy' | 'gate' = 'standard';
+
+        if (gateHexes.includes(coordinate)) {
+            type = 'gate';
+        } else if (angelDeployHexes.includes(coordinate) || demonDeployHexes.includes(coordinate)) {
+            type = 'deploy';
+        }
+
+        hexes[coordinate] = {
+            coordinate,
+            type,
+            occupiedBy: null,
+        };
+    });
+
+    return hexes;
+};
 
 // Helper to create sample tokens
 const createSampleTokens = (card: Omit<CardData, 'tokens'>, count: number): TokenData[] => {
@@ -188,6 +231,7 @@ const createSampleCards = (): CardData[] => {
 };
 
 export default function GameLayout() {
+    const [hexes] = useState<Record<string, HexState>>(initializeHexes());
     const [selectedHex, setSelectedHex] = useState<HexCoordinate | null>(null);
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
     const [selectedToken, setSelectedToken] = useState<string | null>(null);
@@ -201,6 +245,10 @@ export default function GameLayout() {
 
     const handleHexClick = (coordinate: HexCoordinate) => {
         setSelectedHex(coordinate);
+    };
+
+    const handleHexHover = (coordinate: HexCoordinate | null) => {
+        // Optional: Add hover state handling if needed
     };
 
     const handleCardClick = (cardId: string) => {
@@ -254,8 +302,10 @@ export default function GameLayout() {
                 <div className="game-layout-center">
                     <div className="board-container">
                         <HexBoard
+                            hexes={hexes}
                             selectedHex={selectedHex}
                             onHexClick={handleHexClick}
+                            onHexHover={handleHexHover}
                             validMoves={[]}
                         />
                     </div>
