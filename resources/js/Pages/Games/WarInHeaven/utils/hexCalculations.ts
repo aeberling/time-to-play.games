@@ -212,3 +212,187 @@ export function getDefaultLayout(hexSize: number, origin: PixelCoordinates = { x
         origin,
     };
 }
+
+// ============================================================================
+// War in Heaven Specific Functions
+// ============================================================================
+
+export const HEX_SIZE = 40; // Radius from center to corner
+export const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE; // ~69.28
+export const HEX_HEIGHT = 2 * HEX_SIZE; // 80
+export const VERT_SPACING = HEX_HEIGHT * 0.75; // 60 (vertical distance between row centers)
+
+/**
+ * Convert offset coordinates (A1, B2, etc.) to axial coordinates (q, r)
+ */
+export function offsetToAxial(col: string, row: number): HexCoordinates {
+    const colIndex = col.charCodeAt(0) - 'A'.charCodeAt(0); // A=0, B=1, etc.
+    const rowIndex = row - 1; // Convert to 0-indexed
+
+    // For odd-r horizontal layout (flat-top)
+    const q = colIndex - (rowIndex - (rowIndex % 2)) / 2;
+    const r = rowIndex;
+
+    return { q, r, s: -q - r };
+}
+
+/**
+ * Convert axial coordinates back to offset coordinates
+ */
+export function axialToOffset(hex: HexCoordinates): { col: string; row: number } {
+    const col = String.fromCharCode('A'.charCodeAt(0) + hex.q + (hex.r - (hex.r % 2)) / 2);
+    const row = hex.r + 1; // Convert to 1-indexed
+
+    return { col, row };
+}
+
+/**
+ * Get pixel position for a hex using offset coordinates (A1, B2, etc.)
+ */
+export function getHexPixelPosition(col: string, row: number): PixelCoordinates {
+    const colIndex = col.charCodeAt(0) - 'A'.charCodeAt(0); // A=0, B=1, etc.
+    const rowIndex = row - 1; // Convert to 0-indexed
+
+    // Calculate row center offset to center the board
+    const rowWidths: Record<number, number> = {
+        1: 2, 2: 3, 3: 4, 4: 5,
+        5: 4, // center row
+        6: 5, 7: 4, 8: 3, 9: 2
+    };
+
+    const maxWidth = 5;
+    const rowWidth = rowWidths[row] || 0;
+
+    // Base x position for the row (centered)
+    const rowStartX = (maxWidth - rowWidth) * (HEX_WIDTH / 2);
+
+    // For flat-top hexagons with odd-r offset:
+    // Even rows (2, 4, 6, 8) nestle between odd row hexes
+    const isEvenRow = row % 2 === 0;
+    // No offset needed - rows are already properly aligned
+    const nestleOffset = 0;
+
+    const x = rowStartX + colIndex * HEX_WIDTH + nestleOffset;
+    const y = rowIndex * VERT_SPACING;
+
+    return { x, y };
+}
+
+/**
+ * Get adjacent hex coordinates in offset notation
+ * Returns valid War in Heaven board coordinates only
+ */
+export function getAdjacentHexes(coordinate: string): string[] {
+    const col = coordinate.charAt(0);
+    const row = parseInt(coordinate.substring(1));
+    const colIndex = col.charCodeAt(0) - 'A'.charCodeAt(0);
+
+    const adjacents: string[] = [];
+
+    // For odd-r horizontal layout
+    const isEvenRow = row % 2 === 0;
+
+    if (isEvenRow) {
+        // Even rows (2, 4, 6, 8)
+        const neighbors = [
+            [colIndex - 1, row - 1], // NW
+            [colIndex, row - 1],     // NE
+            [colIndex + 1, row],     // E
+            [colIndex, row + 1],     // SE
+            [colIndex - 1, row + 1], // SW
+            [colIndex - 1, row],     // W
+        ];
+
+        for (const [c, r] of neighbors) {
+            if (c >= 0 && c <= 4) { // Valid column range
+                const coord = String.fromCharCode('A'.charCodeAt(0) + c) + r;
+                if (isValidHex(coord)) {
+                    adjacents.push(coord);
+                }
+            }
+        }
+    } else {
+        // Odd rows (1, 3, 5, 7, 9)
+        const neighbors = [
+            [colIndex, row - 1],     // NW
+            [colIndex + 1, row - 1], // NE
+            [colIndex + 1, row],     // E
+            [colIndex + 1, row + 1], // SE
+            [colIndex, row + 1],     // SW
+            [colIndex - 1, row],     // W
+        ];
+
+        for (const [c, r] of neighbors) {
+            if (c >= 0 && c <= 4) { // Valid column range
+                const coord = String.fromCharCode('A'.charCodeAt(0) + c) + r;
+                if (isValidHex(coord)) {
+                    adjacents.push(coord);
+                }
+            }
+        }
+    }
+
+    return adjacents;
+}
+
+/**
+ * Check if a coordinate is a valid hex on the War in Heaven board
+ */
+export function isValidHex(coordinate: string): boolean {
+    const VALID_HEXES: Record<number, string[]> = {
+        1: ['A1', 'B1'],
+        2: ['A2', 'B2', 'C2'],
+        3: ['A3', 'B3', 'C3', 'D3'],
+        4: ['A4', 'B4', 'C4', 'D4', 'E4'],
+        5: ['A5', 'B5', 'C5', 'D5'],
+        6: ['A6', 'B6', 'C6', 'D6', 'E6'],
+        7: ['A7', 'B7', 'C7', 'D7'],
+        8: ['A8', 'B8', 'C8'],
+        9: ['A9', 'B9'],
+    };
+
+    const row = parseInt(coordinate.substring(1));
+    return VALID_HEXES[row]?.includes(coordinate) || false;
+}
+
+/**
+ * Calculate distance between two hexes using offset coordinates
+ */
+export function getHexDistance(coord1: string, coord2: string): number {
+    const col1 = coord1.charAt(0);
+    const row1 = parseInt(coord1.substring(1));
+    const col2 = coord2.charAt(0);
+    const row2 = parseInt(coord2.substring(1));
+
+    const axial1 = offsetToAxial(col1, row1);
+    const axial2 = offsetToAxial(col2, row2);
+
+    return hexDistance(axial1, axial2);
+}
+
+/**
+ * Get all hexes in a straight line from a starting hex in one of the 6 directions
+ * Used for Jophiel/Belphegor abilities and Camiel/Asmodeus movement
+ */
+export function getHexesInLine(start: string, direction: number, maxDistance: number = 10): string[] {
+    const col = start.charAt(0);
+    const row = parseInt(start.substring(1));
+    const axial = offsetToAxial(col, row);
+
+    const line: string[] = [];
+    let current = axial;
+
+    for (let i = 1; i <= maxDistance; i++) {
+        current = hexNeighbor(current, direction);
+        const { col: newCol, row: newRow } = axialToOffset(current);
+        const coordinate = newCol + newRow;
+
+        if (!isValidHex(coordinate)) {
+            break; // Stop if we go off the board
+        }
+
+        line.push(coordinate);
+    }
+
+    return line;
+}

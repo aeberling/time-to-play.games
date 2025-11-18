@@ -70,3 +70,17 @@ export const POINTY_ORIENTATION: HexOrientation = {
     b3: 2.0 / 3.0,
     startAngle: 0.5,
 };
+
+// ============================================================================
+// War in Heaven Specific Types
+// ============================================================================
+
+export type HexType = 'standard' | 'deploy' | 'gate';
+export type Faction = 'angels' | 'demons';
+
+export interface HexState {
+    coordinate: string;
+    type: HexType;
+    owner?: Faction; // For deploy spaces
+    occupiedBy: string | null; // Token ID or null
+}

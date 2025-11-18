@@ -48,6 +48,11 @@ Route::get('/style-guide', function () {
     return Inertia::render('StyleGuide');
 })->name('style-guide');
 
+// War in Heaven Board Preview (Development)
+Route::get('/dev/war-in-heaven/board-preview', function () {
+    return Inertia::render('Games/WarInHeaven/BoardPreview');
+})->name('dev.war-in-heaven.board-preview');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
