@@ -60,7 +60,7 @@ export const Token: React.FC<TokenProps> = ({
                             cx={radius}
                             cy={radius}
                             r={radius - 1}
-                            fill={factionColorDark}
+                            fill="#000"
                         />
 
                         {/* Inner circle (background) */}
@@ -71,76 +71,93 @@ export const Token: React.FC<TokenProps> = ({
                             fill={factionColor}
                         />
 
-                        {/* Top half - character icon area */}
+                        {/* Top three-fifths - character icon area */}
                         <clipPath id={`clip-top-${token.id}`}>
-                            <rect x="0" y="0" width={radius * 2} height={radius} />
+                            <rect x="0" y="0" width={radius * 2} height={radius * 1.2} />
                         </clipPath>
                         <circle
                             cx={radius}
                             cy={radius}
                             r={radius - 4}
-                            fill="#FFF"
+                            fill={factionColor}
                             clipPath={`url(#clip-top-${token.id})`}
                         />
 
-                        {/* Character icon (would be an image in real implementation) */}
-                        <g transform={`translate(${radius}, ${radius * 0.5})`}>
+                        {/* Character icon */}
+                        <image
+                            href={token.icon}
+                            x={radius * 0.55}
+                            y={radius * 0.2}
+                            width={radius * 0.9}
+                            height={radius * 0.9}
+                            clipPath={`url(#clip-top-${token.id})`}
+                            preserveAspectRatio="xMidYMid meet"
+                        />
+
+                        {/* Drop shadow filter for stats */}
+                        <defs>
+                            <filter id={`stat-shadow-${token.id}`}>
+                                <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.8" floodColor="#000"/>
+                            </filter>
+                        </defs>
+
+                        {/* Bottom two-fifths - grey-blue background */}
+                        <clipPath id={`clip-bottom-${token.id}`}>
+                            <rect x="0" y={radius * 1.2} width={radius * 2} height={radius * 0.8} />
+                        </clipPath>
+                        <circle
+                            cx={radius}
+                            cy={radius}
+                            r={radius - 3}
+                            fill="#5A6C7D"
+                            clipPath={`url(#clip-bottom-${token.id})`}
+                        />
+
+                        {/* Bottom third - stats area */}
+                        <g transform={`translate(${radius + 3}, ${radius * 1.55})`}>
+                            {/* Attack number */}
                             <text
+                                x={-radius * 0.45}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                fontSize={radius * 0.5}
-                                fill="#333"
+                                fontSize={radius * 0.425}
+                                fill="#FFF"
                                 fontWeight="bold"
+                                filter={`url(#stat-shadow-${token.id})`}
                             >
-                                {token.name.charAt(0)}
+                                {token.attack}
                             </text>
-                        </g>
+                            {/* Attack icon */}
+                            <image
+                                href="/assets/games/war-in-heaven/icons/attack-icon.png"
+                                x={-radius * 0.35}
+                                y={-radius * 0.175}
+                                width={radius * 0.35}
+                                height={radius * 0.35}
+                                preserveAspectRatio="xMidYMid meet"
+                            />
 
-                        {/* Bottom half - stats area */}
-                        <g transform={`translate(${radius}, ${radius * 1.5})`}>
-                            {/* Attack (left side) */}
-                            <g transform={`translate(${-radius * 0.4}, 0)`}>
-                                <text
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize={radius * 0.35}
-                                    fill="#FFF"
-                                    fontWeight="bold"
-                                >
-                                    {token.attack}
-                                </text>
-                                <text
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize={radius * 0.2}
-                                    fill="#FFF"
-                                    y={radius * 0.25}
-                                >
-                                    ⚔
-                                </text>
-                            </g>
-
-                            {/* Defense (right side) */}
-                            <g transform={`translate(${radius * 0.4}, 0)`}>
-                                <text
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize={radius * 0.35}
-                                    fill="#FFF"
-                                    fontWeight="bold"
-                                >
-                                    {token.defense}
-                                </text>
-                                <text
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize={radius * 0.2}
-                                    fill="#FFF"
-                                    y={radius * 0.25}
-                                >
-                                    🛡
-                                </text>
-                            </g>
+                            {/* Defense number */}
+                            <text
+                                x={radius * 0.15}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize={radius * 0.425}
+                                fill="#FFF"
+                                fontWeight="bold"
+                                filter={`url(#stat-shadow-${token.id})`}
+                            >
+                                {token.defense}
+                            </text>
+                            {/* Defense icon */}
+                            <image
+                                href="/assets/games/war-in-heaven/icons/defense-icon.png"
+                                x={radius * 0.25}
+                                y={-radius * 0.175}
+                                width={radius * 0.35}
+                                height={radius * 0.35}
+                                preserveAspectRatio="xMidYMid meet"
+                            />
                         </g>
 
                         {/* Selection ring */}
@@ -164,8 +181,7 @@ export const Token: React.FC<TokenProps> = ({
                             cx={radius}
                             cy={radius}
                             r={radius - 1}
-                            fill={factionColorDark}
-                            opacity="0.6"
+                            fill="#000"
                         />
 
                         {/* Inner circle (background) - desaturated */}
