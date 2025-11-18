@@ -51,20 +51,26 @@ export const Card: React.FC<CardProps> = ({
 
             {/* Token Display Area */}
             <div className="card-tokens">
-                {card.tokens.map((token, index) => (
-                    <div
-                        key={token.id}
-                        className="card-token-slot"
-                        style={{ left: `${10 + index * 45}px` }}
-                    >
-                        <Token
-                            token={token}
-                            size="small"
-                            onClick={() => onTokenClick?.(token.id)}
-                            isSelected={selectedTokenId === token.id}
-                        />
-                    </div>
-                ))}
+                {card.tokens.map((token, index) => {
+                    // For troops (4 tokens), use tighter spacing
+                    const isTroop = card.tokens.length === 4;
+                    const spacing = isTroop ? 35 : 45;
+
+                    return (
+                        <div
+                            key={token.id}
+                            className="card-token-slot"
+                            style={{ left: `${10 + index * spacing}px` }}
+                        >
+                            <Token
+                                token={token}
+                                size="small"
+                                onClick={() => onTokenClick?.(token.id)}
+                                isSelected={selectedTokenId === token.id}
+                            />
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
