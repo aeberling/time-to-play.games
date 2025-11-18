@@ -1,1 +1,2 @@
 - Only push changes to git when I ask you to
+- When I ask you to plan or "create a plan", create a .md file in the /reference folder or appropriate subfolder if it is related to a specific game.

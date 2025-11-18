@@ -1,0 +1,54 @@
+{
+  "layouts": {
+    "standard_11x11": {
+      "name": "Standard 11x11",
+      "size": 11,
+      "description": "Standard balanced starting layout",
+      "startingPositions": {
+        "FACTION1": [
+          {"q": -3, "r": 3, "pieceType": "warrior"},
+          {"q": -2, "r": 3, "pieceType": "warrior"},
+          {"q": -3, "r": 4, "pieceType": "warrior"},
+          {"q": -2, "r": 2, "pieceType": "archer"},
+          {"q": -4, "r": 4, "pieceType": "archer"},
+          {"q": -3, "r": 2, "pieceType": "champion"}
+        ],
+        "FACTION2": [
+          {"q": 3, "r": -3, "pieceType": "soldier"},
+          {"q": 2, "r": -3, "pieceType": "soldier"},
+          {"q": 3, "r": -4, "pieceType": "soldier"},
+          {"q": 2, "r": -2, "pieceType": "sniper"},
+          {"q": 4, "r": -4, "pieceType": "sniper"},
+          {"q": 3, "r": -2, "pieceType": "berserker"}
+        ]
+      },
+      "specialTerrain": [
+        {"q": 0, "r": 0, "terrain": "objective"},
+        {"q": -2, "r": 0, "terrain": "defensive"},
+        {"q": 2, "r": 0, "terrain": "defensive"},
+        {"q": 0, "r": -2, "terrain": "defensive"},
+        {"q": 0, "r": 2, "terrain": "defensive"}
+      ]
+    },
+    "small_7x7": {
+      "name": "Small 7x7",
+      "size": 7,
+      "description": "Smaller board for faster games",
+      "startingPositions": {
+        "FACTION1": [
+          {"q": -2, "r": 2, "pieceType": "warrior"},
+          {"q": -1, "r": 2, "pieceType": "warrior"},
+          {"q": -2, "r": 1, "pieceType": "archer"}
+        ],
+        "FACTION2": [
+          {"q": 2, "r": -2, "pieceType": "soldier"},
+          {"q": 1, "r": -2, "pieceType": "soldier"},
+          {"q": 2, "r": -1, "pieceType": "sniper"}
+        ]
+      },
+      "specialTerrain": [
+        {"q": 0, "r": 0, "terrain": "objective"}
+      ]
+    }
+  }
+}

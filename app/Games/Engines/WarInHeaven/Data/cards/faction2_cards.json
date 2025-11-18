@@ -1,0 +1,59 @@
+{
+  "cards": [
+    {
+      "id": "f2_fury",
+      "name": "Battle Fury",
+      "type": "ABILITY",
+      "faction": "FACTION2",
+      "attack": 3,
+      "defense": -1,
+      "abilities": ["temporary_buff"],
+      "resourceCost": 1,
+      "description": "Give a unit +3 attack and -1 defense for this turn"
+    },
+    {
+      "id": "f2_armor",
+      "name": "Iron Armor",
+      "type": "ABILITY",
+      "faction": "FACTION2",
+      "attack": 0,
+      "defense": 2,
+      "abilities": ["temporary_buff"],
+      "resourceCost": 1,
+      "description": "Give a unit +2 defense for this turn"
+    },
+    {
+      "id": "f2_sacrifice",
+      "name": "Blood Sacrifice",
+      "type": "ABILITY",
+      "faction": "FACTION2",
+      "attack": 0,
+      "defense": 0,
+      "abilities": ["sacrifice", "draw"],
+      "resourceCost": 0,
+      "description": "Sacrifice a friendly unit to draw 2 cards"
+    },
+    {
+      "id": "f2_charge",
+      "name": "Charge",
+      "type": "ABILITY",
+      "faction": "FACTION2",
+      "attack": 1,
+      "defense": 0,
+      "abilities": ["movement", "attack_buff"],
+      "resourceCost": 2,
+      "description": "Move a unit up to 3 hexes and give it +1 attack if it attacks this turn"
+    },
+    {
+      "id": "f2_summon_soldier",
+      "name": "Summon Soldier",
+      "type": "SUMMON",
+      "faction": "FACTION2",
+      "attack": 0,
+      "defense": 0,
+      "abilities": ["summon"],
+      "resourceCost": 3,
+      "description": "Summon a Soldier unit at an empty adjacent hex"
+    }
+  ]
+}

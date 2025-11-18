@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 620" width="450" height="620">
+  <defs>
+    <!-- Hex polygon definition (flat-top hexagon) -->
+    <polygon id="hex" points="34.64,20 34.64,60 0,80 -34.64,60 -34.64,20 0,0" />
+
+    <!-- Filters and styles -->
+    <filter id="hexShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+
+    <style>
+      .hex-deploy { fill: #E8E8E8; stroke: #999; stroke-width: 1.5; }
+      .hex-gate { fill: #606060; stroke: #333; stroke-width: 1.5; }
+      .hex-standard { fill: #F5F5F5; stroke: #CCC; stroke-width: 1; }
+      .hex-label { font-family: monospace; font-size: 10px; fill: #333; text-anchor: middle; }
+      .hex-type { font-family: sans-serif; font-size: 8px; fill: #666; text-anchor: middle; }
+      .token { fill: none; stroke-width: 2; }
+      .token-angel { fill: #FFB200; stroke: #CC8E00; }
+      .token-demon { fill: #7F0212; stroke: #5A0000; }
+      .token-label { font-family: sans-serif; font-size: 11px; font-weight: bold; text-anchor: middle; fill: white; }
+      .board-title { font-family: sans-serif; font-size: 16px; font-weight: bold; fill: #333; text-anchor: middle; }
+      .legend-text { font-family: sans-serif; font-size: 11px; fill: #333; }
+      .legend-label { font-family: sans-serif; font-size: 9px; fill: #666; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="225" y="25" class="board-title">War in Heaven - Game Board</text>
+
+  <!-- Board Group -->
+  <g id="board" transform="translate(225, 80)">
+
+    <!-- Row 1: A1, B1 (Deploy - Angels) -->
+    <g transform="translate(-34.64, 0)">
+      <use href="#hex" class="hex-deploy" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A1</text>
+      <text y="15" class="hex-type">Deploy★</text>
+    </g>
+    <g transform="translate(34.64, 0)">
+      <use href="#hex" class="hex-deploy" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B1</text>
+      <text y="15" class="hex-type">Deploy★</text>
+    </g>
+
+    <!-- Row 2: A2, B2, C2 -->
+    <g transform="translate(-69.28, 60)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A2</text>
+    </g>
+    <g transform="translate(0, 60)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B2</text>
+      <!-- Commander token -->
+      <circle r="18" class="token token-angel"/>
+      <text y="4" class="token-label">M</text>
+    </g>
+    <g transform="translate(69.28, 60)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C2</text>
+    </g>
+
+    <!-- Row 3: A3, B3, C3, D3 -->
+    <g transform="translate(-103.92, 120)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A3</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-angel"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(-34.64, 120)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B3</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-angel"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(34.64, 120)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C3</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-angel"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(103.92, 120)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">D3</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-angel"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+
+    <!-- Row 4: A4, B4, C4, D4, E4 -->
+    <g transform="translate(-138.56, 180)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A4</text>
+    </g>
+    <g transform="translate(-69.28, 180)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B4</text>
+    </g>
+    <g transform="translate(0, 180)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C4</text>
+    </g>
+    <g transform="translate(69.28, 180)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">D4</text>
+    </g>
+    <g transform="translate(138.56, 180)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">E4</text>
+    </g>
+
+    <!-- Row 5: A5, B5, C5, D5 (Gate/Bridge) -->
+    <g transform="translate(-103.92, 240)">
+      <use href="#hex" class="hex-gate" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label" fill="#EEE">A5</text>
+      <text y="15" class="hex-type" fill="#CCC">Gate#</text>
+    </g>
+    <g transform="translate(-34.64, 240)">
+      <use href="#hex" class="hex-gate" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label" fill="#EEE">B5</text>
+      <text y="15" class="hex-type" fill="#CCC">Gate#</text>
+    </g>
+    <g transform="translate(34.64, 240)">
+      <use href="#hex" class="hex-gate" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label" fill="#EEE">C5</text>
+      <text y="15" class="hex-type" fill="#CCC">Gate#</text>
+    </g>
+    <g transform="translate(103.92, 240)">
+      <use href="#hex" class="hex-gate" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label" fill="#EEE">D5</text>
+      <text y="15" class="hex-type" fill="#CCC">Gate#</text>
+    </g>
+
+    <!-- Row 6: A6, B6, C6, D6, E6 -->
+    <g transform="translate(-138.56, 300)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A6</text>
+    </g>
+    <g transform="translate(-69.28, 300)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B6</text>
+    </g>
+    <g transform="translate(0, 300)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C6</text>
+    </g>
+    <g transform="translate(69.28, 300)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">D6</text>
+    </g>
+    <g transform="translate(138.56, 300)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">E6</text>
+    </g>
+
+    <!-- Row 7: A7, B7, C7, D7 -->
+    <g transform="translate(-103.92, 360)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A7</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-demon"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(-34.64, 360)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B7</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-demon"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(34.64, 360)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C7</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-demon"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+    <g transform="translate(103.92, 360)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">D7</text>
+      <!-- Troop token -->
+      <circle r="16" class="token token-demon"/>
+      <text y="4" class="token-label">T</text>
+    </g>
+
+    <!-- Row 8: A8, B8, C8 -->
+    <g transform="translate(-69.28, 420)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A8</text>
+    </g>
+    <g transform="translate(0, 420)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B8</text>
+      <!-- Commander token -->
+      <circle r="18" class="token token-demon"/>
+      <text y="4" class="token-label">L</text>
+    </g>
+    <g transform="translate(69.28, 420)">
+      <use href="#hex" class="hex-standard" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">C8</text>
+    </g>
+
+    <!-- Row 9: A9, B9 (Deploy - Demons) -->
+    <g transform="translate(-34.64, 480)">
+      <use href="#hex" class="hex-deploy" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">A9</text>
+      <text y="15" class="hex-type">Deploy★</text>
+    </g>
+    <g transform="translate(34.64, 480)">
+      <use href="#hex" class="hex-deploy" filter="url(#hexShadow)"/>
+      <text y="5" class="hex-label">B9</text>
+      <text y="15" class="hex-type">Deploy★</text>
+    </g>
+
+  </g>
+
+  <!-- Legend -->
+  <g id="legend" transform="translate(20, 560)">
+    <text x="0" y="0" class="legend-text" font-weight="bold">Legend:</text>
+
+    <!-- Deploy spaces -->
+    <rect x="0" y="8" width="15" height="12" class="hex-deploy"/>
+    <text x="20" y="18" class="legend-label">Deploy Spaces (★)</text>
+
+    <!-- Gate spaces -->
+    <rect x="120" y="8" width="15" height="12" class="hex-gate"/>
+    <text x="140" y="18" class="legend-label">Gate/Bridge (#)</text>
+
+    <!-- Angels token -->
+    <circle cx="250" cy="14" r="8" class="token token-angel"/>
+    <text x="262" y="18" class="legend-label">Angels (M=Michael, T=Troop)</text>
+
+    <!-- Demons token -->
+    <circle cx="10" cy="34" r="8" class="token token-demon"/>
+    <text x="22" y="38" class="legend-label">Demons (L=Lucifer, T=Troop)</text>
+  </g>
+
+  <!-- Board info -->
+  <g id="info" transform="translate(20, 40)">
+    <text x="0" y="0" class="legend-label">Total Hexes: 32 | Deploy: 4 (2 per faction) | Gate/Bridge: 4 | Standard: 24</text>
+  </g>
+</svg>

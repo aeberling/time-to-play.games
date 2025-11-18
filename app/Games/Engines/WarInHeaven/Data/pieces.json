@@ -1,0 +1,74 @@
+{
+  "pieceTypes": {
+    "FACTION1": [
+      {
+        "type": "warrior",
+        "name": "Warrior",
+        "health": 3,
+        "attack": 2,
+        "defense": 2,
+        "movementRange": 2,
+        "attackRange": 1,
+        "abilities": [],
+        "description": "A basic melee unit with balanced stats"
+      },
+      {
+        "type": "archer",
+        "name": "Archer",
+        "health": 2,
+        "attack": 3,
+        "defense": 1,
+        "movementRange": 2,
+        "attackRange": 3,
+        "abilities": ["ranged"],
+        "description": "Ranged unit that can attack from distance"
+      },
+      {
+        "type": "champion",
+        "name": "Champion",
+        "health": 5,
+        "attack": 3,
+        "defense": 3,
+        "movementRange": 2,
+        "attackRange": 1,
+        "abilities": ["leader"],
+        "description": "Powerful unit with high stats"
+      }
+    ],
+    "FACTION2": [
+      {
+        "type": "soldier",
+        "name": "Soldier",
+        "health": 3,
+        "attack": 2,
+        "defense": 2,
+        "movementRange": 2,
+        "attackRange": 1,
+        "abilities": [],
+        "description": "A basic melee unit with balanced stats"
+      },
+      {
+        "type": "sniper",
+        "name": "Sniper",
+        "health": 2,
+        "attack": 3,
+        "defense": 1,
+        "movementRange": 2,
+        "attackRange": 4,
+        "abilities": ["ranged", "longshot"],
+        "description": "Long-range unit with exceptional attack range"
+      },
+      {
+        "type": "berserker",
+        "name": "Berserker",
+        "health": 4,
+        "attack": 4,
+        "defense": 1,
+        "movementRange": 3,
+        "attackRange": 1,
+        "abilities": ["aggressive"],
+        "description": "High damage, low defense unit with increased movement"
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "cards": [
+    {
+      "id": "f1_attack_boost",
+      "name": "Attack Boost",
+      "type": "ABILITY",
+      "faction": "FACTION1",
+      "attack": 2,
+      "defense": 0,
+      "abilities": ["temporary_buff"],
+      "resourceCost": 1,
+      "description": "Give a unit +2 attack for this turn"
+    },
+    {
+      "id": "f1_defense_wall",
+      "name": "Defense Wall",
+      "type": "ABILITY",
+      "faction": "FACTION1",
+      "attack": 0,
+      "defense": 3,
+      "abilities": ["temporary_buff"],
+      "resourceCost": 1,
+      "description": "Give a unit +3 defense for this turn"
+    },
+    {
+      "id": "f1_heal",
+      "name": "Healing Light",
+      "type": "ABILITY",
+      "faction": "FACTION1",
+      "attack": 0,
+      "defense": 0,
+      "abilities": ["heal"],
+      "resourceCost": 2,
+      "description": "Restore 2 health to a friendly unit"
+    },
+    {
+      "id": "f1_movement",
+      "name": "Swift March",
+      "type": "ABILITY",
+      "faction": "FACTION1",
+      "attack": 0,
+      "defense": 0,
+      "abilities": ["movement"],
+      "resourceCost": 1,
+      "description": "Move a unit up to 2 additional hexes this turn"
+    },
+    {
+      "id": "f1_summon_warrior",
+      "name": "Summon Warrior",
+      "type": "SUMMON",
+      "faction": "FACTION1",
+      "attack": 0,
+      "defense": 0,
+      "abilities": ["summon"],
+      "resourceCost": 3,
+      "description": "Summon a Warrior unit at an empty adjacent hex"
+    }
+  ]
+}

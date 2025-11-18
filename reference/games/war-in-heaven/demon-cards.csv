@@ -1,0 +1,9 @@
+quantity,name,cost,attack,defense,subtype,colorhex,circleicon,cardimage,specialimage,specialmapimage,flavortext,specialtext
+1,Lucifer,0,5,6,Commander,#7F0212,{{ images.iconlucifer.url }},{{ images.lucifer.url }},{{ images.refreshability.url }},,Lucifer was extremely prideful and rebelled against his Father.,"Once per game, may move one of your Allies or Troops on the Battle Field to a space adjacent to Lucifer."
+1,Fallen Angels,0,1,1,Troop,#7F0212,{{ images.iconfallenangels.url }},{{ images.fallen.url }},,,How art thou fallen from heaven.,Start the game with 4 Troops on the Battle Field.
+1,Leviathen,1,3,2,Ally,#7F0212,{{ images.iconleviathen.url }},{{ images.leviathen.url }},{{ images.move.url }},,Demon of the deadly sin envy.,Moves 2 spaces in any direction. May move through occupied spaces.
+1,Belphegor,2,2,4,Ally,#7F0212,{{ images.iconbelphegor.url }},{{ images.belphegor.url }},{{ images.ability.url }},,Demon of the deadly sin sloth.,"At the end of his move, each opponent's Troops in a straight line to him moves one space way from him."
+1,Mammon,3,0,4,Ally,#7F0212,{{ images.iconmammon.url }},{{ images.mammon.url }},{{ images.ability.url }},,Demon of the deadly sin greed.,"At the start of each Round, may recharge up to one token. This is in addition to normal Recharge game rule."
+1,Asmodeus,1,6,2,Ally,#7F0212,{{ images.iconasmodeus.url }},{{ images.asmodeus.url }},{{ images.move.url }},,Demon of the deadly sin lust.,Can move any number of spaces in a straight line. Cannot move onto or past Pearly Gate spaces.
+1,Beelzebub,2,1,3,Ally,#7F0212,{{ images.iconbeelzebub.url }},{{ images.beelzebub.url }},{{ images.crown.url }},,Demon of the deadly sin gluttony.,WIN if all of your Allies are on the Battle Field.
+1,Baal,3,3,3,Ally,#7F0212,{{ images.iconbaal.url }},{{ images.baal.url }},{{ images.ability.url }},,Demon of the deadly sin fear.,Bolster Lucifer by +2 Attack and +2 Defense.
