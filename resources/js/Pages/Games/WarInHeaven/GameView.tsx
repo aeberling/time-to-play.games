@@ -291,6 +291,8 @@ export default function GameView() {
     const [activeTab, setActiveTab] = useState<'player' | 'opponent'>('player');
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [round, setRound] = useState(1);
+    const [actionsRemaining, setActionsRemaining] = useState(3);
 
     const angelCards = createAngelCards();
     const demonCards = createDemonCards();
@@ -315,6 +317,41 @@ export default function GameView() {
                     onHexHover={handleHexHover}
                     validMoves={[]}
                 />
+            </div>
+
+            {/* Summary Panel */}
+            <div className="summary-panel">
+                <div className="summary-section">
+                    <div className="summary-label">Round</div>
+                    <div className="summary-value">{round} / 12</div>
+                </div>
+
+                <div className="summary-divider" />
+
+                <div className="summary-section">
+                    <div className="summary-label">Actions</div>
+                    <div className="summary-value">{actionsRemaining} / 3</div>
+                    <div className="action-dots">
+                        {[...Array(3)].map((_, i) => (
+                            <div
+                                key={i}
+                                className={`action-dot ${i < actionsRemaining ? 'action-dot-active' : ''}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                <div className="summary-divider" />
+
+                <button
+                    className="end-turn-btn"
+                    onClick={() => {
+                        setActionsRemaining(3);
+                        setRound(r => Math.min(12, r + 1));
+                    }}
+                >
+                    End Turn
+                </button>
             </div>
 
             {/* Collapsible Card Panel */}
