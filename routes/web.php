@@ -58,6 +58,11 @@ Route::get('/dev/war-in-heaven/token-gallery', function () {
     return Inertia::render('Games/WarInHeaven/TokenGallery');
 })->name('dev.war-in-heaven.token-gallery');
 
+// War in Heaven Card Gallery (Development)
+Route::get('/dev/war-in-heaven/card-gallery', function () {
+    return Inertia::render('Games/WarInHeaven/CardGallery');
+})->name('dev.war-in-heaven.card-gallery');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
