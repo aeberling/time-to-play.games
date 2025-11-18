@@ -285,7 +285,61 @@ const createDemonCards = (): CardData[] => {
 };
 
 export default function GameView() {
-    const [hexes] = useState<Record<string, HexState>>(initializeHexes());
+    const [hexes, setHexes] = useState<Record<string, HexState>>(() => {
+        const initialHexes = initializeHexes();
+        // Place some initial tokens on the board
+        initialHexes['A2'].occupiedBy = {
+            id: 'angel_militia_token_0',
+            name: "Heaven's Militia",
+            faction: 'angels',
+            subtype: 'troop',
+            attack: 1,
+            defense: 1,
+            icon: '/assets/games/war-in-heaven/icons/iconmilitia.png',
+            isActive: true,
+        };
+        initialHexes['B3'].occupiedBy = {
+            id: 'angel_michael_token_0',
+            name: 'Michael',
+            faction: 'angels',
+            subtype: 'commander',
+            attack: 5,
+            defense: 6,
+            icon: '/assets/games/war-in-heaven/icons/iconmichael.png',
+            isActive: true,
+        };
+        initialHexes['C4'].occupiedBy = {
+            id: 'angel_uriel_token_0',
+            name: 'Uriel',
+            faction: 'angels',
+            subtype: 'ally',
+            attack: 3,
+            defense: 2,
+            icon: '/assets/games/war-in-heaven/icons/iconuriel.png',
+            isActive: false, // This one is flipped (depleted)
+        };
+        initialHexes['C6'].occupiedBy = {
+            id: 'demon_fallen_token_0',
+            name: 'Fallen Angels',
+            faction: 'demons',
+            subtype: 'troop',
+            attack: 1,
+            defense: 1,
+            icon: '/assets/games/war-in-heaven/icons/iconfallenangels.png',
+            isActive: true,
+        };
+        initialHexes['B7'].occupiedBy = {
+            id: 'demon_lucifer_token_0',
+            name: 'Lucifer',
+            faction: 'demons',
+            subtype: 'commander',
+            attack: 5,
+            defense: 6,
+            icon: '/assets/games/war-in-heaven/icons/iconlucifer.png',
+            isActive: true,
+        };
+        return initialHexes;
+    });
     const [selectedHex, setSelectedHex] = useState<HexCoordinate | null>(null);
     const [isPanelExpanded, setIsPanelExpanded] = useState(false);
     const [activeTab, setActiveTab] = useState<'player' | 'opponent'>('player');
@@ -293,17 +347,136 @@ export default function GameView() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [round, setRound] = useState(1);
     const [actionsRemaining, setActionsRemaining] = useState(3);
+    const [selectedToken, setSelectedToken] = useState<string | null>(null);
+    const [draggedToken, setDraggedToken] = useState<{cardId: string, tokenIndex: number} | null>(null);
 
-    const angelCards = createAngelCards();
-    const demonCards = createDemonCards();
+    const [angelCards, setAngelCards] = useState<CardData[]>(createAngelCards());
+    const [demonCards, setDemonCards] = useState<CardData[]>(createDemonCards());
     const displayCards = activeTab === 'player' ? angelCards : demonCards;
 
     const handleHexClick = (coordinate: HexCoordinate) => {
-        setSelectedHex(coordinate);
+        const hex = hexes[coordinate];
+
+        // If we have a token on the hex, select it or flip it
+        if (hex.occupiedBy) {
+            if (selectedToken === hex.occupiedBy.id) {
+                // Double-click behavior: flip the token
+                setHexes({
+                    ...hexes,
+                    [coordinate]: {
+                        ...hex,
+                        occupiedBy: hex.occupiedBy ? {
+                            ...hex.occupiedBy,
+                            isActive: !hex.occupiedBy.isActive,
+                        } : null,
+                    },
+                });
+            } else {
+                // Single click: select the token
+                setSelectedToken(hex.occupiedBy.id);
+                setSelectedHex(coordinate);
+            }
+        } else {
+            // Empty hex clicked
+            if (selectedToken && selectedHex) {
+                // Move token from selectedHex to this hex
+                const fromHex = hexes[selectedHex];
+                if (fromHex.occupiedBy) {
+                    setHexes({
+                        ...hexes,
+                        [selectedHex]: {
+                            ...fromHex,
+                            occupiedBy: null,
+                        },
+                        [coordinate]: {
+                            ...hex,
+                            occupiedBy: fromHex.occupiedBy,
+                        },
+                    });
+                    setSelectedToken(null);
+                    setSelectedHex(null);
+                }
+            } else {
+                setSelectedHex(coordinate);
+            }
+        }
     };
 
     const handleHexHover = (coordinate: HexCoordinate | null) => {
         // Optional hover handling
+    };
+
+    const handleTokenDragStart = (cardId: string, tokenIndex: number) => {
+        const cards = activeTab === 'player' ? angelCards : demonCards;
+        const card = cards.find(c => c.id === cardId);
+        if (card && card.tokens[tokenIndex]) {
+            setDraggedToken({ cardId, tokenIndex });
+        }
+    };
+
+    const handleTokenDrop = (coordinate: HexCoordinate) => {
+        if (!draggedToken) return;
+
+        const cards = activeTab === 'player' ? angelCards : demonCards;
+        const setCards = activeTab === 'player' ? setAngelCards : setDemonCards;
+        const card = cards.find(c => c.id === draggedToken.cardId);
+
+        if (!card) return;
+
+        const token = card.tokens[draggedToken.tokenIndex];
+        const hex = hexes[coordinate];
+
+        // Check if hex is a valid deploy zone for this faction
+        const isValidDeploy = (hex.type === 'deploy' &&
+            ((token.faction === 'angels' && ['A1', 'B1'].includes(coordinate)) ||
+             (token.faction === 'demons' && ['A9', 'B9'].includes(coordinate))));
+
+        if (hex.occupiedBy || !isValidDeploy) return;
+
+        // Place token on board
+        setHexes({
+            ...hexes,
+            [coordinate]: {
+                ...hex,
+                occupiedBy: token,
+            },
+        });
+
+        // Remove token from card
+        const updatedCards = cards.map(c => {
+            if (c.id === draggedToken.cardId) {
+                return {
+                    ...c,
+                    tokens: c.tokens.filter((_, i) => i !== draggedToken.tokenIndex),
+                };
+            }
+            return c;
+        });
+        setCards(updatedCards);
+        setDraggedToken(null);
+    };
+
+    const handleCardTokenClick = (cardId: string, tokenIndex: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const cards = activeTab === 'player' ? angelCards : demonCards;
+        const setCards = activeTab === 'player' ? setAngelCards : setDemonCards;
+        const card = cards.find(c => c.id === cardId);
+
+        if (!card || !card.tokens[tokenIndex]) return;
+
+        // Flip the token (for payment)
+        const updatedCards = cards.map(c => {
+            if (c.id === cardId) {
+                return {
+                    ...c,
+                    tokens: c.tokens.map((token, i) =>
+                        i === tokenIndex ? { ...token, isActive: !token.isActive } : token
+                    ),
+                };
+            }
+            return c;
+        });
+        setCards(updatedCards);
     };
 
     return (
@@ -315,6 +488,7 @@ export default function GameView() {
                     selectedHex={selectedHex}
                     onHexClick={handleHexClick}
                     onHexHover={handleHexHover}
+                    onDrop={handleTokenDrop}
                     validMoves={[]}
                 />
             </div>
@@ -390,47 +564,71 @@ export default function GameView() {
                             onMouseMove={(e) => setMousePosition({ x: e.clientX, y: e.clientY })}
                             onMouseLeave={() => setHoveredCard(null)}
                         >
-                            {/* Token overlay */}
-                            {card.tokens.length > 0 && (
-                                <div className="panel-card-token">
+                            {/* Show all tokens for this card */}
+                            {card.tokens.map((token, tokenIndex) => (
+                                <div
+                                    key={token.id}
+                                    className="panel-card-token"
+                                    style={{
+                                        left: `${tokenIndex * 8}px`,
+                                        cursor: 'pointer',
+                                    }}
+                                    draggable
+                                    onDragStart={() => handleTokenDragStart(card.id, tokenIndex)}
+                                    onClick={(e) => handleCardTokenClick(card.id, tokenIndex, e)}
+                                    title="Drag to deploy or click to flip"
+                                >
                                     <svg width="50" height="50" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
                                         <circle cx="32" cy="32" r="31" fill="#000" />
-                                        <circle cx="32" cy="32" r="29" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'} />
-                                        <circle cx="32" cy="32" r="28" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'}
-                                                clipPath={`url(#clip-top-mini-${card.id})`} />
-                                        <clipPath id={`clip-top-mini-${card.id}`}>
+                                        <circle cx="32" cy="32" r="29" fill={token.isActive ? (card.faction === 'angels' ? '#FFB200' : '#7F0212') : '#D2D2D2'} />
+                                        <circle cx="32" cy="32" r="28" fill={token.isActive ? (card.faction === 'angels' ? '#FFB200' : '#7F0212') : '#D2D2D2'}
+                                                clipPath={`url(#clip-top-mini-${token.id})`} />
+                                        <clipPath id={`clip-top-mini-${token.id}`}>
                                             <rect x="0" y="0" width="64" height="38.4" />
                                         </clipPath>
                                         <circle cx="32" cy="32" r="29" fill="#5A6C7D"
-                                                clipPath={`url(#clip-bottom-mini-${card.id})`} />
-                                        <clipPath id={`clip-bottom-mini-${card.id}`}>
+                                                clipPath={`url(#clip-bottom-mini-${token.id})`} />
+                                        <clipPath id={`clip-bottom-mini-${token.id}`}>
                                             <rect x="0" y="38.4" width="64" height="25.6" />
                                         </clipPath>
                                         <image
-                                            href={card.iconUrl}
+                                            href={token.isActive ? card.iconUrl : '/assets/games/war-in-heaven/icons/refresh.png'}
                                             x="17.6"
-                                            y="6.4"
-                                            width="28.8"
-                                            height="28.8"
-                                            clipPath={`url(#clip-top-mini-${card.id})`}
+                                            y={token.isActive ? "6.4" : "11.4"}
+                                            width={token.isActive ? "28.8" : "18.8"}
+                                            height={token.isActive ? "28.8" : "18.8"}
+                                            clipPath={token.isActive ? `url(#clip-top-mini-${token.id})` : undefined}
                                             preserveAspectRatio="xMidYMid meet"
                                         />
-                                        <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
-                                              filter={`url(#shadow-mini-${card.id})`}>
-                                            {card.attack}
-                                        </text>
-                                        <text x="48" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
-                                              filter={`url(#shadow-mini-${card.id})`}>
-                                            {card.defense}
-                                        </text>
+                                        {token.isActive ? (
+                                            <>
+                                                <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                      filter={`url(#shadow-mini-${token.id})`}>
+                                                    {card.attack}
+                                                </text>
+                                                <text x="48" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                      filter={`url(#shadow-mini-${token.id})`}>
+                                                    {card.defense}
+                                                </text>
+                                            </>
+                                        ) : (
+                                            <image
+                                                href="/assets/games/war-in-heaven/icons/refresh.png"
+                                                x="22.4"
+                                                y="42.4"
+                                                width="19.2"
+                                                height="19.2"
+                                                clipPath={`url(#clip-bottom-mini-${token.id})`}
+                                            />
+                                        )}
                                         <defs>
-                                            <filter id={`shadow-mini-${card.id}`}>
+                                            <filter id={`shadow-mini-${token.id}`}>
                                                 <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.8" floodColor="#000"/>
                                             </filter>
                                         </defs>
                                     </svg>
                                 </div>
-                            )}
+                            ))}
 
                             {/* Card Image */}
                             <img

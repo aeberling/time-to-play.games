@@ -10,6 +10,7 @@ interface HexBoardProps {
   validMoves: string[];
   onHexClick: (coordinate: string) => void;
   onHexHover: (coordinate: string | null) => void;
+  onDrop?: (coordinate: string) => void;
   showCoordinates?: boolean;
 }
 
@@ -32,6 +33,7 @@ export const HexBoard: React.FC<HexBoardProps> = ({
   validMoves,
   onHexClick,
   onHexHover,
+  onDrop,
   showCoordinates = false,
 }) => {
   // Calculate board dimensions
@@ -89,6 +91,7 @@ export const HexBoard: React.FC<HexBoardProps> = ({
                   onClick={() => onHexClick(coordinate)}
                   onMouseEnter={() => onHexHover(coordinate)}
                   onMouseLeave={() => onHexHover(null)}
+                  onDrop={onDrop ? () => onDrop(coordinate) : undefined}
                 />
               );
             });

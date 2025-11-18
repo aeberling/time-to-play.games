@@ -191,10 +191,9 @@
 .panel-card-wrapper {
     position: relative;
     flex-shrink: 0;
-    cursor: pointer;
     transition: transform 0.2s ease;
-    padding-top: 20px;
-    padding-left: 20px;
+    padding-top: 60px;
+    padding-left: 40px;
 }
 
 .panel-card-wrapper:hover {

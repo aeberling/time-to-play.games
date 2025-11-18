@@ -13,6 +13,7 @@ interface HexTileProps {
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onDrop?: () => void;
 }
 
 // Generate flat-top hexagon points
@@ -40,9 +41,27 @@ export const HexTile: React.FC<HexTileProps> = ({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  onDrop,
 }) => {
+  const [isDragOver, setIsDragOver] = React.useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (onDrop) onDrop();
+  };
   // Determine hex fill color based on type
   const getFillColor = (): string => {
+    if (isDragOver && hexState.type === 'deploy') return '#C8E6C8'; // Light green for valid drop zone
     if (isSelected) return '#FFE59E'; // Light yellow for selection
     if (isValidMove) return '#B8E6B8'; // Light green for valid moves
 
@@ -103,6 +122,9 @@ export const HexTile: React.FC<HexTileProps> = ({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       style={{ cursor: 'pointer' }}
     >
       {/* Hexagon shape */}
@@ -157,15 +179,96 @@ export const HexTile: React.FC<HexTileProps> = ({
         </text>
       )}
 
-      {/* Occupied indicator (if hex has a token) */}
+      {/* Token (if hex is occupied) */}
       {hexState.occupiedBy && (
-        <circle
-          r={HEX_SIZE * 0.4}
-          fill="rgba(255, 255, 255, 0.3)"
-          stroke="#333"
-          strokeWidth="1"
-          pointerEvents="none"
-        />
+        <g pointerEvents="none">
+          {/* Token background */}
+          <circle r={HEX_SIZE * 0.65} fill="#000" />
+          <circle
+            r={HEX_SIZE * 0.62}
+            fill={hexState.occupiedBy.isActive
+              ? (hexState.occupiedBy.faction === 'angels' ? '#FFB200' : '#7F0212')
+              : '#D2D2D2'}
+            clipPath={`url(#token-top-${coordinate})`}
+          />
+          <clipPath id={`token-top-${coordinate}`}>
+            <rect
+              x={-HEX_SIZE * 0.62}
+              y={-HEX_SIZE * 0.62}
+              width={HEX_SIZE * 1.24}
+              height={HEX_SIZE * 0.744}
+            />
+          </clipPath>
+          <circle
+            r={HEX_SIZE * 0.62}
+            fill="#5A6C7D"
+            clipPath={`url(#token-bottom-${coordinate})`}
+          />
+          <clipPath id={`token-bottom-${coordinate}`}>
+            <rect
+              x={-HEX_SIZE * 0.62}
+              y={-HEX_SIZE * 0.124}
+              width={HEX_SIZE * 1.24}
+              height={HEX_SIZE * 0.496}
+            />
+          </clipPath>
+
+          {/* Token icon */}
+          <image
+            href={hexState.occupiedBy.isActive
+              ? hexState.occupiedBy.icon
+              : '/assets/games/war-in-heaven/icons/refresh.png'}
+            x={hexState.occupiedBy.isActive ? -HEX_SIZE * 0.35 : -HEX_SIZE * 0.25}
+            y={hexState.occupiedBy.isActive ? -HEX_SIZE * 0.5 : -HEX_SIZE * 0.35}
+            width={hexState.occupiedBy.isActive ? HEX_SIZE * 0.7 : HEX_SIZE * 0.5}
+            height={hexState.occupiedBy.isActive ? HEX_SIZE * 0.7 : HEX_SIZE * 0.5}
+            clipPath={hexState.occupiedBy.isActive ? `url(#token-top-${coordinate})` : undefined}
+            preserveAspectRatio="xMidYMid meet"
+          />
+
+          {/* Stats or refresh icon */}
+          {hexState.occupiedBy.isActive ? (
+            <>
+              <text
+                x={-HEX_SIZE * 0.35}
+                y={HEX_SIZE * 0.35}
+                textAnchor="middle"
+                fontSize={HEX_SIZE * 0.35}
+                fill="#FFF"
+                fontWeight="bold"
+                filter={`url(#token-shadow-${coordinate})`}
+              >
+                {hexState.occupiedBy.attack}
+              </text>
+              <text
+                x={HEX_SIZE * 0.35}
+                y={HEX_SIZE * 0.35}
+                textAnchor="middle"
+                fontSize={HEX_SIZE * 0.35}
+                fill="#FFF"
+                fontWeight="bold"
+                filter={`url(#token-shadow-${coordinate})`}
+              >
+                {hexState.occupiedBy.defense}
+              </text>
+            </>
+          ) : (
+            <image
+              href="/assets/games/war-in-heaven/icons/refresh.png"
+              x={-HEX_SIZE * 0.25}
+              y={HEX_SIZE * 0.05}
+              width={HEX_SIZE * 0.5}
+              height={HEX_SIZE * 0.5}
+              clipPath={`url(#token-bottom-${coordinate})`}
+            />
+          )}
+
+          <defs>
+            <filter id={`token-shadow-${coordinate}`}>
+              <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodOpacity="0.8" floodColor="#000"/>
+            </filter>
+          </defs>
+        </g>
       )}
     </g>
   );
