@@ -184,54 +184,58 @@ export const Token: React.FC<TokenProps> = ({
                             fill="#000"
                         />
 
-                        {/* Inner circle (background) - desaturated */}
+                        {/* Inner circle (background) */}
                         <circle
                             cx={radius}
                             cy={radius}
                             r={radius - 3}
-                            fill={factionColor}
-                            opacity="0.4"
+                            fill="#D2D2D2"
                         />
 
-                        {/* Gray overlay */}
+                        {/* Top three-fifths - character icon area */}
+                        <clipPath id={`clip-top-inactive-${token.id}`}>
+                            <rect x="0" y="0" width={radius * 2} height={radius * 1.2} />
+                        </clipPath>
+                        <circle
+                            cx={radius}
+                            cy={radius}
+                            r={radius - 4}
+                            fill="#D2D2D2"
+                            clipPath={`url(#clip-top-inactive-${token.id})`}
+                        />
+
+                        {/* Character icon */}
+                        <image
+                            href={token.icon}
+                            x={radius * 0.55}
+                            y={radius * 0.2}
+                            width={radius * 0.9}
+                            height={radius * 0.9}
+                            clipPath={`url(#clip-top-inactive-${token.id})`}
+                            preserveAspectRatio="xMidYMid meet"
+                        />
+
+                        {/* Bottom two-fifths - grey-blue background */}
+                        <clipPath id={`clip-bottom-inactive-${token.id}`}>
+                            <rect x="0" y={radius * 1.2} width={radius * 2} height={radius * 0.8} />
+                        </clipPath>
                         <circle
                             cx={radius}
                             cy={radius}
                             r={radius - 3}
-                            fill="#666"
-                            opacity="0.7"
+                            fill="#5A6C7D"
+                            clipPath={`url(#clip-bottom-inactive-${token.id})`}
                         />
 
-                        {/* Refresh icon area */}
-                        <circle
-                            cx={radius}
-                            cy={radius}
-                            r={radius * 0.5}
-                            fill="#888"
+                        {/* Refresh icon centered in bottom section */}
+                        <image
+                            href="/assets/games/war-in-heaven/icons/refresh-icon.png"
+                            x={radius * 0.72}
+                            y={radius * 1.42 - 5}
+                            width={radius * 0.56}
+                            height={radius * 0.56}
+                            preserveAspectRatio="xMidYMid meet"
                         />
-
-                        {/* Refresh icon (simplified) */}
-                        <g transform={`translate(${radius}, ${radius})`}>
-                            <text
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fontSize={radius * 0.5}
-                                fill="#FFF"
-                            >
-                                ↻
-                            </text>
-                        </g>
-
-                        {/* "Flip to Recharge" text */}
-                        <text
-                            x={radius}
-                            y={radius * 1.7}
-                            textAnchor="middle"
-                            fontSize={radius * 0.2}
-                            fill="#CCC"
-                        >
-                            Recharge
-                        </text>
                     </g>
                 )}
             </svg>
