@@ -149,6 +149,7 @@ export default function PlayerHand() {
     const [cards, setCards] = useState<CardData[]>(createAngelCards());
     const [modalCard, setModalCard] = useState<CardData | null>(null);
     const [selectedToken, setSelectedToken] = useState<string | null>(null);
+    const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
     const handleCardClick = (card: CardData) => {
         setModalCard(card);
@@ -220,23 +221,94 @@ export default function PlayerHand() {
                                 position: 'relative',
                                 cursor: 'pointer',
                                 transition: 'transform 0.2s ease',
+                                paddingTop: '20px', // Extra padding for token overflow
+                                paddingLeft: '20px', // Extra padding for token overflow
                             }}
-                            onClick={() => handleCardClick(card)}
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-8px)';
+                                setHoveredCard(card.id);
                             }}
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = 'translateY(0)';
+                                setHoveredCard(null);
                             }}
                         >
+                            {/* Token on top-left corner, partially off card */}
+                            {card.tokens.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '0',
+                                    left: '0',
+                                    zIndex: 10,
+                                }}>
+                                    <div style={{
+                                        width: '50px',
+                                        height: '50px',
+                                    }}>
+                                        <svg
+                                            width="50"
+                                            height="50"
+                                            viewBox="0 0 64 64"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            {/* Token circle */}
+                                            <circle cx="32" cy="32" r="31" fill="#000" />
+                                            <circle cx="32" cy="32" r="29" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'} />
+                                            <circle cx="32" cy="32" r="28" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'}
+                                                    clipPath={`url(#clip-top-mini-${card.id})`} />
+                                            <clipPath id={`clip-top-mini-${card.id}`}>
+                                                <rect x="0" y="0" width="64" height="38.4" />
+                                            </clipPath>
+
+                                            {/* Bottom section */}
+                                            <circle cx="32" cy="32" r="29" fill="#5A6C7D"
+                                                    clipPath={`url(#clip-bottom-mini-${card.id})`} />
+                                            <clipPath id={`clip-bottom-mini-${card.id}`}>
+                                                <rect x="0" y="38.4" width="64" height="25.6" />
+                                            </clipPath>
+
+                                            {/* Character icon */}
+                                            <image
+                                                href={card.iconUrl}
+                                                x="17.6"
+                                                y="6.4"
+                                                width="28.8"
+                                                height="28.8"
+                                                clipPath={`url(#clip-top-mini-${card.id})`}
+                                                preserveAspectRatio="xMidYMid meet"
+                                            />
+
+                                            {/* Stats */}
+                                            <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                  filter={`url(#shadow-mini-${card.id})`}>
+                                                {card.attack}
+                                            </text>
+                                            <text x="48" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                  filter={`url(#shadow-mini-${card.id})`}>
+                                                {card.defense}
+                                            </text>
+
+                                            <defs>
+                                                <filter id={`shadow-mini-${card.id}`}>
+                                                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.8" floodColor="#000"/>
+                                                </filter>
+                                            </defs>
+                                        </svg>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Card Image at 50% size */}
-                            <div style={{
-                                position: 'relative',
-                                width: '140px',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-                            }}>
+                            <div
+                                style={{
+                                    position: 'relative',
+                                    width: '140px',
+                                    borderRadius: '8px',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                                }}
+                                onClick={() => handleCardClick(card)}
+                            >
                                 <img
                                     src={card.cardImageUrl}
                                     alt={card.name}
@@ -246,71 +318,45 @@ export default function PlayerHand() {
                                         display: 'block',
                                     }}
                                 />
+                            </div>
 
-                                {/* Token on card */}
-                                {card.tokens.length > 0 && (
+                            {/* Tooltip */}
+                            {hoveredCard === card.id && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '-80px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: '#2a2a2a',
+                                    color: '#fff',
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                                    border: `2px solid ${card.faction === 'angels' ? '#FFB200' : '#7F0212'}`,
+                                    maxWidth: '280px',
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.4',
+                                    zIndex: 100,
+                                    pointerEvents: 'none',
+                                }}>
+                                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: card.faction === 'angels' ? '#FFB200' : '#ef4444' }}>
+                                        {card.name}
+                                    </div>
+                                    {card.specialText}
+                                    {/* Arrow */}
                                     <div style={{
                                         position: 'absolute',
-                                        top: '8px',
-                                        right: '8px',
-                                    }}>
-                                        <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                        }}>
-                                            <svg
-                                                width="40"
-                                                height="40"
-                                                viewBox="0 0 64 64"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                            >
-                                                {/* Token circle */}
-                                                <circle cx="32" cy="32" r="31" fill="#000" />
-                                                <circle cx="32" cy="32" r="29" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'} />
-                                                <circle cx="32" cy="32" r="28" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'}
-                                                        clipPath="url(#clip-top-mini)" />
-                                                <clipPath id="clip-top-mini">
-                                                    <rect x="0" y="0" width="64" height="38.4" />
-                                                </clipPath>
-
-                                                {/* Bottom section */}
-                                                <circle cx="32" cy="32" r="29" fill="#5A6C7D"
-                                                        clipPath="url(#clip-bottom-mini)" />
-                                                <clipPath id="clip-bottom-mini">
-                                                    <rect x="0" y="38.4" width="64" height="25.6" />
-                                                </clipPath>
-
-                                                {/* Character icon */}
-                                                <image
-                                                    href={card.iconUrl}
-                                                    x="17.6"
-                                                    y="6.4"
-                                                    width="28.8"
-                                                    height="28.8"
-                                                    clipPath="url(#clip-top-mini)"
-                                                    preserveAspectRatio="xMidYMid meet"
-                                                />
-
-                                                {/* Stats */}
-                                                <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
-                                                      filter="url(#shadow-mini)">
-                                                    {card.attack}
-                                                </text>
-                                                <text x="48" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
-                                                      filter="url(#shadow-mini)">
-                                                    {card.defense}
-                                                </text>
-
-                                                <defs>
-                                                    <filter id="shadow-mini">
-                                                        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.8" floodColor="#000"/>
-                                                    </filter>
-                                                </defs>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                                        top: '-8px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        width: 0,
+                                        height: 0,
+                                        borderLeft: '8px solid transparent',
+                                        borderRight: '8px solid transparent',
+                                        borderBottom: `8px solid ${card.faction === 'angels' ? '#FFB200' : '#7F0212'}`,
+                                    }} />
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
