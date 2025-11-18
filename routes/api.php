@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\GamePlayerController;
 use App\Http\Controllers\Api\GameMoveController;
 use App\Http\Controllers\Api\GameTestController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\UserThemeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,10 +31,6 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/users/online', [UserController::class, 'online']);
     Route::post('/users/heartbeat', [UserController::class, 'heartbeat']);
-
-    // Theme endpoints
-    Route::get('/user/theme', [UserThemeController::class, 'show']);
-    Route::put('/user/theme', [UserThemeController::class, 'update']);
 
     // Game management
     Route::prefix('games')->group(function () {
