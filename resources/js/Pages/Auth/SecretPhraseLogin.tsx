@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 export default function SecretPhraseLogin({
     status,
@@ -15,6 +15,8 @@ export default function SecretPhraseLogin({
         secret_phrase: '',
         remember: false as boolean,
     });
+
+    const [isInputFocused, setIsInputFocused] = useState(false);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -37,24 +39,14 @@ export default function SecretPhraseLogin({
                 </p>
             </div>
 
-            {/* Gate of Moria ASCII Art */}
-            <div className="mb-8 text-center font-mono text-xs text-gray-500 whitespace-pre">
-{`              ___
-             /   \\
-            /  ^  \\
-           |  / \\  |
-           | |   | |
-            \\  O  /
-             \\___/
-              | |
-            __|_|__
-           |       |
-           | ITHIL |
-           |  /|\\  |
-           | / | \\ |
-           |/  |  \\|
-           |   |   |
-           |_______|`}
+            {/* Gate of Moria Image */}
+            <div className="mb-8 text-center">
+                <img
+                    src={isInputFocused ? '/images/speak-friend.png' : '/images/speak-friend-px.png'}
+                    alt="Gates of Moria"
+                    className="mx-auto rounded-lg shadow-lg transition-all duration-300 max-w-full h-auto"
+                    style={{ maxHeight: '400px' }}
+                />
             </div>
 
             {status && (
@@ -80,6 +72,8 @@ export default function SecretPhraseLogin({
                         autoComplete="off"
                         isFocused={true}
                         onChange={(e) => setData('secret_phrase', e.target.value)}
+                        onFocus={() => setIsInputFocused(true)}
+                        onBlur={() => setIsInputFocused(false)}
                         placeholder="Enter the words to open the gate..."
                     />
                     <InputError message={errors.secret_phrase} className="mt-2" />

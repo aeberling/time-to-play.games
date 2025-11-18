@@ -147,11 +147,15 @@ const createAngelCards = (): CardData[] => {
 
 export default function PlayerHand() {
     const [cards, setCards] = useState<CardData[]>(createAngelCards());
-    const [selectedCard, setSelectedCard] = useState<string | null>(null);
+    const [modalCard, setModalCard] = useState<CardData | null>(null);
     const [selectedToken, setSelectedToken] = useState<string | null>(null);
 
-    const handleCardClick = (cardId: string) => {
-        setSelectedCard(selectedCard === cardId ? null : cardId);
+    const handleCardClick = (card: CardData) => {
+        setModalCard(card);
+    };
+
+    const handleCloseModal = () => {
+        setModalCard(null);
     };
 
     const handleTokenClick = (tokenId: string) => {
@@ -189,7 +193,7 @@ export default function PlayerHand() {
             }}>
                 <h1 style={{ margin: 0, fontSize: '1.5rem' }}>War in Heaven - Player Hand</h1>
                 <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem', color: '#999' }}>
-                    Cards sorted by cost (lowest to highest) | All tokens start in active state
+                    Cards sorted by cost (lowest to highest) | Click card to view full size
                 </p>
             </div>
 
@@ -204,7 +208,7 @@ export default function PlayerHand() {
             }}>
                 <div style={{
                     display: 'flex',
-                    gap: '2rem',
+                    gap: '1rem',
                     flexWrap: 'wrap',
                     justifyContent: 'center',
                     maxWidth: '100%',
@@ -212,24 +216,163 @@ export default function PlayerHand() {
                     {cards.map((card) => (
                         <div
                             key={card.id}
-                            onDoubleClick={() => {
-                                // Double-click on card flips first token
-                                if (card.tokens.length > 0) {
-                                    toggleTokenState(card.id, card.tokens[0].id);
-                                }
+                            style={{
+                                position: 'relative',
+                                cursor: 'pointer',
+                                transition: 'transform 0.2s ease',
+                            }}
+                            onClick={() => handleCardClick(card)}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-8px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
                             }}
                         >
-                            <Card
-                                card={card}
-                                isSelected={selectedCard === card.id}
-                                onClick={() => handleCardClick(card.id)}
-                                onTokenClick={(tokenId) => handleTokenClick(tokenId)}
-                                selectedTokenId={selectedToken}
-                            />
+                            {/* Card Image at 50% size */}
+                            <div style={{
+                                position: 'relative',
+                                width: '140px',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                            }}>
+                                <img
+                                    src={card.cardImageUrl}
+                                    alt={card.name}
+                                    style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block',
+                                    }}
+                                />
+
+                                {/* Token on card */}
+                                {card.tokens.length > 0 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '8px',
+                                        right: '8px',
+                                    }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                        }}>
+                                            <svg
+                                                width="40"
+                                                height="40"
+                                                viewBox="0 0 64 64"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                            >
+                                                {/* Token circle */}
+                                                <circle cx="32" cy="32" r="31" fill="#000" />
+                                                <circle cx="32" cy="32" r="29" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'} />
+                                                <circle cx="32" cy="32" r="28" fill={card.faction === 'angels' ? '#FFB200' : '#7F0212'}
+                                                        clipPath="url(#clip-top-mini)" />
+                                                <clipPath id="clip-top-mini">
+                                                    <rect x="0" y="0" width="64" height="38.4" />
+                                                </clipPath>
+
+                                                {/* Bottom section */}
+                                                <circle cx="32" cy="32" r="29" fill="#5A6C7D"
+                                                        clipPath="url(#clip-bottom-mini)" />
+                                                <clipPath id="clip-bottom-mini">
+                                                    <rect x="0" y="38.4" width="64" height="25.6" />
+                                                </clipPath>
+
+                                                {/* Character icon */}
+                                                <image
+                                                    href={card.iconUrl}
+                                                    x="17.6"
+                                                    y="6.4"
+                                                    width="28.8"
+                                                    height="28.8"
+                                                    clipPath="url(#clip-top-mini)"
+                                                    preserveAspectRatio="xMidYMid meet"
+                                                />
+
+                                                {/* Stats */}
+                                                <text x="16" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                      filter="url(#shadow-mini)">
+                                                    {card.attack}
+                                                </text>
+                                                <text x="48" y="52" textAnchor="middle" fontSize="14" fill="#FFF" fontWeight="bold"
+                                                      filter="url(#shadow-mini)">
+                                                    {card.defense}
+                                                </text>
+
+                                                <defs>
+                                                    <filter id="shadow-mini">
+                                                        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.8" floodColor="#000"/>
+                                                    </filter>
+                                                </defs>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
+
+            {/* Modal for full card view */}
+            {modalCard && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '2rem',
+                    }}
+                    onClick={handleCloseModal}
+                >
+                    <div
+                        style={{
+                            position: 'relative',
+                            maxWidth: '400px',
+                            maxHeight: '90vh',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Card
+                            card={modalCard}
+                            isSelected={false}
+                            onClick={() => {}}
+                            onTokenClick={handleTokenClick}
+                            selectedTokenId={selectedToken}
+                        />
+
+                        {/* Close button */}
+                        <button
+                            onClick={handleCloseModal}
+                            style={{
+                                position: 'absolute',
+                                top: '-40px',
+                                right: '0',
+                                background: '#fff',
+                                color: '#000',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                fontSize: '20px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Info Footer */}
             <div style={{
@@ -240,7 +383,7 @@ export default function PlayerHand() {
                 fontSize: '0.875rem',
                 textAlign: 'center',
             }}>
-                Click cards to select • Click tokens to select • Double-click cards to flip first token
+                Click any card to view full size • Click tokens in modal to interact
             </div>
         </div>
     );
