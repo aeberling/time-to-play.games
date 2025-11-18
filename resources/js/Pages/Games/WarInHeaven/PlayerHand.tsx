@@ -150,6 +150,7 @@ export default function PlayerHand() {
     const [modalCard, setModalCard] = useState<CardData | null>(null);
     const [selectedToken, setSelectedToken] = useState<string | null>(null);
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
     const handleCardClick = (card: CardData) => {
         setModalCard(card);
@@ -227,6 +228,9 @@ export default function PlayerHand() {
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-8px)';
                                 setHoveredCard(card.id);
+                            }}
+                            onMouseMove={(e) => {
+                                setMousePosition({ x: e.clientX, y: e.clientY });
                             }}
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = 'translateY(0)';
@@ -320,47 +324,31 @@ export default function PlayerHand() {
                                 />
                             </div>
 
-                            {/* Tooltip */}
-                            {hoveredCard === card.id && (
-                                <div style={{
-                                    position: 'absolute',
-                                    bottom: '-80px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    background: '#2a2a2a',
-                                    color: '#fff',
-                                    padding: '0.75rem 1rem',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                                    border: `2px solid ${card.faction === 'angels' ? '#FFB200' : '#7F0212'}`,
-                                    maxWidth: '280px',
-                                    fontSize: '0.875rem',
-                                    lineHeight: '1.4',
-                                    zIndex: 100,
-                                    pointerEvents: 'none',
-                                }}>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: card.faction === 'angels' ? '#FFB200' : '#ef4444' }}>
-                                        {card.name}
-                                    </div>
-                                    {card.specialText}
-                                    {/* Arrow */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-8px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        width: 0,
-                                        height: 0,
-                                        borderLeft: '8px solid transparent',
-                                        borderRight: '8px solid transparent',
-                                        borderBottom: `8px solid ${card.faction === 'angels' ? '#FFB200' : '#7F0212'}`,
-                                    }} />
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>
             </div>
+
+            {/* Tooltip that follows cursor */}
+            {hoveredCard && (
+                <div style={{
+                    position: 'fixed',
+                    left: `${mousePosition.x + 12}px`,
+                    top: `${mousePosition.y + 12}px`,
+                    background: '#333',
+                    color: '#fff',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                    maxWidth: '300px',
+                    fontSize: '0.8rem',
+                    lineHeight: '1.3',
+                    zIndex: 1000,
+                    pointerEvents: 'none',
+                }}>
+                    {cards.find(c => c.id === hoveredCard)?.specialText}
+                </div>
+            )}
 
             {/* Modal for full card view */}
             {modalCard && (
