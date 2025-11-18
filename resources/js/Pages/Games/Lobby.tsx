@@ -190,8 +190,8 @@ export default function Lobby({ auth }: PageProps) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Game Lobby
+                <h2 className="text-4xl font-black leading-tight text-adventure-900 drop-shadow-md">
+                    Game Lobby 🎲
                 </h2>
             }
         >
@@ -201,62 +201,71 @@ export default function Lobby({ auth }: PageProps) {
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {/* Error Display */}
                     {error && (
-                        <div className="rounded-md bg-red-50 p-4">
-                            <p className="text-sm text-red-800">{error}</p>
+                        <div className="rounded-3xl bg-gradient-to-r from-coral-200 to-coral-300 p-6 border-4 border-coral-500 shadow-lg">
+                            <p className="text-base font-bold text-adventure-900">{error}</p>
                         </div>
                     )}
 
                     {/* Create New Game Section */}
-                    <div className="bg-white p-6 shadow sm:rounded-lg">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            Create New Game
+                    <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-quest-300">
+                        <h3 className="text-3xl font-black text-adventure-900 mb-6">
+                            Create New Game ⚔️
                         </h3>
 
                         <div className="space-y-4">
                             {/* Game Type Selection */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Game Type
+                                <label className="block text-xl font-black text-adventure-900 mb-4">
+                                    Choose Your Game
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {gameTypes.map((gameType) => (
-                                        <button
-                                            key={gameType.type}
-                                            onClick={() => {
-                                                setSelectedGameType(gameType.type);
-                                                setMaxPlayers(gameType.config.minPlayers);
-                                            }}
-                                            className={`p-4 border-2 rounded-lg text-left transition-all ${
-                                                selectedGameType === gameType.type
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                            }`}
-                                        >
-                                            <h4 className="font-semibold text-gray-900">
-                                                {gameType.name}
-                                            </h4>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                {gameType.config.description}
-                                            </p>
-                                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                                                <span>
-                                                    {gameType.config.minPlayers}-
-                                                    {gameType.config.maxPlayers} players
-                                                </span>
-                                                <span className="font-medium">
-                                                    {gameType.config.difficulty}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
+                                    {gameTypes.map((gameType, index) => {
+                                        const colors = [
+                                            { border: 'border-coral-700', bg: 'bg-gradient-to-br from-coral-600 to-coral-700', selectedBg: 'bg-gradient-to-br from-coral-600 to-coral-700', hover: 'hover:scale-105 hover:shadow-2xl' },
+                                            { border: 'border-treasure-700', bg: 'bg-gradient-to-br from-treasure-600 to-treasure-700', selectedBg: 'bg-gradient-to-br from-treasure-600 to-treasure-700', hover: 'hover:scale-105 hover:shadow-2xl' },
+                                            { border: 'border-adventure-700', bg: 'bg-gradient-to-br from-adventure-600 to-adventure-700', selectedBg: 'bg-gradient-to-br from-adventure-600 to-adventure-700', hover: 'hover:scale-105 hover:shadow-2xl' }
+                                        ];
+                                        const colorClass = colors[index % colors.length];
+
+                                        return (
+                                            <button
+                                                key={gameType.type}
+                                                onClick={() => {
+                                                    setSelectedGameType(gameType.type);
+                                                    setMaxPlayers(gameType.config.minPlayers);
+                                                }}
+                                                className={`p-6 border-6 rounded-2xl text-left transition-all transform ${
+                                                    selectedGameType === gameType.type
+                                                        ? `${colorClass.border} ${colorClass.selectedBg} scale-105 shadow-2xl`
+                                                        : 'border-gray-300 bg-white hover:border-gray-400'
+                                                } ${colorClass.hover}`}
+                                            >
+                                                <h4 className={`font-black text-2xl ${selectedGameType === gameType.type ? 'text-white drop-shadow-lg' : 'text-adventure-900'}`}>
+                                                    {gameType.name}
+                                                </h4>
+                                                <p className={`text-base font-bold mt-2 leading-relaxed ${selectedGameType === gameType.type ? 'text-white drop-shadow-md' : 'text-adventure-700'}`}>
+                                                    {gameType.config.description}
+                                                </p>
+                                                <div className={`mt-3 flex items-center gap-4 text-sm font-bold ${selectedGameType === gameType.type ? 'text-white drop-shadow-md' : 'text-adventure-800'}`}>
+                                                    <span>
+                                                        {gameType.config.minPlayers}-
+                                                        {gameType.config.maxPlayers} players
+                                                    </span>
+                                                    <span className="font-black">
+                                                        {gameType.config.difficulty}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
                             {/* Player Count Selection */}
                             {selectedGameTypeInfo && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Max Players: {maxPlayers}
+                                <div className="bg-gradient-to-r from-adventure-50 to-quest-50 rounded-2xl p-6 border-4 border-adventure-300">
+                                    <label className="block text-lg font-black text-adventure-900 mb-3">
+                                        Max Players: <span className="text-quest-600">{maxPlayers}</span>
                                     </label>
                                     <input
                                         type="range"
@@ -264,7 +273,7 @@ export default function Lobby({ auth }: PageProps) {
                                         max={selectedGameTypeInfo.config.maxPlayers}
                                         value={maxPlayers}
                                         onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        className="w-full h-3 bg-adventure-300 rounded-lg appearance-none cursor-pointer"
                                     />
                                 </div>
                             )}
@@ -419,30 +428,30 @@ export default function Lobby({ auth }: PageProps) {
                             <button
                                 onClick={handleCreateGame}
                                 disabled={gameStore.loading}
-                                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                className="w-full bg-gradient-to-br from-quest-500 to-quest-600 text-white py-5 px-8 rounded-full hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-black text-2xl shadow-2xl border-6 border-white transition transform"
                             >
-                                {gameStore.loading ? 'Creating...' : 'Create Game'}
+                                {gameStore.loading ? 'Creating...' : 'Create Game! 🎉'}
                             </button>
                         </div>
                     </div>
 
                     {/* Your Active Games Section */}
                     {myGames.length > 0 && (
-                        <div className="bg-white p-6 shadow sm:rounded-lg">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                    Your Active Games
+                        <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-coral-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-3xl font-black text-adventure-900">
+                                    Your Active Games 🎮
                                 </h3>
                                 <button
                                     onClick={fetchMyGames}
-                                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                                    className="text-base font-bold text-adventure-700 hover:text-adventure-900 hover:scale-110 transition transform px-4 py-2 rounded-full border-4 border-adventure-300 bg-adventure-50"
                                 >
                                     Refresh
                                 </button>
                             </div>
 
                             {loadingMyGames ? (
-                                <div className="text-center py-8 text-gray-500">
+                                <div className="text-center py-8 text-adventure-700 font-bold text-xl">
                                     Loading your games...
                                 </div>
                             ) : (
@@ -459,34 +468,34 @@ export default function Lobby({ auth }: PageProps) {
                                         return (
                                             <div
                                                 key={game.id}
-                                                className="border-2 border-indigo-200 bg-indigo-50 rounded-lg p-4 hover:border-indigo-300 transition-colors"
+                                                className="border-6 border-coral-600 bg-gradient-to-br from-coral-50 via-white to-quest-50 rounded-2xl p-6 hover:border-coral-700 hover:scale-105 hover:shadow-2xl transition-all transform shadow-xl ring-4 ring-coral-200 hover:ring-coral-300"
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <h4 className="font-semibold text-gray-900">
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            <h4 className="font-black text-2xl text-adventure-900">
                                                                 {gameTypeInfo?.name || game.game_type} #{game.id}
                                                             </h4>
                                                             <span
-                                                                className={`px-2 py-1 text-xs font-medium rounded ${
+                                                                className={`px-3 py-1 text-sm font-black rounded-full border-4 ${
                                                                     game.status === 'WAITING'
-                                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                                        ? 'bg-quest-500 text-white border-quest-700'
                                                                         : game.status === 'READY'
-                                                                        ? 'bg-green-100 text-green-800'
+                                                                        ? 'bg-treasure-600 text-white border-treasure-800'
                                                                         : game.status === 'IN_PROGRESS'
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-gray-100 text-gray-800'
+                                                                        ? 'bg-cyan-600 text-white border-cyan-800 animate-pulse'
+                                                                        : 'bg-gray-400 text-white border-gray-600'
                                                                 }`}
                                                             >
                                                                 {game.status}
                                                             </span>
                                                             {isCreator && (
-                                                                <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800">
+                                                                <span className="px-3 py-1 text-sm font-black rounded-full bg-adventure-600 text-white border-4 border-adventure-800">
                                                                     Host
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
+                                                        <div className="mt-3 flex items-center gap-4 text-base text-adventure-800 font-bold">
                                                             <span>
                                                                 Players: {game.game_players.length}/
                                                                 {game.max_players}
@@ -496,10 +505,10 @@ export default function Lobby({ auth }: PageProps) {
                                                                     {game.game_players.map((p) => (
                                                                         <span
                                                                             key={p.id}
-                                                                            className={`inline-block w-6 h-6 rounded-full text-xs flex items-center justify-center font-medium ${
+                                                                            className={`inline-block w-8 h-8 rounded-full text-sm flex items-center justify-center font-black border-2 ${
                                                                                 p.user_id === auth.user.id
-                                                                                    ? 'bg-indigo-600 text-white'
-                                                                                    : 'bg-gray-300'
+                                                                                    ? 'bg-gradient-to-br from-adventure-500 to-adventure-700 text-white border-white shadow-md'
+                                                                                    : 'bg-gray-300 border-gray-400'
                                                                             }`}
                                                                             title={p.user.display_name || p.user.name}
                                                                         >
@@ -511,17 +520,17 @@ export default function Lobby({ auth }: PageProps) {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
                                                         <button
                                                             onClick={() => router.visit(`/games/${game.id}`)}
-                                                            className="px-4 py-2 rounded-md font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                                                            className="px-6 py-3 rounded-full font-black bg-gradient-to-br from-quest-500 to-quest-600 text-white hover:scale-105 transition transform shadow-lg border-4 border-white"
                                                         >
                                                             {game.status === 'IN_PROGRESS' ? 'Resume Game' : 'View Game'}
                                                         </button>
                                                         {isCreator && (
                                                             <button
                                                                 onClick={() => handleArchiveGame(game.id)}
-                                                                className="px-4 py-2 rounded-md font-medium bg-red-600 text-white hover:bg-red-700"
+                                                                className="px-6 py-3 rounded-full font-black bg-gradient-to-br from-coral-500 to-coral-600 text-white hover:scale-105 transition transform shadow-lg border-4 border-white"
                                                                 title="End and archive this game"
                                                             >
                                                                 End Game
@@ -538,26 +547,29 @@ export default function Lobby({ auth }: PageProps) {
                     )}
 
                     {/* Available Games Section */}
-                    <div className="bg-white p-6 shadow sm:rounded-lg">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium text-gray-900">
-                                Available Games
+                    <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-treasure-300">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-3xl font-black text-adventure-900">
+                                Available Games 🌟
                             </h3>
                             <button
                                 onClick={fetchGames}
-                                className="text-sm text-indigo-600 hover:text-indigo-800"
+                                className="text-base font-bold text-adventure-700 hover:text-adventure-900 hover:scale-110 transition transform px-4 py-2 rounded-full border-4 border-adventure-300 bg-adventure-50"
                             >
                                 Refresh
                             </button>
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-adventure-700 font-bold text-xl">
                                 Loading games...
                             </div>
                         ) : games.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                No games available. Create one to get started!
+                            <div className="text-center py-12 bg-gradient-to-br from-treasure-100 to-adventure-100 rounded-3xl border-4 border-dashed border-treasure-400">
+                                <div className="text-6xl mb-4">🎯</div>
+                                <p className="text-xl font-bold text-adventure-800">
+                                    No games available. Create one to get started!
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -574,30 +586,30 @@ export default function Lobby({ auth }: PageProps) {
                                     return (
                                         <div
                                             key={game.id}
-                                            className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                                            className="border-6 border-adventure-400 bg-white rounded-2xl p-6 hover:border-adventure-600 hover:scale-105 hover:shadow-2xl transition-all transform shadow-lg"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-3">
-                                                        <h4 className="font-semibold text-gray-900">
+                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                        <h4 className="font-black text-2xl text-adventure-900">
                                                             {gameTypeInfo?.name || game.game_type}
                                                         </h4>
                                                         <span
-                                                            className={`px-2 py-1 text-xs font-medium rounded ${
+                                                            className={`px-3 py-1 text-sm font-black rounded-full border-4 ${
                                                                 game.status === 'WAITING'
-                                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                                    : 'bg-gray-100 text-gray-800'
+                                                                    ? 'bg-quest-500 text-white border-quest-700'
+                                                                    : 'bg-gray-400 text-white border-gray-600'
                                                             }`}
                                                         >
                                                             {game.status}
                                                         </span>
                                                         {isPlayerInGame && (
-                                                            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
-                                                                You're in this game
+                                                            <span className="px-3 py-1 text-sm font-black rounded-full bg-cyan-600 text-white border-4 border-cyan-800">
+                                                                You're in!
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
+                                                    <div className="mt-3 flex items-center gap-4 text-base text-adventure-800 font-bold">
                                                         <span>
                                                             Players: {game.game_players.length}/
                                                             {game.max_players}
@@ -607,7 +619,7 @@ export default function Lobby({ auth }: PageProps) {
                                                                 {game.game_players.map((p) => (
                                                                     <span
                                                                         key={p.id}
-                                                                        className="inline-block w-6 h-6 rounded-full bg-gray-300 text-xs flex items-center justify-center font-medium"
+                                                                        className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-treasure-400 to-treasure-600 text-white text-sm flex items-center justify-center font-black border-2 border-white shadow-md"
                                                                     >
                                                                         {p.user.display_name?.[0] ||
                                                                             p.user.name[0]}
@@ -620,7 +632,7 @@ export default function Lobby({ auth }: PageProps) {
                                                 {isPlayerInGame ? (
                                                     <button
                                                         onClick={() => router.visit(`/games/${game.id}`)}
-                                                        className="px-4 py-2 rounded-md font-medium bg-green-600 text-white hover:bg-green-700"
+                                                        className="px-6 py-3 rounded-full font-black bg-gradient-to-br from-treasure-500 to-treasure-600 text-white hover:scale-105 transition transform shadow-lg border-4 border-white"
                                                     >
                                                         View Game
                                                     </button>
@@ -628,13 +640,13 @@ export default function Lobby({ auth }: PageProps) {
                                                     <button
                                                         onClick={() => handleJoinGame(game.id)}
                                                         disabled={isFull}
-                                                        className={`px-4 py-2 rounded-md font-medium ${
+                                                        className={`px-6 py-3 rounded-full font-black shadow-lg border-4 transition transform ${
                                                             isFull
-                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400'
+                                                                : 'bg-gradient-to-br from-quest-500 to-quest-600 text-white hover:scale-105 border-white'
                                                         }`}
                                                     >
-                                                        {isFull ? 'Full' : 'Join'}
+                                                        {isFull ? 'Full' : 'Join!'}
                                                     </button>
                                                 )}
                                             </div>

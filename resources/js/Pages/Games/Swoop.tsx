@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import type { PageProps, SwoopGameState, Card } from '@/types/index';
 import { useGameStore } from '@/store';
-import { useTheme } from '@/contexts/ThemeContext';
 import GameCard from '@/Components/GameCard';
 
 /**
@@ -35,11 +34,11 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         cancelGame,
     } = useGameStore();
 
-    const { theme } = useTheme();
     const [selectedCards, setSelectedCards] = useState<{source: 'hand' | 'faceup' | 'mystery', index: number}[]>([]);
     const [showSwoopAnimation, setShowSwoopAnimation] = useState(false);
     const [revealedMystery, setRevealedMystery] = useState<{index: number, card: Card} | null>(null);
     const [lastSwoopTimestamp, setLastSwoopTimestamp] = useState<string | null>(null);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     const swoopState = gameState as SwoopGameState | null;
 
@@ -79,6 +78,23 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
             unsubscribeFromGame(gameId);
         };
     }, [gameId, auth.user.id]);
+
+    // Auto-collapse sidebar on mobile/tablet on initial load
+    useEffect(() => {
+        const handleResize = () => {
+            // lg breakpoint is 1024px in Tailwind
+            if (window.innerWidth < 1024) {
+                setSidebarCollapsed(true);
+            }
+        };
+
+        // Set initial state
+        handleResize();
+
+        // Optional: Listen for window resize
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Watch for swoop events
     useEffect(() => {
@@ -572,9 +588,17 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
 
                     {/* Game Board - Two Column Layout */}
                     {!isWaiting && swoopState && (
-                        <div className="flex gap-4">
-                            {/* Left Column: Play Area (75%) */}
-                            <div className="w-3/4">
+                        <div className="flex gap-4 relative">
+                            {/* Backdrop overlay for mobile when sidebar is open */}
+                            {!sidebarCollapsed && (
+                                <div
+                                    className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                                    onClick={() => setSidebarCollapsed(true)}
+                                />
+                            )}
+
+                            {/* Left Column: Play Area (75% on desktop, full width on mobile/tablet) */}
+                            <div className="w-full lg:w-3/4">
                                 <div className="game-bg p-4 shadow sm:rounded-lg relative">
                                 {isGameOver ? (
                                 <div className="py-8">
@@ -765,12 +789,13 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                         }
                                     })()} cards)
                                 </div>
-                                <div className="bg-gray-100 rounded-lg p-4 relative overflow-hidden">
+                                <div className="bg-blue-50 rounded-lg p-4 relative overflow-hidden">
                                     {/* Swoop Animation Overlay */}
                                     {showSwoopAnimation && (
                                         <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
-                                            <div className="text-6xl font-bold text-yellow-500 drop-shadow-lg animate-swoop">
+                                            <div className="text-6xl font-black text-yellow-500 drop-shadow-lg animate-swoop flex items-center gap-4">
                                                 SWOOP!
+                                                <span className="text-7xl" style={{ transform: 'scaleX(-1)' }}>🦅</span>
                                             </div>
                                         </div>
                                     )}
@@ -853,7 +878,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                             })()}
                                         </div>
                                     ) : (
-                                        <div className="text-gray-400 text-sm text-center py-4">Empty</div>
+                                        <div className="py-4"></div>
                                     )}
                                 </div>
                             </div>
@@ -891,7 +916,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                         undefined, // Cannot click again
                                                                         true, // Always shown as selected
                                                                         false,
-                                                                        theme.colors.active // Special border color
+                                                                        '#fbbf24' // Special border color
                                                                     )
                                                                 ) : (
                                                                     // Show face-down card with click handler
@@ -917,7 +942,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                         isMyTurn && isPlayable ? () => handleCardSelect('faceup', idx) : undefined,
                                                                         isSelected,
                                                                         false,
-                                                                        isPlayable && !isSelected && revealedMystery ? theme.colors.success : undefined
+                                                                        isPlayable && !isSelected && revealedMystery ? '#22c55e' : undefined
                                                                     )}
                                                                 </div>
                                                             );
@@ -970,7 +995,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                 isMyTurn && isPlayable ? () => handleCardSelect('hand', originalIdx) : undefined,
                                                                 isSelected,
                                                                 false,
-                                                                isPlayable && !isSelected && revealedMystery ? theme.colors.success : undefined
+                                                                isPlayable && !isSelected && revealedMystery ? '#22c55e' : undefined
                                                             )}
                                                         </div>
                                                     );
@@ -1007,9 +1032,18 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 </div>
                             </div>
 
-                            {/* Right Column: Game Info & Players (25%) */}
-                            <div className="w-1/4">
-                                <div className="game-bg p-4 shadow sm:rounded-lg space-y-4">
+                            {/* Right Column: Game Info & Players (25% on desktop, slide-in panel on mobile/tablet) */}
+                            <div className={`
+                                fixed lg:relative
+                                top-0 lg:top-auto
+                                right-0 lg:right-auto
+                                h-full lg:h-auto
+                                w-80 lg:w-1/4
+                                z-40 lg:z-auto
+                                transition-transform duration-300 ease-in-out
+                                ${sidebarCollapsed ? 'translate-x-full lg:translate-x-0' : 'translate-x-0'}
+                            `}>
+                                <div className="game-bg p-4 shadow sm:rounded-lg space-y-4 h-full lg:h-auto overflow-y-auto">
                                     {/* Game Status */}
                                     <div className="space-y-2">
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Game Info</div>
@@ -1132,6 +1166,36 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Toggle button for mobile/tablet - only visible on smaller screens */}
+                            <button
+                                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                className={`
+                                    fixed
+                                    top-32
+                                    ${sidebarCollapsed ? 'right-4' : 'right-[21rem]'}
+                                    lg:hidden
+                                    z-50
+                                    text-sm px-3 py-1.5
+                                    bg-indigo-600 hover:bg-indigo-700
+                                    text-white rounded
+                                    shadow-md
+                                    transition-all duration-300 ease-in-out
+                                    font-medium
+                                    flex items-center gap-1
+                                `}
+                                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            >
+                                <svg
+                                    className={`w-4 h-4 transition-transform duration-300 ${sidebarCollapsed ? '' : 'rotate-180'}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                <span className="text-xs">{sidebarCollapsed ? 'Info' : ''}</span>
+                            </button>
                         </div>
                     )}
                 </div>

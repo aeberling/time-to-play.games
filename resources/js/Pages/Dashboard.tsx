@@ -75,8 +75,8 @@ export default function Dashboard({ auth }: PageProps) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard
+                <h2 className="text-4xl font-black leading-tight text-adventure-900 drop-shadow-md">
+                    Your Adventure Dashboard
                 </h2>
             }
         >
@@ -88,37 +88,38 @@ export default function Dashboard({ auth }: PageProps) {
                         {/* Left Column: Current Games & New Games */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Your Current Games */}
-                            <div className="bg-white shadow-sm sm:rounded-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Your Current Games
+                            <div className="bg-white shadow-2xl rounded-3xl p-8 border-8 border-adventure-300">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-3xl font-black text-adventure-900">
+                                        Your Current Games 🎮
                                     </h3>
                                     <button
                                         onClick={fetchData}
-                                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                                        className="text-base font-bold text-adventure-700 hover:text-adventure-900 hover:scale-110 transition transform px-4 py-2 rounded-full border-4 border-adventure-300 bg-adventure-50"
                                     >
                                         Refresh
                                     </button>
                                 </div>
 
                                 {loading ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        Loading...
+                                    <div className="text-center py-8 text-adventure-700 font-bold text-xl">
+                                        Loading adventures...
                                     </div>
                                 ) : myGames.length === 0 ? (
-                                    <div className="text-center py-8">
-                                        <p className="text-gray-500 mb-4">
-                                            You're not in any games yet
+                                    <div className="text-center py-12 bg-gradient-to-br from-quest-100 to-adventure-100 rounded-3xl border-4 border-dashed border-adventure-400">
+                                        <div className="text-6xl mb-4">🎲</div>
+                                        <p className="text-xl font-bold text-adventure-800 mb-6">
+                                            No active quests yet!
                                         </p>
                                         <Link
                                             href="/games/lobby"
-                                            className="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-medium"
+                                            className="inline-block bg-gradient-to-br from-quest-500 to-quest-600 text-white px-8 py-4 rounded-full hover:scale-110 transition transform font-black text-lg shadow-lg border-4 border-white"
                                         >
-                                            Browse Games
+                                            Start Your Adventure!
                                         </Link>
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
+                                    <div className="space-y-4">
                                         {myGames.map((game) => {
                                             const gameTypeInfo = gameTypes.find(
                                                 (gt) => gt.type === game.game_type
@@ -127,34 +128,34 @@ export default function Dashboard({ auth }: PageProps) {
                                             return (
                                                 <div
                                                     key={game.id}
-                                                    className="border-2 border-indigo-200 bg-indigo-50 rounded-lg p-4 hover:border-indigo-300 transition-colors cursor-pointer"
+                                                    className="border-6 border-coral-600 bg-gradient-to-br from-coral-50 via-white to-quest-50 rounded-2xl p-6 hover:border-coral-700 hover:scale-105 hover:shadow-2xl transition-all transform cursor-pointer shadow-xl ring-4 ring-coral-200 hover:ring-coral-300"
                                                     onClick={() => router.visit(`/games/${game.id}`)}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="font-semibold text-gray-900">
+                                                            <div className="flex items-center gap-3">
+                                                                <h4 className="font-black text-2xl text-adventure-900">
                                                                     {gameTypeInfo?.name || game.game_type}
                                                                 </h4>
                                                                 <span
-                                                                    className={`px-2 py-1 text-xs font-medium rounded ${
+                                                                    className={`px-3 py-1 text-sm font-black rounded-full border-4 ${
                                                                         game.status === 'WAITING'
-                                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                                            ? 'bg-quest-500 text-white border-quest-700'
                                                                             : game.status === 'READY'
-                                                                            ? 'bg-green-100 text-green-800'
+                                                                            ? 'bg-treasure-600 text-white border-treasure-800'
                                                                             : game.status === 'IN_PROGRESS'
-                                                                            ? 'bg-blue-100 text-blue-800'
-                                                                            : 'bg-gray-100 text-gray-800'
+                                                                            ? 'bg-cyan-600 text-white border-cyan-800 animate-pulse'
+                                                                            : 'bg-gray-400 text-white border-gray-600'
                                                                     }`}
                                                                 >
                                                                     {game.status}
                                                                 </span>
                                                             </div>
-                                                            <div className="mt-1 text-sm text-gray-600">
+                                                            <div className="mt-2 text-base font-bold text-adventure-700">
                                                                 {game.game_players.length}/{game.max_players} players
                                                             </div>
                                                         </div>
-                                                        <div className="text-sm font-medium text-indigo-600">
+                                                        <div className="text-xl font-black text-coral-600">
                                                             {game.status === 'IN_PROGRESS' ? 'Play →' : 'View →'}
                                                         </div>
                                                     </div>
@@ -166,45 +167,54 @@ export default function Dashboard({ auth }: PageProps) {
                             </div>
 
                             {/* New Games to Try */}
-                            <div className="bg-white shadow-sm sm:rounded-lg p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                    Games to Try
+                            <div className="bg-white shadow-2xl rounded-3xl p-8 border-8 border-treasure-300">
+                                <h3 className="text-3xl font-black text-adventure-900 mb-6">
+                                    Games to Try ✨
                                 </h3>
 
                                 {loading ? (
-                                    <div className="text-center py-8 text-gray-500">
+                                    <div className="text-center py-8 text-adventure-700 font-bold text-xl">
                                         Loading...
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {gameTypes.map((gameType) => (
-                                            <div
-                                                key={gameType.type}
-                                                className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-                                            >
-                                                <h4 className="font-semibold text-gray-900 mb-1">
-                                                    {gameType.name}
-                                                </h4>
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    {gameType.config.description}
-                                                </p>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="text-xs text-gray-500">
-                                                        <span className="font-medium">{gameType.config.difficulty}</span>
-                                                        <span className="mx-1">•</span>
-                                                        <span>
-                                                            {gameType.config.minPlayers}-{gameType.config.maxPlayers} players
-                                                        </span>
+                                        {gameTypes.map((gameType, index) => {
+                                            const colors = [
+                                                'from-treasure-600 to-treasure-700 border-treasure-800',
+                                                'from-quest-600 to-quest-700 border-quest-800',
+                                                'from-coral-600 to-coral-700 border-coral-800'
+                                            ];
+                                            const colorClass = colors[index % colors.length];
+
+                                            return (
+                                                <div
+                                                    key={gameType.type}
+                                                    className={`bg-gradient-to-br ${colorClass} rounded-2xl p-6 border-6 hover:scale-105 transition-transform transform shadow-lg`}
+                                                >
+                                                    <h4 className="font-black text-2xl text-white mb-2 drop-shadow-lg">
+                                                        {gameType.name}
+                                                    </h4>
+                                                    <p className="text-base text-white font-bold mb-4 leading-relaxed drop-shadow-md">
+                                                        {gameType.config.description}
+                                                    </p>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="text-sm text-white font-bold drop-shadow-md">
+                                                            <span className="font-black">{gameType.config.difficulty}</span>
+                                                            <span className="mx-2">•</span>
+                                                            <span>
+                                                                {gameType.config.minPlayers}-{gameType.config.maxPlayers} players
+                                                            </span>
+                                                        </div>
+                                                        <Link
+                                                            href="/games/lobby"
+                                                            className="text-base font-black text-white bg-white/30 hover:bg-white/40 px-4 py-2 rounded-full transition border-2 border-white shadow-lg"
+                                                        >
+                                                            Play
+                                                        </Link>
                                                     </div>
-                                                    <Link
-                                                        href="/games/lobby"
-                                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                                                    >
-                                                        Play
-                                                    </Link>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -212,41 +222,44 @@ export default function Dashboard({ auth }: PageProps) {
 
                         {/* Right Column: Online Players */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white shadow-sm sm:rounded-lg p-6 sticky top-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
+                            <div className="bg-white shadow-2xl rounded-3xl p-8 sticky top-6 border-8 border-cyan-300">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-2xl font-black text-adventure-900">
                                         Online Players
                                     </h3>
-                                    <span className="flex items-center gap-1 text-sm text-gray-500">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    <span className="flex items-center gap-2 text-base font-black text-treasure-700 bg-treasure-100 px-4 py-2 rounded-full border-4 border-treasure-400">
+                                        <span className="w-3 h-3 bg-treasure-500 rounded-full animate-pulse"></span>
                                         {onlineUsers.length}
                                     </span>
                                 </div>
 
                                 {loading ? (
-                                    <div className="text-center py-8 text-gray-500">
+                                    <div className="text-center py-8 text-adventure-700 font-bold text-xl">
                                         Loading...
                                     </div>
                                 ) : onlineUsers.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        No other players online
+                                    <div className="text-center py-12 bg-gradient-to-br from-cyan-100 to-adventure-100 rounded-2xl border-4 border-dashed border-cyan-300">
+                                        <div className="text-5xl mb-3">👥</div>
+                                        <p className="text-base font-bold text-adventure-700">
+                                            No other adventurers online
+                                        </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {onlineUsers.map((user) => (
                                             <div
                                                 key={user.id}
-                                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                                className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gradient-to-r hover:from-cyan-50 hover:to-adventure-50 transition-all border-4 border-transparent hover:border-cyan-300 hover:scale-105 transform"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-white font-black text-lg shadow-lg border-4 border-white">
                                                     {user.initials}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-medium text-gray-900 truncate">
+                                                    <div className="text-base font-black text-adventure-900 truncate">
                                                         {user.display_name || user.name}
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-xs text-green-600">
-                                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                                    <div className="flex items-center gap-1 text-sm text-treasure-700 font-bold">
+                                                        <span className="w-2 h-2 bg-treasure-500 rounded-full"></span>
                                                         Online
                                                     </div>
                                                 </div>
@@ -255,12 +268,12 @@ export default function Dashboard({ auth }: PageProps) {
                                     </div>
                                 )}
 
-                                <div className="mt-6 pt-6 border-t border-gray-200">
+                                <div className="mt-8 pt-6 border-t-4 border-adventure-200">
                                     <Link
                                         href="/games/lobby"
-                                        className="block w-full bg-indigo-600 text-white text-center px-4 py-2 rounded-lg hover:bg-indigo-700 font-medium"
+                                        className="block w-full bg-gradient-to-br from-quest-500 to-quest-600 text-white text-center px-6 py-4 rounded-full hover:scale-105 transition transform font-black text-lg shadow-lg border-4 border-white"
                                     >
-                                        Go to Lobby
+                                        Go to Lobby 🎲
                                     </Link>
                                 </div>
                             </div>

@@ -4,7 +4,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, OhHellGameState, Card } from '@/types';
 import { useGameStore } from '@/store';
 import GameCard from '@/Components/GameCard';
-import { useTheme } from '@/contexts/ThemeContext';
 
 /**
  * Oh Hell! Game Component
@@ -35,7 +34,6 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
         cancelGame,
     } = useGameStore();
 
-    const { theme } = useTheme();
     const [selectedCard, setSelectedCard] = useState<number | null>(null);
     const [bidAmount, setBidAmount] = useState<number>(0);
     const [showTrickWinner, setShowTrickWinner] = useState<{ winner: number; cards: any[] } | null>(null);

@@ -32,8 +32,17 @@ export default function Login({
         <GuestLayout>
             <Head title="Log in" />
 
+            <div className="text-center mb-6">
+                <h1 className="text-4xl font-black text-adventure-900 drop-shadow-md">
+                    Welcome Back!
+                </h1>
+                <p className="text-lg font-bold text-adventure-700 mt-2">
+                    The party awaits!
+                </p>
+            </div>
+
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-quest-200 to-quest-300 border-4 border-quest-500 text-adventure-900 font-bold text-center">
                     {status}
                 </div>
             )}
@@ -56,7 +65,7 @@ export default function Login({
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-6">
                     <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
@@ -72,8 +81,8 @@ export default function Login({
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4 block">
-                    <label className="flex items-center">
+                <div className="mt-6 block">
+                    <label className="flex items-center cursor-pointer">
                         <Checkbox
                             name="remember"
                             checked={data.remember}
@@ -81,34 +90,34 @@ export default function Login({
                                 setData('remember', e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-sm text-gray-600">
+                        <span className="ms-3 text-base font-bold text-adventure-800">
                             Remember me
                         </span>
                     </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-8 flex flex-col gap-4">
+                    <PrimaryButton className="w-full justify-center" disabled={processing}>
+                        {processing ? 'Entering...' : 'Log in'}
+                    </PrimaryButton>
+
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            className="text-center text-base font-bold text-adventure-700 hover:text-adventure-900 transition underline"
                         >
                             Forgot your password?
                         </Link>
                     )}
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
-                    </PrimaryButton>
                 </div>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-8 pt-6 border-t-4 border-adventure-200 text-center">
                 <Link
                     href={route('login.secret-phrase')}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="inline-block text-lg font-black text-coral-600 hover:text-coral-700 transition hover:scale-105 transform"
                 >
-                    Or... Speak Friend and Enter
+                    Or... Speak Friend and Enter 🗝️
                 </Link>
             </div>
         </GuestLayout>
