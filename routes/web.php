@@ -68,6 +68,11 @@ Route::get('/dev/war-in-heaven/ui-gallery', function () {
     return Inertia::render('Games/WarInHeaven/UIGallery');
 })->name('dev.war-in-heaven.ui-gallery');
 
+// War in Heaven Game Layout (Development)
+Route::get('/dev/war-in-heaven/game-layout', function () {
+    return Inertia::render('Games/WarInHeaven/GameLayout');
+})->name('dev.war-in-heaven.game-layout');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
