@@ -43,6 +43,11 @@ Route::get('/', function () {
     ]);
 });
 
+// Brand Style Guide
+Route::get('/style-guide', function () {
+    return Inertia::render('StyleGuide');
+})->name('style-guide');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
