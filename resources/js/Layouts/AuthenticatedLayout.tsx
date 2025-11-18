@@ -2,7 +2,6 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import ThemeSelector from '@/Components/ThemeSelector';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -16,14 +15,14 @@ export default function Authenticated({
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
+        <div className="min-h-screen bg-gradient-to-b from-adventure-50 to-white">
+            <nav className="border-b-4 border-adventure-300 bg-gradient-to-r from-adventure-600 via-adventure-500 to-adventure-600 shadow-lg">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
+                    <div className="flex h-20 justify-between">
                         <div className="flex">
-                            <div className="flex shrink-0 items-center">
+                            <div className="flex shrink-0 items-center transform transition hover:scale-110">
                                 <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
+                                    <ApplicationLogo className="block h-12 w-auto fill-current text-white drop-shadow-lg" />
                                 </Link>
                             </div>
 
@@ -43,20 +42,19 @@ export default function Authenticated({
                             </div>
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center gap-4">
-                            <ThemeSelector />
+                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
+                                        <span className="inline-flex rounded-full">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                                className="inline-flex items-center rounded-full border-4 border-white bg-gradient-to-br from-quest-400 to-quest-500 px-5 py-2 text-base font-black leading-4 text-adventure-900 transition duration-150 ease-in-out hover:scale-105 hover:shadow-lg transform focus:outline-none"
                                             >
                                                 {user.name}
 
                                                 <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
+                                                    className="-me-0.5 ms-2 h-5 w-5"
                                                     xmlns="http://www.w3.org/2000/svg"
                                                     viewBox="0 0 20 20"
                                                     fill="currentColor"
@@ -96,7 +94,7 @@ export default function Authenticated({
                                         (previousState) => !previousState,
                                     )
                                 }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
+                                className="inline-flex items-center justify-center rounded-full p-3 text-white transition duration-150 ease-in-out hover:bg-adventure-700 hover:scale-110 transform focus:bg-adventure-700 focus:outline-none border-2 border-white"
                             >
                                 <svg
                                     className="h-6 w-6"
@@ -112,7 +110,7 @@ export default function Authenticated({
                                         }
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        strokeWidth="2"
+                                        strokeWidth="3"
                                         d="M4 6h16M4 12h16M4 18h16"
                                     />
                                     <path
@@ -123,7 +121,7 @@ export default function Authenticated({
                                         }
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        strokeWidth="2"
+                                        strokeWidth="3"
                                         d="M6 18L18 6M6 6l12 12"
                                     />
                                 </svg>
@@ -135,7 +133,7 @@ export default function Authenticated({
                 <div
                     className={
                         (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
+                        ' sm:hidden bg-gradient-to-b from-adventure-500 to-adventure-600'
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
@@ -153,12 +151,12 @@ export default function Authenticated({
                         </ResponsiveNavLink>
                     </div>
 
-                    <div className="border-t border-gray-200 pb-1 pt-4">
+                    <div className="border-t-4 border-quest-400 pb-1 pt-4">
                         <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
+                            <div className="text-lg font-black text-white drop-shadow-md">
                                 {user.name}
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
+                            <div className="text-sm font-bold text-adventure-100">
                                 {user.email}
                             </div>
                         </div>
@@ -180,7 +178,7 @@ export default function Authenticated({
             </nav>
 
             {header && (
-                <header className="bg-white shadow">
+                <header className="bg-gradient-to-r from-white via-adventure-50 to-white shadow-lg border-b-4 border-adventure-200">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                         {header}
                     </div>

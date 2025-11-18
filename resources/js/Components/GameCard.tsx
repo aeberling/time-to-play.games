@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card } from '@/types';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface GameCardProps {
     card: Card | string;
@@ -23,8 +22,6 @@ export default function GameCard({
     isPlayable = false,
     className = '',
 }: GameCardProps) {
-    const { theme } = useTheme();
-
     if (typeof card === 'string' || faceDown || (card as any).hidden) {
         return (
             <div
@@ -37,7 +34,7 @@ export default function GameCard({
 
     const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
     const isJoker = card.rank === 'Joker';
-    const suitColor = isRed ? theme.colors.redSuit : theme.colors.blackSuit;
+    const suitColor = isRed ? '#dc2626' : '#1f2937';
 
     return (
         <div
@@ -50,9 +47,9 @@ export default function GameCard({
                     : ''
             } ${onClick ? 'cursor-pointer hover:shadow-md' : 'cursor-default'} ${className}`}
             style={{
-                borderColor: borderColor || (selected ? theme.colors.active : isPlayable ? theme.colors.success : undefined),
+                borderColor: borderColor || (selected ? '#fbbf24' : isPlayable ? '#22c55e' : undefined),
                 borderWidth: borderColor && !selected && !isPlayable ? '3px' : undefined,
-                ...(selected && { borderColor: theme.colors.active }),
+                ...(selected && { borderColor: '#fbbf24' }),
             }}
         >
             {isJoker ? (
