@@ -556,15 +556,18 @@ export default function GameView() {
                             onMouseLeave={() => setHoveredCard(null)}
                         >
                             {/* Show all tokens for this card */}
-                            {card.tokens.map((token, tokenIndex) => (
+                            {card.tokens.map((token, tokenIndex) => {
+                                // Stack troop tokens vertically, others horizontally
+                                const isTroop = card.subtype === 'troop';
+                                const tokenStyle = isTroop
+                                    ? { left: '5px', top: `${50 + tokenIndex * 12}px`, cursor: 'pointer' }
+                                    : { left: `${tokenIndex * 8 + 5}px`, top: '50px', cursor: 'pointer' };
+
+                                return (
                                 <div
                                     key={token.id}
                                     className="panel-card-token"
-                                    style={{
-                                        left: `${tokenIndex * 8 + 5}px`,
-                                        top: '50px',
-                                        cursor: 'pointer',
-                                    }}
+                                    style={tokenStyle}
                                     draggable
                                     onDragStart={() => handleTokenDragStart(card.id, tokenIndex)}
                                     onClick={(e) => handleCardTokenClick(card.id, tokenIndex, e)}
@@ -623,7 +626,8 @@ export default function GameView() {
                                         </defs>
                                     </svg>
                                 </div>
-                            ))}
+                                );
+                            })}
 
                             {/* Card Image */}
                             <img
