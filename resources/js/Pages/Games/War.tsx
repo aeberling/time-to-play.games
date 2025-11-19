@@ -215,7 +215,7 @@ export default function War({ auth, gameId }: WarProps) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        War - Game #{gameId}
+                        {currentGame?.name || `War - Game #${gameId}`}
                     </h2>
                     <div className="flex items-center gap-3">
                         {canCancelGame && (

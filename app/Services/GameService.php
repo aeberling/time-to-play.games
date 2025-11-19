@@ -37,8 +37,12 @@ class GameService
         // Verify game type exists
         $engine = $this->registry->get($gameType);
 
+        // Generate a random game name
+        $gameName = GameNameGenerator::generate($gameType);
+
         $game = Game::create([
             'game_type' => $gameType,
+            'name' => $gameName,
             'status' => 'WAITING',
             'max_players' => $maxPlayers,
             'timer_config' => $timerConfig,

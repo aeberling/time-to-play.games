@@ -113,6 +113,10 @@ class SwoopEngine implements GameEngineInterface
             $revealedMysteryCards[] = array_fill(0, 4, false);
         }
 
+        // Create randomized player order for turn sequence
+        $playerOrder = range(0, $playerCount - 1);
+        shuffle($playerOrder);
+
         return [
             'players' => $players,
             'playerCount' => $playerCount,
@@ -122,7 +126,9 @@ class SwoopEngine implements GameEngineInterface
             'revealedMysteryCards' => $revealedMysteryCards,
             'playPile' => [],
             'removedCards' => [],
-            'currentPlayerIndex' => 0,
+            'playerOrder' => $playerOrder, // Randomized order for turns and display
+            'roundStartingPlayerOffset' => 0, // Which position in playerOrder starts this round
+            'currentPlayerIndex' => $playerOrder[0], // First player in random order starts
             'phase' => 'PLAYING',
             'round' => 1,
             'scores' => $scores,
@@ -212,10 +218,9 @@ class SwoopEngine implements GameEngineInterface
         }
 
         if ($action === 'PICKUP') {
-            if (empty($state['playPile'])) {
-                return ValidationResult::invalid('No pile to pick up');
-            }
-            return ValidationResult::valid();
+            // Manual pickup is not allowed in Swoop
+            // Players must play a card, and if it's higher than the pile, they automatically pick up
+            return ValidationResult::invalid('You must play a card. If it\'s higher than the pile, you\'ll automatically pick it up.');
         }
 
         if ($action === 'PLAY') {
@@ -248,15 +253,10 @@ class SwoopEngine implements GameEngineInterface
             // Check if play is valid against pile
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
             if (!$isValidPlay['valid']) {
-                // Special case: if playing from mystery or face-up cards, allow the play
-                // The card(s) will be played and then auto-pickup will trigger in applyMove
-                $fromMystery = $move['fromMystery'] ?? false;
-                $fromFaceUp = $move['fromFaceUp'] ?? false;
-
-                if ($fromMystery || $fromFaceUp) {
-                    return ValidationResult::valid(); // Will trigger auto-pickup in applyMove
-                }
-                return ValidationResult::invalid($isValidPlay['error']);
+                // If card is higher than pile, always allow it to be revealed
+                // This will trigger auto-pickup in applyMove (showing the card in play history first)
+                // This applies to cards from any source (hand, face-up, or mystery)
+                return ValidationResult::valid(); // Will trigger auto-pickup in applyMove
             }
 
             // Check swoop constraint: cannot create more than 4 equal cards
@@ -399,6 +399,23 @@ class SwoopEngine implements GameEngineInterface
     }
 
     /**
+     * Get the next player index based on player order
+     */
+    private function getNextPlayerIndex(array $state, int $currentPlayerIndex): int
+    {
+        $playerOrder = $state['playerOrder'];
+
+        // Find current player's position in the order
+        $currentPosition = array_search($currentPlayerIndex, $playerOrder);
+
+        // Move to next position (wrapping around)
+        $nextPosition = ($currentPosition + 1) % count($playerOrder);
+
+        // Return the actual player index at that position
+        return $playerOrder[$nextPosition];
+    }
+
+    /**
      * Add an entry to the play history
      */
     private function addToPlayHistory(array &$state, string $actionType, int $playerIndex, array $extra = []): void
@@ -495,7 +512,7 @@ class SwoopEngine implements GameEngineInterface
                 'cardCount' => $cardCount,
             ]);
 
-            $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
+            $state['currentPlayerIndex'] = $this->getNextPlayerIndex($state, $playerIndex);
             return $state;
         }
 
@@ -504,11 +521,10 @@ class SwoopEngine implements GameEngineInterface
 
             // Check if this is a card that can't be played (auto-pickup case)
             $isValidPlay = $this->isValidPlay($cards, $state['playPile']);
-            $isFromMystery = $move['fromMystery'] ?? false;
-            $isFromFaceUp = $move['fromFaceUp'] ?? false;
 
-            if (!$isValidPlay['valid'] && ($isFromMystery || $isFromFaceUp)) {
-                // Card is higher than pile - remove it from player's area and add to hand with pile
+            if (!$isValidPlay['valid']) {
+                // Card is higher than pile - reveal it and force pickup
+                // This applies to cards from any source (hand, face-up, or mystery)
                 $state = $this->removeCardsFromPlayer($state, $playerIndex, $move);
 
                 // Flatten all card groups
@@ -519,8 +535,7 @@ class SwoopEngine implements GameEngineInterface
 
                 $pileCardCount = count($allPileCards);
 
-                // Add the current pile AND the played card(s) to player's hand
-                // This allows the player to get face-up/mystery cards into their hand
+                // Add the current pile AND the revealed card(s) to player's hand
                 $state['playerHands'][$playerIndex] = array_merge(
                     $state['playerHands'][$playerIndex],
                     $allPileCards,
@@ -543,7 +558,7 @@ class SwoopEngine implements GameEngineInterface
                     'pileCardCount' => $pileCardCount,
                 ]);
 
-                $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
+                $state['currentPlayerIndex'] = $this->getNextPlayerIndex($state, $playerIndex);
                 return $state;
             }
 
@@ -553,16 +568,20 @@ class SwoopEngine implements GameEngineInterface
             // Add cards to pile - group matching cards together
             $state = $this->addCardsToPile($state, $move['cards']);
 
-            // Check if ANY of the cards played are special cards (10s or Jokers)
+            // Check if a special card (10 or Joker) was played from mystery cards
+            // Only mystery card special cards trigger automatic swoop
+            // Special cards from hand/face-up only swoop if they complete a set of 4
             $isSwoopCard = false;
-            foreach ($cards as $card) {
-                if ($this->isSpecialCard($card)) {
-                    $isSwoopCard = true;
-                    break;
+            if ($move['fromMystery'] ?? false) {
+                foreach ($cards as $card) {
+                    if ($this->isSpecialCard($card)) {
+                        $isSwoopCard = true;
+                        break;
+                    }
                 }
             }
 
-            // Check for swoop
+            // Check for swoop: either auto-swoop from mystery special card OR 4 matching cards
             $swoopTriggered = $isSwoopCard || $this->checkSwoop($state['playPile']);
 
             $state['lastAction'] = [
@@ -592,7 +611,7 @@ class SwoopEngine implements GameEngineInterface
                 // Same player goes again - don't increment turn
             } else {
                 // Next player's turn
-                $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
+                $state['currentPlayerIndex'] = $this->getNextPlayerIndex($state, $playerIndex);
             }
 
             // Check if player won the round
@@ -866,6 +885,9 @@ class SwoopEngine implements GameEngineInterface
             $revealedMysteryCards[] = array_fill(0, 4, false);
         }
 
+        // Rotate starting player for new round
+        $state['roundStartingPlayerOffset'] = ($state['roundStartingPlayerOffset'] + 1) % $state['playerCount'];
+
         // Reset game state for new round
         $state['playerHands'] = $playerHands;
         $state['faceUpCards'] = $faceUpCards;
@@ -873,7 +895,7 @@ class SwoopEngine implements GameEngineInterface
         $state['revealedMysteryCards'] = $revealedMysteryCards;
         $state['playPile'] = [];
         $state['removedCards'] = [];
-        $state['currentPlayerIndex'] = 0;
+        $state['currentPlayerIndex'] = $state['playerOrder'][$state['roundStartingPlayerOffset']];
         $state['phase'] = 'PLAYING';
         $state['playersReadyToContinue'] = array_fill(0, $state['playerCount'], false);
         $state['lastAction'] = [

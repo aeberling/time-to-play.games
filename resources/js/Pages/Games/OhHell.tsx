@@ -229,7 +229,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
             <AuthenticatedLayout
                 header={
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Oh Hell!
+                        {currentGame?.name || 'Oh Hell!'}
                     </h2>
                 }
             >

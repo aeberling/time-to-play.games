@@ -524,7 +524,7 @@ export default function Lobby({ auth }: PageProps) {
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-3 flex-wrap">
                                                             <h4 className="font-black text-2xl text-adventure-900">
-                                                                {gameTypeInfo?.name || game.game_type} #{game.id}
+                                                                {game.name || `${gameTypeInfo?.name || game.game_type} #${game.id}`}
                                                             </h4>
                                                             <span
                                                                 className={`px-3 py-1 text-sm font-black rounded-full border-4 ${
@@ -642,7 +642,7 @@ export default function Lobby({ auth }: PageProps) {
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 flex-wrap">
                                                         <h4 className="font-black text-2xl text-adventure-900">
-                                                            {gameTypeInfo?.name || game.game_type}
+                                                            {game.name || `${gameTypeInfo?.name || game.game_type} #${game.id}`}
                                                         </h4>
                                                         <span
                                                             className={`px-3 py-1 text-sm font-black rounded-full border-4 ${

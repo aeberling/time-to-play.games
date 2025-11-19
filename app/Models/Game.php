@@ -10,6 +10,7 @@ class Game extends Model
 {
     protected $fillable = [
         'game_type',
+        'name',
         'status',
         'max_players',
         'timer_config',

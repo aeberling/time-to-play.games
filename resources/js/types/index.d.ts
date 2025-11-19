@@ -94,6 +94,7 @@ export interface GameMove {
 export interface Game {
     id: number;
     game_type: GameType;
+    name?: string | null;
     status: GameStatus;
     max_players: number;
     timer_config: TimerConfig | null;
@@ -145,6 +146,8 @@ export interface SwoopGameState {
     revealedMysteryCards: boolean[][];
     playPile: Array<{cards: Card[], rank: string}>;
     removedCards: Card[];
+    playerOrder: number[]; // Randomized order of player indices for turn sequence
+    roundStartingPlayerOffset: number; // Which position in playerOrder starts this round
     currentPlayerIndex: number;
     phase: 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
     round: number;

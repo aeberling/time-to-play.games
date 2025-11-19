@@ -106,6 +106,26 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         }
     }, [swoopState?.recentSwoop]);
 
+    // Restore revealed mystery card from server state on mount/refresh
+    useEffect(() => {
+        if (swoopState && playerIndex !== null) {
+            const revealedCards = swoopState.revealedMysteryCards?.[playerIndex];
+            if (revealedCards) {
+                // Find the first revealed card (there should only be one at most)
+                const revealedIndex = revealedCards.findIndex((revealed: boolean) => revealed === true);
+                if (revealedIndex !== -1) {
+                    const card = swoopState.mysteryCards[playerIndex][revealedIndex];
+                    if (card) {
+                        // Restore the revealed state
+                        setRevealedMystery({ index: revealedIndex, card });
+                        // Auto-select the revealed card
+                        setSelectedCards([{ source: 'mystery', index: revealedIndex }]);
+                    }
+                }
+            }
+        }
+    }, [swoopState?.revealedMysteryCards, playerIndex]);
+
     // Clear revealed mystery card when it's no longer in the mystery cards array
     useEffect(() => {
         if (revealedMystery !== null && swoopState && playerIndex !== null) {
@@ -273,12 +293,33 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         }
 
         // Copy to clipboard
-        navigator.clipboard.writeText(stateText).then(() => {
-            alert('Game state copied to clipboard!');
-        }).catch(err => {
-            console.error('Failed to copy to clipboard:', err);
-            alert('Failed to copy to clipboard. See console for details.');
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            // Modern clipboard API
+            navigator.clipboard.writeText(stateText).then(() => {
+                alert('Game state copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy to clipboard. See console for details.');
+            });
+        } else {
+            // Fallback for browsers that don't support clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = stateText;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                alert('Game state copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy to clipboard. See console for details.');
+            }
+
+            document.body.removeChild(textArea);
+        }
     };
 
     const handleCardSelect = (source: 'hand' | 'faceup' | 'mystery', index: number) => {
@@ -505,7 +546,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
             <AuthenticatedLayout
                 header={
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Swoop
+                        {currentGame?.name || 'Swoop'}
                     </h2>
                 }
             >
@@ -696,6 +737,63 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                             Return to Lobby
                                         </button>
                                     </div>
+
+                                    {/* Final Round Results */}
+                                    {swoopState.roundResults && (
+                                        <div className="mt-12 pt-8 border-t-2 border-gray-300">
+                                            <h3 className="text-xl font-bold text-center text-gray-900 mb-6">
+                                                Final Round Scoring
+                                            </h3>
+
+                                            <div className="max-w-2xl mx-auto space-y-3">
+                                                {swoopState.roundResults.map((result: any) => {
+                                                    const player = swoopState.players[result.playerIndex];
+                                                    const isWinner = result.remainingCards.length === 0;
+
+                                                    return (
+                                                        <div
+                                                            key={result.playerIndex}
+                                                            className={`p-4 rounded-lg ${
+                                                                isWinner ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'
+                                                            } border-2`}
+                                                        >
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-semibold text-gray-900">
+                                                                        {player?.name || `Player ${result.playerIndex + 1}`}
+                                                                        {isWinner && <span className="ml-2 text-green-600">🏆 Won Round!</span>}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <div className="text-lg font-bold">+{result.pointsThisRound} pts</div>
+                                                                    <div className="text-sm text-gray-600">Total: {result.totalScore}</div>
+                                                                </div>
+                                                            </div>
+
+                                                            {result.remainingCards.length > 0 && (
+                                                                <div className="mt-2 pt-2 border-t border-gray-300">
+                                                                    <div className="text-xs text-gray-600 mb-1">Remaining cards:</div>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {sortCards(result.remainingCards).map((card: any, idx: number) => {
+                                                                            const points = getCardPoints(card);
+                                                                            return (
+                                                                                <div key={idx} className="relative inline-block">
+                                                                                    {renderCard(card)}
+                                                                                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-base font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+                                                                                        +{points}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <>
@@ -755,7 +853,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                         <div className="mt-2 pt-2 border-t border-gray-300">
                                                             <div className="text-xs text-gray-600 mb-1">Remaining cards:</div>
                                                             <div className="flex flex-wrap gap-2">
-                                                                {result.remainingCards.map((card: any, idx: number) => {
+                                                                {sortCards(result.remainingCards).map((card: any, idx: number) => {
                                                                     const points = getCardPoints(card);
                                                                     return (
                                                                         <div key={idx} className="relative inline-block">
@@ -963,7 +1061,8 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                         )}
                                                         {/* Face-up card (on top) - positioned absolutely over mystery card with slight offset */}
                                                         {faceUpCard && (() => {
-                                                            const isPlayable = !revealedMystery || faceUpCard.rank === revealedMystery.card.rank;
+                                                            const isWild = faceUpCard.rank === '10' || faceUpCard.value === 0;
+                                                            const isPlayable = !revealedMystery || faceUpCard.rank === revealedMystery.card.rank || isWild;
                                                             const isSelected = selectedCards.some(s => s.source === 'faceup' && s.index === idx);
 
                                                             return (
@@ -992,7 +1091,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                             Your Hand
                                             {revealedMystery && (
                                                 <span className="text-xs ml-2 text-blue-600">
-                                                    (Select matching {revealedMystery.card.rank}s to play together)
+                                                    (Select matching {revealedMystery.card.rank}s or wilds to play together)
                                                 </span>
                                             )}
                                         </div>
@@ -1015,8 +1114,9 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                         usedIndices.add(originalIdx);
                                                     }
 
-                                                    // If a mystery card is revealed, only allow matching rank cards
-                                                    const isPlayable = !revealedMystery || card.rank === revealedMystery.card.rank;
+                                                    // If a mystery card is revealed, only allow matching rank cards or wild cards
+                                                    const isWild = card.rank === '10' || card.value === 0;
+                                                    const isPlayable = !revealedMystery || card.rank === revealedMystery.card.rank || isWild;
                                                     const isSelected = selectedCards.some(s => s.source === 'hand' && s.index === originalIdx);
 
                                                     return (
@@ -1047,15 +1147,6 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                     >
                                         {loading ? 'Playing...' : 'Play Selected Cards'}
                                     </button>
-                                    {swoopState.playPile.length > 0 && (
-                                        <button
-                                            onClick={handlePickup}
-                                            disabled={loading}
-                                            className="px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 disabled:opacity-50"
-                                        >
-                                            Pick Up Pile
-                                        </button>
-                                    )}
                                 </div>
                             )}
 
@@ -1121,8 +1212,8 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                     </span>
                                                                 )}
                                                                 {action.type === 'SWOOP' && (
-                                                                    <span className="text-yellow-700 font-semibold">
-                                                                        🦅 SWOOP! Played {action.cardCount} card{action.cardCount > 1 ? 's' : ''}{' '}
+                                                                    <span>
+                                                                        Played {action.cardCount} card{action.cardCount > 1 ? 's' : ''}{' '}
                                                                         {action.cards && action.cards.length > 0 && (
                                                                             <span className="font-mono font-semibold">
                                                                                 ({action.cards.map((c: any) => (
@@ -1132,6 +1223,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                                 )).reduce((prev: any, curr: any) => [prev, ', ', curr])}))
                                                                             </span>
                                                                         )}
+                                                                        {' '}<span className="text-yellow-700 font-semibold">🦅 SWOOP!</span>
                                                                     </span>
                                                                 )}
                                                                 {action.type === 'PICKUP' && (
@@ -1139,7 +1231,17 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                 )}
                                                                 {action.type === 'AUTO_PICKUP' && (
                                                                     <span>
-                                                                        Revealed card too high, picked up pile ({action.pileCardCount} cards)
+                                                                        Revealed{' '}
+                                                                        {action.cards && action.cards.length > 0 && (
+                                                                            <span className="font-mono font-semibold">
+                                                                                {action.cards.map((c: any) => (
+                                                                                    <span key={`${c.rank}${c.suit}`} className={getSuitColor(c.suit)}>
+                                                                                        {c.rank}{getSuitIcon(c.suit)}
+                                                                                    </span>
+                                                                                )).reduce((prev: any, curr: any) => [prev, ', ', curr])}
+                                                                            </span>
+                                                                        )}
+                                                                        {' '}too high, picked up pile ({action.pileCardCount} cards)
                                                                     </span>
                                                                 )}
                                                                 {action.type === 'REVEAL_MYSTERY' && (
@@ -1204,8 +1306,10 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                     {/* Player Stats */}
                                     <div className="space-y-2">
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Players</div>
-                                        {swoopState.players.map((player, idx) => {
+                                        {swoopState.playerOrder.map((idx, orderPosition) => {
+                                            const player = swoopState.players[idx];
                                             const isActivePlayer = idx === swoopState.currentPlayerIndex && !isGameOver;
+                                            const isStartingPlayer = orderPosition === swoopState.roundStartingPlayerOffset;
                                             const playerHandCards = swoopState.playerHands[idx];
                                             const playerFaceUpCards = swoopState.faceUpCards[idx];
                                             const playerMysteryCards = swoopState.mysteryCards[idx];
@@ -1221,9 +1325,16 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                     style={{ borderLeft: `4px solid ${getPlayerColor(idx)}` }}
                                                 >
                                                     <div className="font-semibold text-base mb-2 flex items-center justify-between">
-                                                        <span>
-                                                            {player.name}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span>
+                                                                {player.name}
+                                                            </span>
+                                                            {isStartingPlayer && swoopState.phase === 'PLAYING' && (
+                                                                <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded font-medium" title="Started this round">
+                                                                    1st
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {isActivePlayer && (
                                                             <span className="text-lg animate-pulse">🤔</span>
                                                         )}
@@ -1264,15 +1375,28 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                                     {Array.from({ length: Math.max(playerMysteryCards.length, playerFaceUpCards.length) }).map((_, cardIdx) => {
                                                                         const mysteryCard = playerMysteryCards[cardIdx];
                                                                         const faceUpCard = playerFaceUpCards[cardIdx];
+                                                                        const isMysteryRevealed = swoopState.revealedMysteryCards?.[idx]?.[cardIdx] ?? false;
 
                                                                         // Don't render if both are null or undefined
                                                                         if (!mysteryCard && !faceUpCard) return null;
 
                                                                         return (
                                                                             <div key={cardIdx} className="relative" style={{ width: '48px', height: '64px' }}>
-                                                                                {/* Mystery card at bottom - always blue */}
+                                                                                {/* Mystery card at bottom */}
                                                                                 {mysteryCard && (
-                                                                                    <div className="absolute inset-0 bg-blue-800 border border-gray-300 rounded-lg"></div>
+                                                                                    isMysteryRevealed ? (
+                                                                                        // Show revealed mystery card
+                                                                                        <div className="absolute inset-0">
+                                                                                            <GameCard
+                                                                                                card={mysteryCard}
+                                                                                                faceDown={false}
+                                                                                                small={true}
+                                                                                            />
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        // Show face-down placeholder
+                                                                                        <div className="absolute inset-0 bg-blue-800 border border-gray-300 rounded-lg"></div>
+                                                                                    )
                                                                                 )}
                                                                                 {/* Face-up card on top with slight offset */}
                                                                                 {faceUpCard && (
