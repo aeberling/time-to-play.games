@@ -233,6 +233,9 @@ class SwoopEngine implements GameEngineInterface
                 return ValidationResult::invalid('You do not have these cards');
             }
 
+            // Note: UI already prevents selecting unrevealed/covered mystery cards,
+            // so no additional validation needed here
+
             // All cards must be same rank (excluding wild cards: 10s and Jokers)
             $cards = array_map(fn($cardData) => Card::fromArray($cardData), $move['cards']);
 
@@ -685,6 +688,9 @@ class SwoopEngine implements GameEngineInterface
                 if ($key !== false) {
                     // Replace with null instead of removing to maintain indices
                     $state['mysteryCards'][$playerIndex][$idx] = null;
+                    // Also remove the face-up card at the same index to maintain pairing
+                    // (it should typically already be null, but this ensures consistency)
+                    $state['faceUpCards'][$playerIndex][$idx] = null;
                     unset($cardsToRemove[$key]);
                     $cardsToRemove = array_values($cardsToRemove);
                 }
