@@ -463,9 +463,9 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
         : false;
 
     // Get player-specific data (only if game has started and has Oh Hell properties)
-    const myHand = ohHellState && ohHellState.playerHands && playerIndex !== null ? ohHellState.playerHands[playerIndex] : [];
+    const myHand = ohHellState && ohHellState.playerHands && playerIndex !== null ? (ohHellState.playerHands[playerIndex] || []) : [];
     const myBid = ohHellState && ohHellState.bids && playerIndex !== null ? ohHellState.bids[playerIndex] : null;
-    const myTricksWon = ohHellState && ohHellState.tricksWon && playerIndex !== null ? ohHellState.tricksWon[playerIndex] : 0;
+    const myTricksWon = ohHellState && ohHellState.tricksWon && playerIndex !== null ? (ohHellState.tricksWon[playerIndex] || 0) : 0;
     const myScore = ohHellState && ohHellState.scores && playerIndex !== null ? ohHellState.scores[playerIndex] : 0;
 
     // Calculate dealer restriction
@@ -843,7 +843,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                     {/* Round Results */}
                                     <div className="mb-6 space-y-3">
                                         {ohHellState.players.map((player, idx) => {
-                                            const made = ohHellState.bids[idx] === ohHellState.tricksWon[idx];
+                                            const made = ohHellState.bids?.[idx] === ohHellState.tricksWon?.[idx];
                                             const isReady = ohHellState.playersReadyToContinue?.[idx] ?? false;
                                             return (
                                                 <div
@@ -862,11 +862,11 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                                 </span>
                                                             )}
                                                             <span className="text-sm text-gray-600">
-                                                                Bid: {ohHellState.bids[idx]}, Won: {ohHellState.tricksWon[idx]}
+                                                                Bid: {ohHellState.bids?.[idx] ?? 0}, Won: {ohHellState.tricksWon?.[idx] ?? 0}
                                                             </span>
                                                         </div>
                                                         <div className={`text-lg font-bold ${made ? 'text-green-700' : 'text-red-700'}`}>
-                                                            {made ? '😄🙌 ✓' : '🤜🤛 ✗'} +{ohHellState.roundScores[idx]} pts
+                                                            {made ? '😄🙌 ✓' : '🤜🤛 ✗'} +{ohHellState.roundScores?.[idx] || 0} pts
                                                         </div>
                                                     </div>
                                                 </div>
@@ -899,7 +899,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                             )}
 
                             {/* Play History */}
-                            {ohHellState.playHistory && ohHellState.playHistory.length > 0 && (
+                            {ohHellState.playHistory && Array.isArray(ohHellState.playHistory) && ohHellState.playHistory.length > 0 && (
                                 <div className="mt-8 pt-6 border-t-2 border-gray-300">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="text-sm text-gray-700 font-semibold">Play History</div>
@@ -993,9 +993,9 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                     <div>
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1.5">Game Info</div>
                                         <div className="flex items-center gap-2 text-xs flex-wrap">
-                                            <div className="font-semibold text-gray-900">Round {ohHellState.currentRound}/{ohHellState.totalRounds}</div>
+                                            <div className="font-semibold text-gray-900">Round {ohHellState.currentRound || 1}/{ohHellState.totalRounds || 1}</div>
                                             <span className="text-gray-400">•</span>
-                                            <div className="text-gray-600">Cards: {ohHellState.cardsThisRound}</div>
+                                            <div className="text-gray-600">Cards: {ohHellState.cardsThisRound || 0}</div>
                                             {ohHellState.trumpSuit && (
                                                 <>
                                                     <span className="text-gray-400">•</span>
@@ -1029,7 +1029,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                         {ohHellState.players.map((player, idx) => {
                                             const isThinking = (ohHellState.phase === 'BIDDING' && ohHellState.currentBidder === idx) ||
                                                              (ohHellState.phase === 'PLAYING' && ohHellState.currentTrick && ohHellState.currentTrick.currentPlayer === idx);
-                                            const playerHandCards = ohHellState.playerHands[idx];
+                                            const playerHandCards = ohHellState.playerHands?.[idx] || [];
 
                                             return (
                                                 <div
@@ -1079,7 +1079,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                         )}
 
                                                         {/* Bid and Won */}
-                                                        {ohHellState.bids[idx] !== null && (
+                                                        {ohHellState.bids?.[idx] !== null && ohHellState.bids?.[idx] !== undefined && (
                                                             <div>
                                                                 <div className="flex items-center justify-between text-base font-semibold">
                                                                     <span className="text-blue-700">Bid: {ohHellState.bids[idx]}</span>
@@ -1087,7 +1087,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                                 </div>
                                                                 {(() => {
                                                                     const bid = ohHellState.bids[idx]!;
-                                                                    const won = ohHellState.tricksWon[idx];
+                                                                    const won = ohHellState.tricksWon?.[idx] || 0;
                                                                     const diff = won - bid;
 
                                                                     if (diff === 0) {
@@ -1117,7 +1117,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                         {/* Score */}
                                                         <div className="text-sm pt-2 border-t border-gray-200">
                                                             <span className="text-gray-600">Score:</span>{' '}
-                                                            <span className="font-bold text-gray-800">{ohHellState.scores[idx]}</span>
+                                                            <span className="font-bold text-gray-800">{ohHellState.scores?.[idx] || 0}</span>
                                                         </div>
                                                     </div>
                                                 </div>
