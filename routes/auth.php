@@ -26,7 +26,8 @@ Route::middleware('guest')->group(function () {
     Route::get('speak-friend', [AuthenticatedSessionController::class, 'createSecretPhrase'])
         ->name('login.secret-phrase');
 
-    Route::post('speak-friend', [AuthenticatedSessionController::class, 'storeSecretPhrase']);
+    Route::post('speak-friend', [AuthenticatedSessionController::class, 'storeSecretPhrase'])
+        ->name('login.secret-phrase.store');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

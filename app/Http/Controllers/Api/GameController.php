@@ -95,7 +95,7 @@ class GameController extends Controller
             'game_options.startingHandSize' => 'nullable|integer|min:1|max:13',
             'game_options.endingHandSize' => 'nullable|integer|min:1|max:13',
             'game_options.scoringVariant' => 'nullable|string|in:standard,partial',
-            'game_options.scoreLimit' => 'nullable|integer|min:100|max:1000',
+            'game_options.scoreLimit' => 'nullable|integer|min:50|max:1000',
             'game_options.scoringMethod' => 'nullable|string|in:beginner,normal',
         ]);
 

@@ -39,6 +39,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
     const [revealedMystery, setRevealedMystery] = useState<{index: number, card: Card} | null>(null);
     const [lastSwoopTimestamp, setLastSwoopTimestamp] = useState<string | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [loadTimeout, setLoadTimeout] = useState(false);
 
     const swoopState = gameState as SwoopGameState | null;
 
@@ -71,10 +72,55 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
 
     // Fetch game state and subscribe to updates on mount
     useEffect(() => {
-        fetchGameState(gameId, auth.user.id);
-        subscribeToGame(gameId);
+        const loadGame = async () => {
+            try {
+                // Check if URL has ?join=true parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const shouldAutoJoin = urlParams.get('join') === 'true';
+
+                if (shouldAutoJoin) {
+                    // Try to join the game first
+                    try {
+                        const response = await fetch(`/api/games/${gameId}/join`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            },
+                        });
+
+                        if (response.ok) {
+                            // Remove the join parameter from URL after successful join
+                            window.history.replaceState({}, '', window.location.pathname);
+                        } else {
+                            // If join fails (e.g., already in game, game full), continue loading anyway
+                            console.log('Auto-join failed, loading game state anyway');
+                        }
+                    } catch (joinError) {
+                        console.error('Error auto-joining game:', joinError);
+                        // Continue to load game even if join fails
+                    }
+                }
+
+                await fetchGameState(gameId, auth.user.id);
+                subscribeToGame(gameId);
+            } catch (err) {
+                console.error('Error loading game:', err);
+            }
+        };
+
+        loadGame();
+
+        // Set timeout to show helpful message if loading takes too long
+        const timeoutId = setTimeout(() => {
+            if (!currentGame) {
+                setLoadTimeout(true);
+            }
+        }, 5000); // 5 seconds
 
         return () => {
+            clearTimeout(timeoutId);
             unsubscribeFromGame(gameId);
         };
     }, [gameId, auth.user.id]);
@@ -546,7 +592,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
             <AuthenticatedLayout
                 header={
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {currentGame?.name || 'Swoop'}
+                        Swoop
                     </h2>
                 }
             >
@@ -554,7 +600,54 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="bg-white p-6 shadow sm:rounded-lg text-center">
-                            Loading game...
+                            {error ? (
+                                <div>
+                                    <p className="text-red-600 font-medium mb-4">{error}</p>
+                                    <div className="flex gap-3 justify-center">
+                                        <button
+                                            onClick={() => {
+                                                setLoadTimeout(false);
+                                                fetchGameState(gameId, auth.user.id);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        >
+                                            Retry
+                                        </button>
+                                        <button
+                                            onClick={handleLeaveGame}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                        >
+                                            Back to Lobby
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : loadTimeout ? (
+                                <div>
+                                    <p className="text-gray-700 mb-4">Taking longer than expected to load the game...</p>
+                                    <p className="text-sm text-gray-600 mb-4">Check your browser console for errors or try refreshing.</p>
+                                    <div className="flex gap-3 justify-center">
+                                        <button
+                                            onClick={() => window.location.reload()}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        >
+                                            Refresh Page
+                                        </button>
+                                        <button
+                                            onClick={handleLeaveGame}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                        >
+                                            Back to Lobby
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="mb-2">Loading game...</div>
+                                    {loading && (
+                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -615,9 +708,52 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                     {/* Waiting Room */}
                     {isWaiting && (
                         <div className="bg-white p-6 shadow sm:rounded-lg mb-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Waiting for Players
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900">
+                                        Waiting for Players
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Game: <span className="font-semibold">{currentGame.name}</span>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const baseUrl = window.location.origin + window.location.pathname;
+                                        const gameUrl = `${baseUrl}?join=true`;
+                                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                                            navigator.clipboard.writeText(gameUrl).then(() => {
+                                                alert('Game link copied to clipboard!');
+                                            }).catch(err => {
+                                                console.error('Failed to copy link:', err);
+                                                alert('Failed to copy link. See console for details.');
+                                            });
+                                        } else {
+                                            // Fallback
+                                            const textArea = document.createElement('textarea');
+                                            textArea.value = gameUrl;
+                                            textArea.style.position = 'fixed';
+                                            textArea.style.left = '-999999px';
+                                            document.body.appendChild(textArea);
+                                            textArea.select();
+                                            try {
+                                                document.execCommand('copy');
+                                                alert('Game link copied to clipboard!');
+                                            } catch (err) {
+                                                console.error('Failed to copy link:', err);
+                                                alert('Failed to copy link. See console for details.');
+                                            }
+                                            document.body.removeChild(textArea);
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                    Share Game
+                                </button>
+                            </div>
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-2">

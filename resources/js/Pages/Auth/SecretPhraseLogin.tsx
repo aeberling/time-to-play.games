@@ -21,7 +21,7 @@ export default function SecretPhraseLogin({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        post(route('login.secret-phrase'), {
+        post(route('login.secret-phrase.store'), {
             onFinish: () => reset('secret_phrase'),
         });
     };
