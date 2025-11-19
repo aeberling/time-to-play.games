@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\GameService;
 use App\Models\Game;
 use App\Games\GameRegistry;
+use App\Events\GameCreated;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -131,6 +132,9 @@ class GameController extends Controller
         );
 
         $game->load(['gamePlayers.user']);
+
+        // Broadcast game creation to lobby
+        broadcast(new GameCreated($game));
 
         return response()->json([
             'game' => $game,

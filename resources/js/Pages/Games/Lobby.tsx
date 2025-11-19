@@ -64,6 +64,56 @@ export default function Lobby({ auth }: PageProps) {
         };
     }, []);
 
+    // Listen for real-time lobby updates via WebSocket
+    useEffect(() => {
+        // Subscribe to the lobby channel
+        const channel = window.Echo.channel('lobby');
+
+        // Listen for new game creation
+        channel.listen('.game.created', (e: { game: Game; timestamp: string }) => {
+            console.log('New game created:', e.game);
+            setGames((prevGames) => [e.game, ...prevGames]);
+        });
+
+        // Listen for game updates (e.g., player joins, game starts)
+        channel.listen('.game.updated', (e: { game: Game; timestamp: string }) => {
+            console.log('Game updated:', e.game);
+
+            // Check if current user is now in the game
+            const userInGame = e.game.game_players?.some(p => p.user_id === auth.user.id);
+
+            // Update or remove from available games list based on status
+            setGames((prevGames) => {
+                // Remove game if it's no longer waiting
+                if (e.game.status !== 'WAITING') {
+                    return prevGames.filter((game) => game.id !== e.game.id);
+                }
+                // Update existing game
+                return prevGames.map((game) => (game.id === e.game.id ? e.game : game));
+            });
+
+            // Update or add to my games list if user is in the game
+            setMyGames((prevGames) => {
+                const existingGameIndex = prevGames.findIndex((game) => game.id === e.game.id);
+                if (existingGameIndex >= 0) {
+                    // Update existing game
+                    return prevGames.map((game) => (game.id === e.game.id ? e.game : game));
+                } else if (userInGame) {
+                    // Add new game to my games
+                    return [e.game, ...prevGames];
+                }
+                return prevGames;
+            });
+        });
+
+        // Cleanup on unmount
+        return () => {
+            channel.stopListening('.game.created');
+            channel.stopListening('.game.updated');
+            window.Echo.leave('lobby');
+        };
+    }, []);
+
     // Update hand sizes when max players changes for Oh Hell
     useEffect(() => {
         if (selectedGameType === 'OH_HELL') {

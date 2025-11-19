@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\GameService;
+use App\Events\LobbyGameUpdated;
+use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -31,6 +33,10 @@ class GamePlayerController extends Controller
             $gamePlayer = $this->gameService->addPlayerToGame($gameId, $user->id);
 
             $gamePlayer->load(['game', 'user']);
+
+            // Broadcast game update to lobby
+            $game = Game::with(['gamePlayers.user'])->findOrFail($gameId);
+            broadcast(new LobbyGameUpdated($game));
 
             return response()->json([
                 'message' => 'Joined game successfully',

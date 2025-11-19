@@ -142,6 +142,7 @@ export interface SwoopGameState {
     playerHands: Card[][];
     faceUpCards: Card[][];
     mysteryCards: Card[][];
+    revealedMysteryCards: boolean[][];
     playPile: Array<{cards: Card[], rank: string}>;
     removedCards: Card[];
     currentPlayerIndex: number;
@@ -159,6 +160,17 @@ export interface SwoopGameState {
         swoopTriggered?: boolean;
     };
     recentSwoop: string | null;
+    playHistory?: Array<{
+        type: string;
+        playerIndex: number;
+        playerName: string;
+        timestamp: string;
+        cards?: Card[];
+        cardCount?: number;
+        card?: Card;
+        swoopTriggered?: boolean;
+        pileCardCount?: number;
+    }>;
     roundResults?: Array<{
         playerIndex: number;
         remainingCards: Card[];

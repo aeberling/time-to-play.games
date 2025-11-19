@@ -107,12 +107,19 @@ class SwoopEngine implements GameEngineInterface
             $playerHands[] = $faceUp['remaining']->toArray();
         }
 
+        // Track which mystery cards have been revealed (same structure as mysteryCards, but with booleans)
+        $revealedMysteryCards = [];
+        for ($i = 0; $i < $playerCount; $i++) {
+            $revealedMysteryCards[] = array_fill(0, 4, false);
+        }
+
         return [
             'players' => $players,
             'playerCount' => $playerCount,
             'playerHands' => $playerHands,
             'faceUpCards' => $faceUpCards,
             'mysteryCards' => $mysteryCards,
+            'revealedMysteryCards' => $revealedMysteryCards,
             'playPile' => [],
             'removedCards' => [],
             'currentPlayerIndex' => 0,
@@ -124,6 +131,7 @@ class SwoopEngine implements GameEngineInterface
             'playersReadyToContinue' => array_fill(0, $playerCount, false),
             'lastAction' => null,
             'recentSwoop' => null,
+            'playHistory' => [],
         ];
     }
 
@@ -171,6 +179,24 @@ class SwoopEngine implements GameEngineInterface
         if ($action === 'CONTINUE_ROUND') {
             if ($state['phase'] !== 'ROUND_OVER') {
                 return ValidationResult::invalid('Can only continue when round is over');
+            }
+            return ValidationResult::valid();
+        }
+
+        // Allow REVEAL_MYSTERY on player's turn
+        if ($action === 'REVEAL_MYSTERY') {
+            if ($playerIndex !== $state['currentPlayerIndex']) {
+                return ValidationResult::invalid('Not your turn');
+            }
+            if ($state['phase'] !== 'PLAYING') {
+                return ValidationResult::invalid('Can only reveal cards during playing phase');
+            }
+            $cardIndex = $move['cardIndex'] ?? null;
+            if ($cardIndex === null || $cardIndex < 0 || $cardIndex >= count($state['mysteryCards'][$playerIndex])) {
+                return ValidationResult::invalid('Invalid card index');
+            }
+            if ($state['mysteryCards'][$playerIndex][$cardIndex] === null) {
+                return ValidationResult::invalid('Card already played');
             }
             return ValidationResult::valid();
         }
@@ -372,9 +398,48 @@ class SwoopEngine implements GameEngineInterface
         return Card::fromArray($lastGroupCards[count($lastGroupCards) - 1]);
     }
 
+    /**
+     * Add an entry to the play history
+     */
+    private function addToPlayHistory(array &$state, string $actionType, int $playerIndex, array $extra = []): void
+    {
+        $entry = [
+            'type' => $actionType,
+            'playerIndex' => $playerIndex,
+            'playerName' => $state['players'][$playerIndex]['name'] ?? "Player " . ($playerIndex + 1),
+            'timestamp' => now()->toISOString(),
+        ];
+
+        // Merge in any extra data
+        $entry = array_merge($entry, $extra);
+
+        $state['playHistory'][] = $entry;
+    }
+
     public function applyMove(array $state, array $move, int $playerIndex): array
     {
         $action = $move['action'];
+
+        if ($action === 'REVEAL_MYSTERY') {
+            $cardIndex = $move['cardIndex'];
+            // Mark this mystery card as revealed
+            $state['revealedMysteryCards'][$playerIndex][$cardIndex] = true;
+
+            $state['lastAction'] = [
+                'type' => 'REVEAL_MYSTERY',
+                'playerIndex' => $playerIndex,
+                'cardIndex' => $cardIndex,
+                'timestamp' => now()->toISOString(),
+            ];
+
+            // Add to play history
+            $this->addToPlayHistory($state, 'REVEAL_MYSTERY', $playerIndex, [
+                'card' => $state['mysteryCards'][$playerIndex][$cardIndex],
+            ]);
+
+            // Don't change turn - player is just revealing the card
+            return $state;
+        }
 
         if ($action === 'CONTINUE_ROUND') {
             // Mark this player as ready to continue
@@ -410,6 +475,8 @@ class SwoopEngine implements GameEngineInterface
                 $allPileCards = array_merge($allPileCards, $group['cards']);
             }
 
+            $cardCount = count($allPileCards);
+
             $state['playerHands'][$playerIndex] = array_merge(
                 $state['playerHands'][$playerIndex],
                 $allPileCards
@@ -422,6 +489,11 @@ class SwoopEngine implements GameEngineInterface
                 'playerIndex' => $playerIndex,
                 'timestamp' => now()->toISOString(),
             ];
+
+            // Add to play history
+            $this->addToPlayHistory($state, 'PICKUP', $playerIndex, [
+                'cardCount' => $cardCount,
+            ]);
 
             $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
             return $state;
@@ -445,6 +517,8 @@ class SwoopEngine implements GameEngineInterface
                     $allPileCards = array_merge($allPileCards, $group['cards']);
                 }
 
+                $pileCardCount = count($allPileCards);
+
                 // Add the current pile AND the played card(s) to player's hand
                 // This allows the player to get face-up/mystery cards into their hand
                 $state['playerHands'][$playerIndex] = array_merge(
@@ -461,6 +535,13 @@ class SwoopEngine implements GameEngineInterface
                     'cardsRevealed' => count($move['cards']),
                     'timestamp' => now()->toISOString(),
                 ];
+
+                // Add to play history
+                $this->addToPlayHistory($state, 'AUTO_PICKUP', $playerIndex, [
+                    'cards' => $move['cards'],
+                    'cardCount' => count($move['cards']),
+                    'pileCardCount' => $pileCardCount,
+                ]);
 
                 $state['currentPlayerIndex'] = ($playerIndex + 1) % $state['playerCount'];
                 return $state;
@@ -491,6 +572,13 @@ class SwoopEngine implements GameEngineInterface
                 'cardsPlayed' => count($move['cards']),
                 'timestamp' => now()->toISOString(),
             ];
+
+            // Add to play history
+            $this->addToPlayHistory($state, $swoopTriggered ? 'SWOOP' : 'PLAY', $playerIndex, [
+                'cards' => $move['cards'],
+                'cardCount' => count($move['cards']),
+                'swoopTriggered' => $swoopTriggered,
+            ]);
 
             if ($swoopTriggered) {
                 // Flatten all card groups and remove from game
@@ -772,10 +860,17 @@ class SwoopEngine implements GameEngineInterface
             $playerHands[] = $faceUp['remaining']->toArray();
         }
 
+        // Reset revealed mystery cards tracking for new round
+        $revealedMysteryCards = [];
+        for ($i = 0; $i < $state['playerCount']; $i++) {
+            $revealedMysteryCards[] = array_fill(0, 4, false);
+        }
+
         // Reset game state for new round
         $state['playerHands'] = $playerHands;
         $state['faceUpCards'] = $faceUpCards;
         $state['mysteryCards'] = $mysteryCards;
+        $state['revealedMysteryCards'] = $revealedMysteryCards;
         $state['playPile'] = [];
         $state['removedCards'] = [];
         $state['currentPlayerIndex'] = 0;
@@ -788,6 +883,7 @@ class SwoopEngine implements GameEngineInterface
         ];
         $state['recentSwoop'] = null;
         $state['roundResults'] = null; // Clear previous round results
+        $state['playHistory'] = []; // Clear play history for new round
 
         return $state;
     }
@@ -850,20 +946,41 @@ class SwoopEngine implements GameEngineInterface
 
     public function getPlayerView(array $state, int $playerIndex): array
     {
-        // Hide other players' hands and mystery cards
+        // Hide other players' hands and unrevealed mystery cards
         $viewState = $state;
 
         for ($i = 0; $i < $state['playerCount']; $i++) {
             if ($i !== $playerIndex) {
-                // Replace with count only
+                // Replace hands with hidden placeholders
                 $handCount = count($state['playerHands'][$i]);
-                $mysteryCount = count($state['mysteryCards'][$i]);
-
                 $viewState['playerHands'][$i] = array_fill(0, $handCount, ['hidden' => true]);
-                $viewState['mysteryCards'][$i] = array_fill(0, $mysteryCount, ['hidden' => true]);
+
+                // For mystery cards, show revealed cards but hide unrevealed ones
+                // IMPORTANT: Maintain array indices by keeping null placeholders
+                $mysteryCardsView = [];
+                foreach ($state['mysteryCards'][$i] as $idx => $card) {
+                    if ($card === null) {
+                        // Card has been played - keep null to maintain indices
+                        $mysteryCardsView[$idx] = null;
+                        continue;
+                    }
+
+                    // Check if this card has been revealed
+                    $isRevealed = $state['revealedMysteryCards'][$i][$idx] ?? false;
+
+                    if ($isRevealed) {
+                        // Show the actual card
+                        $mysteryCardsView[$idx] = $card;
+                    } else {
+                        // Hide the card
+                        $mysteryCardsView[$idx] = ['hidden' => true];
+                    }
+                }
+                $viewState['mysteryCards'][$i] = $mysteryCardsView;
             }
         }
 
+        // Keep revealedMysteryCards in the view state so frontend can use it for display logic
         return $viewState;
     }
 

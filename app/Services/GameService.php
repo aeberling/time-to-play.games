@@ -162,8 +162,25 @@ class GameService
             'current_state' => $engine->serializeState($gameState),
         ]);
 
-        // Broadcast initial state to all players
-        broadcast(new GameStateUpdated($gameId, $gameState));
+        // Broadcast initial state to all players (failures won't prevent game start)
+        try {
+            broadcast(new GameStateUpdated($gameId, $gameState));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast game state', [
+                'game_id' => $gameId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Broadcast lobby update (so game is removed from available games)
+        try {
+            broadcast(new \App\Events\LobbyGameUpdated($game));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast lobby update', [
+                'game_id' => $gameId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return $gameState;
     }
@@ -173,7 +190,7 @@ class GameService
      */
     public function makeMove(int $gameId, int $userId, array $moveData): array
     {
-        return DB::transaction(function () use ($gameId, $userId, $moveData) {
+        $result = DB::transaction(function () use ($gameId, $userId, $moveData) {
             $game = Game::lockForUpdate()->findOrFail($gameId);
 
             if ($game->status !== 'IN_PROGRESS') {
@@ -247,11 +264,24 @@ class GameService
                 ]);
             }
 
-            // Broadcast move to all players
-            broadcast(new MoveMade($gameId, $playerIndex, $moveData, $newState));
-
-            return $newState;
+            return [
+                'newState' => $newState,
+                'playerIndex' => $playerIndex,
+                'moveData' => $moveData,
+            ];
         });
+
+        // Broadcast move to all players (outside transaction to avoid rollback on broadcast failure)
+        try {
+            broadcast(new MoveMade($gameId, $result['playerIndex'], $result['moveData'], $result['newState']));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast move', [
+                'game_id' => $gameId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $result['newState'];
     }
 
     /**
@@ -324,7 +354,7 @@ class GameService
      */
     public function continueToNextRound(int $gameId): array
     {
-        return DB::transaction(function () use ($gameId) {
+        $newState = DB::transaction(function () use ($gameId) {
             $game = Game::lockForUpdate()->findOrFail($gameId);
 
             if ($game->status !== 'IN_PROGRESS') {
@@ -350,10 +380,19 @@ class GameService
                 'current_state' => $engine->serializeState($newState),
             ]);
 
-            // Broadcast new state to all players
-            broadcast(new GameStateUpdated($gameId, $newState));
-
             return $newState;
         });
+
+        // Broadcast new state to all players (outside transaction to avoid rollback on broadcast failure)
+        try {
+            broadcast(new GameStateUpdated($gameId, $newState));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast game state update', [
+                'game_id' => $gameId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $newState;
     }
 }
