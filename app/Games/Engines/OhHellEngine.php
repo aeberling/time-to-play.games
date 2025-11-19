@@ -101,6 +101,7 @@ class OhHellEngine implements GameEngineInterface
             'roundScores' => array_fill(0, $playerCount, 0),
             'playersReadyToContinue' => array_fill(0, $playerCount, false),
             'lastAction' => null,
+            'playHistory' => [],
         ];
 
         // Deal first round
@@ -125,6 +126,7 @@ class OhHellEngine implements GameEngineInterface
         $state['roundScores'] = array_fill(0, $state['playerCount'], 0);
         $state['trumpBroken'] = false;
         $state['playersReadyToContinue'] = array_fill(0, $state['playerCount'], false);
+        $state['playHistory'] = []; // Clear play history for new round
 
         $state['currentTrick'] = [
             'cards' => [],
@@ -297,6 +299,15 @@ class OhHellEngine implements GameEngineInterface
                 'timestamp' => now()->toISOString(),
             ];
 
+            // Add to play history
+            $state['playHistory'][] = [
+                'playerIndex' => $playerIndex,
+                'playerName' => $state['players'][$playerIndex]['name'],
+                'type' => 'BID',
+                'bid' => $move['bid'],
+                'timestamp' => now()->toISOString(),
+            ];
+
             // Check if all players have bid
             $allBid = true;
             foreach ($state['bids'] as $bid) {
@@ -355,6 +366,15 @@ class OhHellEngine implements GameEngineInterface
                 'timestamp' => now()->toISOString(),
             ];
 
+            // Add to play history
+            $state['playHistory'][] = [
+                'playerIndex' => $playerIndex,
+                'playerName' => $state['players'][$playerIndex]['name'],
+                'type' => 'PLAY_CARD',
+                'card' => $move['card'],
+                'timestamp' => now()->toISOString(),
+            ];
+
             // Check if trick is complete
             if (count($state['currentTrick']['cards']) === $state['playerCount']) {
                 // Determine trick winner
@@ -369,6 +389,14 @@ class OhHellEngine implements GameEngineInterface
                 $state['lastAction'] = [
                     'type' => 'TRICK_WON',
                     'trickWinner' => $winner,
+                    'timestamp' => now()->toISOString(),
+                ];
+
+                // Add to play history
+                $state['playHistory'][] = [
+                    'playerIndex' => $winner,
+                    'playerName' => $state['players'][$winner]['name'],
+                    'type' => 'TRICK_WON',
                     'timestamp' => now()->toISOString(),
                 ];
 

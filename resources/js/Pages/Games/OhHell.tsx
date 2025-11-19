@@ -38,15 +38,60 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
     const [bidAmount, setBidAmount] = useState<number>(0);
     const [showTrickWinner, setShowTrickWinner] = useState<{ winner: number; cards: any[] } | null>(null);
     const [lastShownTrickCount, setLastShownTrickCount] = useState<number>(0);
+    const [loadTimeout, setLoadTimeout] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     const ohHellState = gameState as OhHellGameState | null;
 
     // Fetch game state and subscribe to updates on mount
     useEffect(() => {
-        fetchGameState(gameId, auth.user.id);
-        subscribeToGame(gameId);
+        const loadGame = async () => {
+            try {
+                // Check if URL has ?join=true parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const shouldAutoJoin = urlParams.get('join') === 'true';
+
+                if (shouldAutoJoin) {
+                    // Try to join the game first
+                    try {
+                        const response = await fetch(`/api/games/${gameId}/join`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            },
+                        });
+
+                        if (response.ok) {
+                            // Remove the join parameter from URL after successful join
+                            window.history.replaceState({}, '', window.location.pathname);
+                        } else {
+                            console.log('Auto-join failed, loading game state anyway');
+                        }
+                    } catch (joinError) {
+                        console.error('Error auto-joining game:', joinError);
+                    }
+                }
+
+                await fetchGameState(gameId, auth.user.id);
+                subscribeToGame(gameId);
+            } catch (err) {
+                console.error('Error loading game:', err);
+            }
+        };
+
+        loadGame();
+
+        // Set timeout to show helpful message if loading takes too long
+        const timeoutId = setTimeout(() => {
+            if (!currentGame) {
+                setLoadTimeout(true);
+            }
+        }, 5000); // 5 seconds
 
         return () => {
+            clearTimeout(timeoutId);
             unsubscribeFromGame(gameId);
         };
     }, [gameId, auth.user.id]);
@@ -61,7 +106,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
 
         // Check if a new trick was just completed
         const completedCount = ohHellState.completedTricks.length;
-        if (completedCount > lastShownTrickCount && ohHellState.currentTrick.cards.length === 0) {
+        if (completedCount > lastShownTrickCount && ohHellState.currentTrick && ohHellState.currentTrick.cards.length === 0) {
             const lastTrick = ohHellState.completedTricks[completedCount - 1];
 
             setShowTrickWinner({
@@ -82,6 +127,23 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
 
         return () => clearTimeout(timer);
     }, [showTrickWinner]);
+
+    // Auto-collapse sidebar on mobile/tablet on initial load
+    useEffect(() => {
+        const handleResize = () => {
+            // lg breakpoint is 1024px in Tailwind
+            if (window.innerWidth < 1024) {
+                setSidebarCollapsed(true);
+            }
+        };
+
+        // Set initial state
+        handleResize();
+
+        // Optional: Listen for window resize
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleToggleReady = async () => {
         try {
@@ -147,6 +209,99 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
         }
     };
 
+    const handleCopyGameState = () => {
+        if (!ohHellState || playerIndex === null) {
+            alert('Game state not available');
+            return;
+        }
+
+        // Format card for display
+        const formatCard = (card: Card) => {
+            return `${card.rank}${card.suit.charAt(0).toUpperCase()}`;
+        };
+
+        // Build game state text
+        let stateText = '=== OH HELL GAME STATE ===\n\n';
+
+        // Game info
+        stateText += `Round: ${ohHellState.currentRound}/${ohHellState.totalRounds}\n`;
+        stateText += `Phase: ${ohHellState.phase}\n`;
+        stateText += `Cards This Round: ${ohHellState.cardsThisRound}\n`;
+        if (ohHellState.trumpSuit) {
+            stateText += `Trump: ${getSuitSymbol(ohHellState.trumpSuit)}\n`;
+        }
+        stateText += '\n';
+
+        // Current trick
+        if (ohHellState.currentTrick && ohHellState.currentTrick.cards.length > 0) {
+            stateText += 'Current Trick:\n';
+            ohHellState.currentTrick.cards.forEach((cardPlay: any) => {
+                stateText += `  ${ohHellState.players[cardPlay.playerIndex].name}: ${formatCard(cardPlay.card)}\n`;
+            });
+            stateText += '\n';
+        }
+
+        // Players
+        stateText += '=== PLAYERS ===\n\n';
+        ohHellState.players.forEach((player, idx) => {
+            const isMe = idx === playerIndex;
+            const isActive = (ohHellState.phase === 'BIDDING' && ohHellState.currentBidder === idx) ||
+                            (ohHellState.phase === 'PLAYING' && ohHellState.currentTrick && ohHellState.currentTrick.currentPlayer === idx);
+
+            stateText += `Player ${idx + 1}: ${player.name}${isMe ? ' (ME)' : ''}${isActive ? ' [ACTIVE]' : ''}\n`;
+            stateText += `  Score: ${ohHellState.scores[idx]} pts\n`;
+            stateText += `  Bid: ${ohHellState.bids[idx] ?? '-'} | Won: ${ohHellState.tricksWon[idx]}\n`;
+            stateText += `  Hand: ${ohHellState.playerHands[idx].length} cards`;
+
+            if (isMe) {
+                const myHandCards = ohHellState.playerHands[idx] as Card[];
+                stateText += ` - ${myHandCards.map(formatCard).join(', ')}`;
+            }
+            stateText += '\n\n';
+        });
+
+        // Play history
+        if (ohHellState.playHistory && ohHellState.playHistory.length > 0) {
+            stateText += '=== PLAY HISTORY ===\n\n';
+            const recentHistory = ohHellState.playHistory.slice(-20).reverse();
+            recentHistory.forEach((entry: any) => {
+                const player = ohHellState.players[entry.playerIndex];
+                if (entry.type === 'BID') {
+                    stateText += `${player.name}: Bid ${entry.bid}\n`;
+                } else if (entry.type === 'PLAY_CARD') {
+                    stateText += `${player.name}: Played ${formatCard(entry.card)}\n`;
+                } else if (entry.type === 'TRICK_WON') {
+                    stateText += `${player.name}: Won trick\n`;
+                }
+            });
+        }
+
+        // Copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(stateText).then(() => {
+                alert('Game state copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard.');
+            });
+        } else {
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = stateText;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('Game state copied to clipboard!');
+            } catch (err) {
+                alert('Failed to copy to clipboard.');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
     // Sort and organize cards by suit
     const sortCards = (cards: Card[]) => {
         // Alternating red and black: Hearts (red), Clubs (black), Diamonds (red), Spades (black)
@@ -162,7 +317,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
 
     // Check if a card can be legally played
     const isCardPlayable = (card: Card): boolean => {
-        if (!ohHellState || !isMyTurnToPlay || !myHand) return false;
+        if (!ohHellState || !isMyTurnToPlay || !myHand || !ohHellState.currentTrick) return false;
 
         const leadSuit = ohHellState.currentTrick.leadSuit;
 
@@ -224,12 +379,20 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
         }
     };
 
+    const getSuitColor = (suit: string) => {
+        const suitLower = suit.toLowerCase();
+        if (suitLower === 'hearts' || suitLower === 'diamonds') {
+            return 'text-red-600';
+        }
+        return 'text-gray-900';
+    };
+
     if (!currentGame) {
         return (
             <AuthenticatedLayout
                 header={
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {currentGame?.name || 'Oh Hell!'}
+                        Oh Hell!
                     </h2>
                 }
             >
@@ -237,7 +400,54 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="bg-white p-6 shadow sm:rounded-lg text-center">
-                            Loading game...
+                            {error ? (
+                                <div>
+                                    <p className="text-red-600 font-medium mb-4">{error}</p>
+                                    <div className="flex gap-3 justify-center">
+                                        <button
+                                            onClick={() => {
+                                                setLoadTimeout(false);
+                                                fetchGameState(gameId, auth.user.id);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        >
+                                            Retry
+                                        </button>
+                                        <button
+                                            onClick={handleLeaveGame}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                        >
+                                            Back to Lobby
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : loadTimeout ? (
+                                <div>
+                                    <p className="text-gray-700 mb-4">Taking longer than expected to load the game...</p>
+                                    <p className="text-sm text-gray-600 mb-4">Check your browser console for errors or try refreshing.</p>
+                                    <div className="flex gap-3 justify-center">
+                                        <button
+                                            onClick={() => window.location.reload()}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        >
+                                            Refresh Page
+                                        </button>
+                                        <button
+                                            onClick={handleLeaveGame}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                        >
+                                            Back to Lobby
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="mb-2">Loading game...</div>
+                                    {loading && (
+                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -248,7 +458,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
     const isWaiting = currentGame.status === 'WAITING' || currentGame.status === 'READY';
     const isGameOver = ohHellState ? ohHellState.phase === 'GAME_OVER' : false;
     const isMyTurnToBid = ohHellState ? ohHellState.currentBidder === playerIndex : false;
-    const isMyTurnToPlay = ohHellState && ohHellState.phase === 'PLAYING'
+    const isMyTurnToPlay = ohHellState && ohHellState.phase === 'PLAYING' && ohHellState.currentTrick
         ? ohHellState.currentTrick.currentPlayer === playerIndex
         : false;
 
@@ -304,9 +514,51 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                     {/* Waiting Room */}
                     {isWaiting && (
                         <div className="bg-white p-6 shadow sm:rounded-lg mb-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Waiting for Players
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900">
+                                        Waiting for Players
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Game: <span className="font-semibold">{currentGame.name}</span>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const baseUrl = window.location.origin + window.location.pathname;
+                                        const gameUrl = `${baseUrl}?join=true`;
+                                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                                            navigator.clipboard.writeText(gameUrl).then(() => {
+                                                alert('Game link copied to clipboard!');
+                                            }).catch(err => {
+                                                console.error('Failed to copy link:', err);
+                                                alert('Failed to copy link.');
+                                            });
+                                        } else {
+                                            // Fallback
+                                            const textArea = document.createElement('textarea');
+                                            textArea.value = gameUrl;
+                                            textArea.style.position = 'fixed';
+                                            textArea.style.left = '-999999px';
+                                            document.body.appendChild(textArea);
+                                            textArea.select();
+                                            try {
+                                                document.execCommand('copy');
+                                                alert('Game link copied to clipboard!');
+                                            } catch (err) {
+                                                alert('Failed to copy link.');
+                                            }
+                                            document.body.removeChild(textArea);
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                    Share Game
+                                </button>
+                            </div>
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-2">
@@ -349,10 +601,29 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
 
                     {/* Game Board - Two Column Layout */}
                     {!isWaiting && ohHellState && (
-                        <div className="flex gap-4">
-                            {/* Left Column: Play Area (75%) */}
-                            <div className="w-3/4">
-                                <div className="game-bg p-4 shadow sm:rounded-lg">
+                        <div className="flex gap-4 relative">
+                            {/* Backdrop overlay for mobile when sidebar is open */}
+                            {!sidebarCollapsed && (
+                                <div
+                                    className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                                    onClick={() => setSidebarCollapsed(true)}
+                                />
+                            )}
+
+                            {/* Left Column: Play Area (full width on mobile, 75% on desktop) */}
+                            <div className="w-full lg:w-3/4">
+                                <div className={`${isMyTurnToPlay && !isGameOver ? 'bg-green-50' : 'game-bg'} p-4 shadow sm:rounded-lg relative transition-colors duration-300`}>
+                                {/* Turn Indicator - Floating in top right */}
+                                {isMyTurnToPlay && ohHellState.phase === 'PLAYING' && !isGameOver && (
+                                    <div className="absolute top-2 right-2 z-20">
+                                        <div className="px-3 py-1.5 rounded-lg shadow-lg" style={{ backgroundColor: 'rgba(255, 51, 153, 0.75)' }}>
+                                            <div className="text-sm font-bold flex items-center gap-2 text-white">
+                                                <span className="animate-pulse text-lg">🎯</span>
+                                                Your Turn
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                             {/* Game Complete Screen */}
                             {isGameOver ? (
@@ -470,7 +741,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                             {/* Current Trick */}
                             {ohHellState.phase === 'PLAYING' && (
                                 <div className="mb-6">
-                                    <div className="text-center mb-2 text-sm game-text-secondary font-medium">
+                                    <div className="text-center mb-2 text-sm text-gray-700 font-semibold">
                                         Current Trick
                                         {(showTrickWinner ? showTrickWinner.cards[0] : ohHellState.currentTrick).leadSuit && (
                                             <span> (Lead: <span className={
@@ -492,7 +763,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                     {renderCard(cardPlay.card, undefined, false, false, false, getPlayerColor(cardPlay.playerIndex))}
                                                 </div>
                                             ))
-                                        ) : ohHellState.currentTrick.cards.length > 0 ? (
+                                        ) : ohHellState.currentTrick && ohHellState.currentTrick.cards.length > 0 ? (
                                             ohHellState.currentTrick.cards.map((cardPlay, idx) => (
                                                 <div key={idx} className="flex flex-col items-center gap-2">
                                                     <div className="text-xs text-gray-600">
@@ -526,7 +797,7 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                 <div className="mb-6">
                                     <div className="text-center mb-3">
                                         <div className="mb-1">
-                                            <span className="text-sm text-gray-600 font-medium">
+                                            <span className="text-sm text-gray-700 font-semibold">
                                                 Your Hand
                                             </span>
                                             {myBid !== null && (
@@ -536,11 +807,6 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                 </span>
                                             )}
                                         </div>
-                                        {ohHellState.phase === 'PLAYING' && isMyTurnToPlay && (
-                                            <div className="text-base font-semibold text-blue-600 animate-pulse">
-                                                Your Turn to Play
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="flex gap-2 justify-center flex-wrap">
                                         {sortCards(myHand).map((card, idx) => {
@@ -631,37 +897,121 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Play History */}
+                            {ohHellState.playHistory && ohHellState.playHistory.length > 0 && (
+                                <div className="mt-8 pt-6 border-t-2 border-gray-300">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="text-sm text-gray-700 font-semibold">Play History</div>
+                                        <button
+                                            onClick={handleCopyGameState}
+                                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                            Copy State
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {(() => {
+                                            // Group history by consecutive actions from the same player
+                                            const turns: any[] = [];
+                                            let currentTurn: any = null;
+
+                                            const recentHistory = ohHellState.playHistory.slice(-20).reverse();
+
+                                            recentHistory.forEach((entry: any) => {
+                                                if (!currentTurn || currentTurn.playerIndex !== entry.playerIndex) {
+                                                    if (currentTurn) {
+                                                        turns.push(currentTurn);
+                                                    }
+                                                    currentTurn = {
+                                                        playerIndex: entry.playerIndex,
+                                                        playerName: entry.playerName,
+                                                        actions: [entry]
+                                                    };
+                                                } else {
+                                                    currentTurn.actions.push(entry);
+                                                }
+                                            });
+
+                                            if (currentTurn) {
+                                                turns.push(currentTurn);
+                                            }
+
+                                            return turns.map((turn, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="p-2 rounded-lg bg-gray-50"
+                                                    style={{ borderLeft: `3px solid ${getPlayerColor(turn.playerIndex)}` }}
+                                                >
+                                                    <div className="font-semibold text-xs text-gray-800 mb-1">
+                                                        {turn.playerName}
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        {turn.actions.map((action: any, actionIdx: number) => (
+                                                            <div key={actionIdx} className="text-xs text-gray-600">
+                                                                {action.type === 'BID' && (
+                                                                    <span>Bid: {action.bid}</span>
+                                                                )}
+                                                                {action.type === 'PLAY_CARD' && action.card && (
+                                                                    <span>
+                                                                        Played{' '}
+                                                                        <span className={`font-mono font-semibold ${getSuitColor(action.card.suit)}`}>
+                                                                            {action.card.rank}{getSuitSymbol(action.card.suit)}
+                                                                        </span>
+                                                                    </span>
+                                                                )}
+                                                                {action.type === 'TRICK_WON' && (
+                                                                    <span className="text-green-600 font-semibold">Won trick!</span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
                                 </>
                             )}
                                 </div>
                             </div>
 
-                            {/* Right Column: Game Info & Players (25%) */}
-                            <div className="w-1/4">
-                                <div className="game-bg p-4 shadow sm:rounded-lg space-y-4">
+                            {/* Right Column: Game Info & Players (slide-in panel on mobile, 25% on desktop) */}
+                            <div className={`
+                                fixed lg:relative
+                                top-0 lg:top-auto
+                                right-0 lg:right-auto
+                                h-full lg:h-auto
+                                w-80 lg:w-1/4
+                                z-40 lg:z-auto
+                                transition-transform duration-300 ease-in-out
+                                ${sidebarCollapsed ? 'translate-x-full lg:translate-x-0' : 'translate-x-0'}
+                            `}>
+                                <div className="game-bg p-4 shadow sm:rounded-lg space-y-4 h-full lg:h-auto overflow-y-auto">
                                     {/* Game Status */}
-                                    <div className="space-y-2">
-                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Game Info</div>
-                                        <div className="text-sm">
-                                            <div className="font-medium">Round {ohHellState.currentRound}/{ohHellState.totalRounds}</div>
+                                    <div>
+                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1.5">Game Info</div>
+                                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                                            <div className="font-semibold text-gray-900">Round {ohHellState.currentRound}/{ohHellState.totalRounds}</div>
+                                            <span className="text-gray-400">•</span>
                                             <div className="text-gray-600">Cards: {ohHellState.cardsThisRound}</div>
+                                            {ohHellState.trumpSuit && (
+                                                <>
+                                                    <span className="text-gray-400">•</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-600">Trump:</span>
+                                                        <span className={`text-lg ${
+                                                            ohHellState.trumpSuit === 'hearts' || ohHellState.trumpSuit === 'diamonds'
+                                                                ? 'text-red-600'
+                                                                : 'text-gray-900'
+                                                        }`}>
+                                                            {getSuitSymbol(ohHellState.trumpSuit)}
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
-
-                                        {/* Trump */}
-                                        {ohHellState.trumpSuit && (
-                                            <div className="pt-2 border-t">
-                                                <div className="text-sm flex items-center gap-2">
-                                                    <span className="font-bold">Trump</span>
-                                                    <span className={`text-2xl ${
-                                                        ohHellState.trumpSuit === 'hearts' || ohHellState.trumpSuit === 'diamonds'
-                                                            ? 'text-red-600'
-                                                            : 'text-gray-900'
-                                                    }`}>
-                                                        {getSuitSymbol(ohHellState.trumpSuit)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {/* Game Over Status */}
                                         {isGameOver && (
@@ -678,7 +1028,8 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Players</div>
                                         {ohHellState.players.map((player, idx) => {
                                             const isThinking = (ohHellState.phase === 'BIDDING' && ohHellState.currentBidder === idx) ||
-                                                             (ohHellState.phase === 'PLAYING' && ohHellState.currentTrick.currentPlayer === idx);
+                                                             (ohHellState.phase === 'PLAYING' && ohHellState.currentTrick && ohHellState.currentTrick.currentPlayer === idx);
+                                            const playerHandCards = ohHellState.playerHands[idx];
 
                                             return (
                                                 <div
@@ -690,19 +1041,84 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                                     }`}
                                                     style={{ borderLeft: `4px solid ${getPlayerColor(idx)}` }}
                                                 >
-                                                    <div className="font-medium text-sm mb-1 flex items-center justify-between">
-                                                        <span>
-                                                            {player.name}
-                                                            {idx === ohHellState.dealerIndex && ' 🫳'}
-                                                        </span>
-                                                        {isThinking && (
-                                                            <span className="text-lg animate-pulse">🤔</span>
-                                                        )}
+                                                    <div className="font-semibold text-base mb-2 flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{player.name}</span>
+                                                            {idx === ohHellState.dealerIndex && (
+                                                                <span className="text-xs bg-yellow-500 text-white px-1.5 py-0.5 rounded font-medium" title="Dealer">
+                                                                    D
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {isThinking && <span className="text-lg animate-pulse">🤔</span>}
                                                     </div>
-                                                    <div className="text-sm text-gray-600 space-y-0.5">
-                                                        <div>Bid: {ohHellState.bids[idx] ?? '-'}</div>
-                                                        <div>Won: {ohHellState.tricksWon[idx]}</div>
-                                                        <div className="font-semibold">Score: {ohHellState.scores[idx]}</div>
+
+                                                    {/* Visual representation of hand */}
+                                                    <div className="space-y-2">
+                                                        {playerHandCards.length > 0 && (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-xs text-gray-500">Hand:</div>
+                                                                <div className="relative flex items-center" style={{ height: '30px', width: `${playerHandCards.length * 8 + 20}px` }}>
+                                                                    {Array.from({ length: playerHandCards.length }).map((_, cardIdx) => (
+                                                                        <div
+                                                                            key={cardIdx}
+                                                                            className="absolute"
+                                                                            style={{
+                                                                                left: `${cardIdx * 8}px`,
+                                                                                zIndex: cardIdx
+                                                                            }}
+                                                                        >
+                                                                            <div className="w-[20px] h-[30px] bg-blue-800 border border-gray-300 rounded-sm"></div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="text-sm font-bold text-gray-700">
+                                                                    {playerHandCards.length}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Bid and Won */}
+                                                        {ohHellState.bids[idx] !== null && (
+                                                            <div>
+                                                                <div className="flex items-center justify-between text-base font-semibold">
+                                                                    <span className="text-blue-700">Bid: {ohHellState.bids[idx]}</span>
+                                                                    <span className="text-green-700">Won: {ohHellState.tricksWon[idx]}</span>
+                                                                </div>
+                                                                {(() => {
+                                                                    const bid = ohHellState.bids[idx]!;
+                                                                    const won = ohHellState.tricksWon[idx];
+                                                                    const diff = won - bid;
+
+                                                                    if (diff === 0) {
+                                                                        return (
+                                                                            <div className="text-base font-semibold text-green-600 mt-1">
+                                                                                Right on bid! 🤩
+                                                                            </div>
+                                                                        );
+                                                                    } else if (diff < 0) {
+                                                                        const needed = Math.abs(diff);
+                                                                        return (
+                                                                            <div className="text-base font-semibold text-orange-600 mt-1">
+                                                                                ↑ Needs {needed} more 🙏
+                                                                            </div>
+                                                                        );
+                                                                    } else {
+                                                                        return (
+                                                                            <div className="text-base font-semibold text-red-600 mt-1">
+                                                                                ↓ {diff} over bid 😭
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                })()}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Score */}
+                                                        <div className="text-sm pt-2 border-t border-gray-200">
+                                                            <span className="text-gray-600">Score:</span>{' '}
+                                                            <span className="font-bold text-gray-800">{ohHellState.scores[idx]}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -710,6 +1126,36 @@ export default function OhHell({ auth, gameId }: OhHellProps) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Toggle button for mobile/tablet - only visible on smaller screens */}
+                            <button
+                                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                className={`
+                                    fixed
+                                    top-32
+                                    ${sidebarCollapsed ? 'right-4' : 'right-[21rem]'}
+                                    lg:hidden
+                                    z-50
+                                    text-sm px-3 py-1.5
+                                    bg-indigo-600 hover:bg-indigo-700
+                                    text-white rounded
+                                    shadow-md
+                                    transition-all duration-300 ease-in-out
+                                    font-medium
+                                    flex items-center gap-1
+                                `}
+                                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            >
+                                <svg
+                                    className={`w-4 h-4 transition-transform duration-300 ${sidebarCollapsed ? '' : 'rotate-180'}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                <span className="text-xs">{sidebarCollapsed ? 'Info' : ''}</span>
+                            </button>
                         </div>
                     )}
                 </div>

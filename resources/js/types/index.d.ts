@@ -216,6 +216,14 @@ export interface OhHellGameState {
         card?: Card;
         bid?: number;
     };
+    playHistory?: Array<{
+        type: string;
+        playerIndex: number;
+        playerName: string;
+        timestamp: string;
+        bid?: number;
+        card?: Card;
+    }>;
 }
 
 export type GameState = WarGameState | SwoopGameState | OhHellGameState;
