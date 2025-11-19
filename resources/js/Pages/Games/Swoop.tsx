@@ -336,6 +336,39 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                     stateText += `  Remaining: ${formatCards(remainingCards)}\n`;
                 }
             });
+            stateText += '\n';
+        }
+
+        // Play history if available
+        if (swoopState.playHistory && swoopState.playHistory.length > 0) {
+            stateText += 'History: ';
+            const recentHistory = swoopState.playHistory.slice(-20).reverse();
+            const historyLines: string[] = [];
+
+            recentHistory.forEach((entry: any) => {
+                const player = swoopState.players[entry.playerIndex];
+                let line = player.name;
+
+                if (entry.type === 'PLAY') {
+                    const cards = entry.cards as Card[];
+                    line += `\nPlayed ${cards.length} card${cards.length > 1 ? 's' : ''} (${formatCards(cards)})`;
+                    if (entry.swoopTriggered) {
+                        line += ` 🦅 SWOOP!`;
+                    }
+                } else if (entry.type === 'PICKUP') {
+                    line += `\nPicked up pile (${entry.cardsPickedUp || 0} cards)`;
+                } else if (entry.type === 'REVEAL_MYSTERY') {
+                    const card = entry.card as Card;
+                    line += `\nRevealed mystery card (${card.rank}${card.suit.charAt(0).toUpperCase()})`;
+                } else if (entry.type === 'PLAY_TOO_HIGH') {
+                    const card = entry.card as Card;
+                    line += `\nRevealed ${card.rank}${card.suit.charAt(0).toUpperCase()} too high, picked up pile (${entry.cardsPickedUp || 0} cards)`;
+                }
+
+                historyLines.push(line);
+            });
+
+            stateText += historyLines.join('\n') + '\n';
         }
 
         // Copy to clipboard
@@ -685,12 +718,6 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                             </button>
                         )}
                         <button
-                            onClick={handleCopyGameState}
-                            className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-                        >
-                            Copy Game State
-                        </button>
-                        <button
                             onClick={handleLeaveGame}
                             className="text-sm text-red-600 hover:text-red-800 font-medium"
                         >
@@ -808,6 +835,17 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                             {/* Left Column: Play Area (75% on desktop, full width on mobile/tablet) */}
                             <div className="w-full lg:w-3/4">
                                 <div className={`${isMyTurn && !isGameOver ? 'bg-green-50' : 'game-bg'} p-4 shadow sm:rounded-lg relative transition-colors duration-300`}>
+                                {/* Turn Indicator - Floating in top right */}
+                                {isMyTurn && swoopState.phase === 'PLAYING' && !isGameOver && (
+                                    <div className="absolute top-2 right-2 z-20">
+                                        <div className="px-3 py-1.5 rounded-lg shadow-lg" style={{ backgroundColor: 'rgba(255, 51, 153, 0.75)' }}>
+                                            <div className="text-sm font-bold flex items-center gap-2 text-white">
+                                                <span className="animate-pulse text-lg">😅</span>
+                                                Your Turn
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 {isGameOver ? (
                                 <div className="py-8">
                                     <div className="text-center mb-8">
@@ -933,20 +971,6 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 </div>
                             ) : (
                                 <>
-                            {/* Turn Indicator */}
-                            {isMyTurn && swoopState.phase === 'PLAYING' && (
-                                <div className="mb-4 p-3 game-bg-secondary rounded-lg">
-                                    <div className="text-center text-base font-semibold text-blue-600 animate-pulse">
-                                        Your Turn
-                                    </div>
-                                    {selectedCards.length > 0 && (
-                                        <div className="text-center text-sm text-gray-700 mt-2">
-                                            Selected: <span className="font-bold">{getSelectedCardsDescription()}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
                             {/* Round Over Summary */}
                             {swoopState.phase === 'ROUND_OVER' && swoopState.roundResults && (
                                 <div className="mb-6 p-6 bg-blue-50 rounded-lg border-2 border-blue-200">
@@ -1032,9 +1056,9 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 </div>
                             )}
 
-                            {/* Play Pile */}
-                            <div className="mb-8">
-                                <div className="text-center mb-2 text-sm text-gray-600 font-medium">
+                            {/* Play Pile - Horizontal Layout */}
+                            <div className="mb-4">
+                                <div className="mb-2 text-sm text-gray-700 font-semibold">
                                     Play Pile ({(() => {
                                         // Handle both old flat array format and new grouped format
                                         if (swoopState.playPile.length === 0) return 0;
@@ -1065,76 +1089,79 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                         </div>
                                     )}
                                     {swoopState.playPile.length > 0 ? (
-                                        <div className="space-y-3">
+                                        <div className="flex items-center justify-center gap-4">
                                             {(() => {
                                                 // Check if it's the new grouped format
                                                 const firstItem = swoopState.playPile[0];
                                                 const isGroupedFormat = firstItem && typeof firstItem === 'object' && 'cards' in firstItem;
 
                                                 if (isGroupedFormat) {
-                                                    // New grouped format - display older groups together, then current group
+                                                    // New grouped format - display current group on left, older groups on right
                                                     const olderGroups = swoopState.playPile.slice(0, -1);
                                                     const currentGroup = swoopState.playPile[swoopState.playPile.length - 1];
 
                                                     return (
                                                         <>
-                                                            {/* Current group */}
-                                                            <div className="flex justify-center items-center">
-                                                                <div className="flex gap-2">
-                                                                    {currentGroup.cards.map((card: Card, cardIdx: number) => (
-                                                                        <div key={cardIdx}>
-                                                                            {renderCard(card)}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
+                                                            {/* Current group - full size */}
+                                                            <div className="flex gap-2">
+                                                                {currentGroup.cards.map((card: Card, cardIdx: number) => (
+                                                                    <div key={cardIdx}>
+                                                                        {renderCard(card)}
+                                                                    </div>
+                                                                ))}
                                                             </div>
 
-                                                            {/* Older groups - all in one row */}
+                                                            {/* Separator */}
                                                             {olderGroups.length > 0 && (
-                                                                <div className="flex justify-center items-center pt-2 border-t border-gray-300">
-                                                                    <div className="flex gap-2 opacity-60 scale-75">
-                                                                        {olderGroups.map((group: any, groupIdx: number) => (
-                                                                            <div key={groupIdx} className="flex gap-2">
-                                                                                {group.cards.map((card: Card, cardIdx: number) => (
-                                                                                    <div key={cardIdx}>
-                                                                                        {renderCard(card)}
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
+                                                                <div className="w-px h-16 bg-gray-300"></div>
+                                                            )}
+
+                                                            {/* Older groups - smaller and faded, on the right */}
+                                                            {olderGroups.length > 0 && (
+                                                                <div className="flex gap-2 opacity-60 scale-75">
+                                                                    {olderGroups.map((group: any, groupIdx: number) => (
+                                                                        <div key={groupIdx} className="flex gap-2">
+                                                                            {group.cards.map((card: Card, cardIdx: number) => (
+                                                                                <div key={cardIdx}>
+                                                                                    {renderCard(card)}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             )}
                                                         </>
                                                     );
                                                 } else {
-                                                    // Old flat format - display recent and older cards
+                                                    // Old flat format - display recent cards on left, older on right
                                                     const cardsInLastPlay = swoopState.lastAction?.cardsPlayed || 1;
                                                     const recentCards = swoopState.playPile.slice(-cardsInLastPlay);
                                                     const olderCards = swoopState.playPile.slice(0, -cardsInLastPlay);
 
                                                     return (
                                                         <>
-                                                            {/* Most Recent Play */}
-                                                            <div className="flex justify-center items-center">
-                                                                <div className="flex gap-2">
-                                                                    {recentCards.map((card: Card, idx: number) => (
+                                                            {/* Most Recent Play - full size */}
+                                                            <div className="flex gap-2">
+                                                                {recentCards.map((card: Card, idx: number) => (
+                                                                    <div key={idx}>
+                                                                        {renderCard(card)}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Separator */}
+                                                            {olderCards.length > 0 && (
+                                                                <div className="w-px h-16 bg-gray-300"></div>
+                                                            )}
+
+                                                            {/* Older cards - smaller and faded, on the right */}
+                                                            {olderCards.length > 0 && (
+                                                                <div className="flex gap-1 opacity-60 scale-75">
+                                                                    {olderCards.map((card: Card, idx: number) => (
                                                                         <div key={idx}>
                                                                             {renderCard(card)}
                                                                         </div>
                                                                     ))}
-                                                                </div>
-                                                            </div>
-                                                            {/* Older cards */}
-                                                            {olderCards.length > 0 && (
-                                                                <div className="flex justify-center items-center pt-2 border-t border-gray-300">
-                                                                    <div className="flex gap-1 opacity-60 scale-75">
-                                                                        {olderCards.map((card: Card, idx: number) => (
-                                                                            <div key={idx}>
-                                                                                {renderCard(card)}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
                                                                 </div>
                                                             )}
                                                         </>
@@ -1143,23 +1170,22 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                             })()}
                                         </div>
                                     ) : (
-                                        <div className="py-4"></div>
+                                        <div className="py-4 text-center text-gray-400 text-sm">Empty</div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Player's Cards */}
-                            <div className="space-y-6">
-                                {/* Mystery Cards with Face-Up Cards Stacked On Top */}
+                            <div className="space-y-5">
+                                {/* Table Cards with Play Button */}
                                 {(myMysteryCards.length > 0 || myFaceUpCards.length > 0) && (
                                     <div>
-                                        <div className="text-sm text-gray-600 font-medium mb-2">
+                                        <div className="text-sm text-gray-700 font-semibold mb-2">
                                             Table Cards
-                                            {myFaceUpCards.filter((c: Card | null) => c !== null).length > 0 && (
-                                                <span className="text-xs ml-2">(Face-up cards must be played first)</span>
-                                            )}
                                         </div>
-                                        <div className="flex gap-6 justify-center flex-wrap">
+                                        <div className="flex items-center justify-center gap-6 flex-wrap">
+                                            {/* Cards Container */}
+                                            <div className="flex gap-6 justify-center flex-wrap">
                                             {/* Cards are stored in arrays with null placeholders to maintain positional correspondence */}
                                             {/* Mystery cards at index i should align with face-up cards at index i */}
                                             {Array.from({ length: Math.max(myMysteryCards.length, myFaceUpCards.length) }).map((_, idx) => {
@@ -1216,6 +1242,20 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                                     </div>
                                                 );
                                             })}
+                                            </div>
+
+                                            {/* Play Button - Next to Table Cards */}
+                                            {isMyTurn && (
+                                                <div className="flex items-start -mt-[13px] ml-[28px]">
+                                                    <button
+                                                        onClick={handlePlayCards}
+                                                        disabled={selectedCards.length === 0 || loading}
+                                                        className="px-5 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md whitespace-nowrap"
+                                                    >
+                                                        {loading ? 'Playing...' : selectedCards.length > 0 ? `Play (${getSelectedCardsDescription()})` : 'Play Cards'}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -1223,11 +1263,11 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 {/* Hand */}
                                 {myHand.length > 0 && (
                                     <div>
-                                        <div className="text-sm text-gray-600 font-medium mb-2">
+                                        <div className="text-sm text-gray-700 font-semibold mb-2">
                                             Your Hand
                                             {revealedMystery && (
-                                                <span className="text-xs ml-2 text-blue-600">
-                                                    (Select matching {revealedMystery.card.rank}s or wilds to play together)
+                                                <span className="text-xs ml-2 text-green-600 font-normal">
+                                                    (Match {revealedMystery.card.rank}s or wilds)
                                                 </span>
                                             )}
                                         </div>
@@ -1273,23 +1313,18 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                 )}
                             </div>
 
-                            {/* Action Buttons */}
-                            {isMyTurn && (
-                                <div className="mt-6 text-center space-x-3">
-                                    <button
-                                        onClick={handlePlayCards}
-                                        disabled={selectedCards.length === 0 || loading}
-                                        className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {loading ? 'Playing...' : 'Play Selected Cards'}
-                                    </button>
-                                </div>
-                            )}
-
                             {/* Play History */}
                             {swoopState.playHistory && swoopState.playHistory.length > 0 && (
                                 <div className="mt-8 pt-6 border-t-2 border-gray-300">
-                                    <div className="text-sm text-gray-700 font-semibold mb-3">Play History</div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="text-sm text-gray-700 font-semibold">Play History</div>
+                                        <button
+                                            onClick={handleCopyGameState}
+                                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                            Copy State
+                                        </button>
+                                    </div>
                                     <div className="space-y-2 max-h-60 overflow-y-auto">
                                         {(() => {
                                             // Group history by consecutive actions from the same player (a "turn")
@@ -1417,15 +1452,17 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                             `}>
                                 <div className="game-bg p-4 shadow sm:rounded-lg space-y-4 h-full lg:h-auto overflow-y-auto">
                                     {/* Game Status */}
-                                    <div className="space-y-2">
-                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Game Info</div>
-                                        <div className="text-sm">
-                                            <div className="font-medium">Round {swoopState.round}</div>
-                                            <div className="text-xs text-gray-600 mt-1">
-                                                Score Limit: {swoopState.scoreLimit || 300}
+                                    <div>
+                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1.5">Game Info</div>
+                                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                                            <div className="font-semibold text-gray-900">Round {swoopState.round}</div>
+                                            <span className="text-gray-400">•</span>
+                                            <div className="text-gray-600">
+                                                Limit: {swoopState.scoreLimit || 300}
                                             </div>
-                                            <div className="text-xs text-gray-600">
-                                                Scoring: {swoopState.scoringMethod === 'normal' ? 'Normal' : 'Beginner'}
+                                            <span className="text-gray-400">•</span>
+                                            <div className="text-gray-600">
+                                                {swoopState.scoringMethod === 'normal' ? 'Normal' : 'Beginner'}
                                             </div>
                                         </div>
 
