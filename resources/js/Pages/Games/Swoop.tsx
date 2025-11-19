@@ -1058,26 +1058,6 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
 
                             {/* Play Pile - Horizontal Layout */}
                             <div className="mb-4">
-                                <div className="mb-2 text-sm text-gray-700 font-semibold">
-                                    Play Pile ({(() => {
-                                        // Handle both old flat array format and new grouped format
-                                        if (swoopState.playPile.length === 0) return 0;
-
-                                        // Check if it's the new grouped format (first item has 'cards' property)
-                                        const firstItem = swoopState.playPile[0];
-                                        if (firstItem && typeof firstItem === 'object' && 'cards' in firstItem) {
-                                            // New grouped format - count total cards across all groups
-                                            let total = 0;
-                                            swoopState.playPile.forEach((group: any) => {
-                                                total += group.cards.length;
-                                            });
-                                            return total;
-                                        } else {
-                                            // Old flat format - just return length
-                                            return swoopState.playPile.length;
-                                        }
-                                    })()} cards)
-                                </div>
                                 <div className="bg-blue-50 rounded-lg p-4 relative overflow-hidden">
                                     {/* Swoop Animation Overlay */}
                                     {showSwoopAnimation && (
@@ -1089,81 +1069,107 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                         </div>
                                     )}
                                     {swoopState.playPile.length > 0 ? (
-                                        <div className="flex items-center justify-center gap-4">
+                                        <div className="flex items-end justify-center gap-6" style={{ marginLeft: '-35%' }}>
                                             {(() => {
                                                 // Check if it's the new grouped format
                                                 const firstItem = swoopState.playPile[0];
                                                 const isGroupedFormat = firstItem && typeof firstItem === 'object' && 'cards' in firstItem;
 
                                                 if (isGroupedFormat) {
-                                                    // New grouped format - display current group on left, older groups on right
+                                                    // New grouped format - display older groups on left, current group on right
                                                     const olderGroups = swoopState.playPile.slice(0, -1);
                                                     const currentGroup = swoopState.playPile[swoopState.playPile.length - 1];
 
+                                                    // Count cards in older groups
+                                                    let olderCardsCount = 0;
+                                                    olderGroups.forEach((group: any) => {
+                                                        olderCardsCount += group.cards.length;
+                                                    });
+
                                                     return (
                                                         <>
-                                                            {/* Current group - full size */}
-                                                            <div className="flex gap-2">
-                                                                {currentGroup.cards.map((card: Card, cardIdx: number) => (
-                                                                    <div key={cardIdx}>
-                                                                        {renderCard(card)}
+                                                            {/* Older groups - smaller and faded, on the left */}
+                                                            {olderGroups.length > 0 && (
+                                                                <div className="flex flex-col items-center gap-2">
+                                                                    <div className="text-xs text-gray-600 font-medium">
+                                                                        Play Pile ({olderCardsCount} {olderCardsCount === 1 ? 'card' : 'cards'})
                                                                     </div>
-                                                                ))}
-                                                            </div>
+                                                                    <div className="flex gap-2 opacity-60 scale-75">
+                                                                        {olderGroups.map((group: any, groupIdx: number) => (
+                                                                            <div key={groupIdx} className="flex gap-2">
+                                                                                {group.cards.map((card: Card, cardIdx: number) => (
+                                                                                    <div key={cardIdx}>
+                                                                                        {renderCard(card)}
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
 
                                                             {/* Separator */}
                                                             {olderGroups.length > 0 && (
-                                                                <div className="w-px h-16 bg-gray-300"></div>
+                                                                <div className="w-px h-20 bg-gray-300 self-end mb-2"></div>
                                                             )}
 
-                                                            {/* Older groups - smaller and faded, on the right */}
-                                                            {olderGroups.length > 0 && (
-                                                                <div className="flex gap-2 opacity-60 scale-75">
-                                                                    {olderGroups.map((group: any, groupIdx: number) => (
-                                                                        <div key={groupIdx} className="flex gap-2">
-                                                                            {group.cards.map((card: Card, cardIdx: number) => (
-                                                                                <div key={cardIdx}>
-                                                                                    {renderCard(card)}
-                                                                                </div>
-                                                                            ))}
+                                                            {/* Current group - full size on the right */}
+                                                            <div className="flex flex-col items-center gap-2">
+                                                                <div className="text-xs text-gray-600 font-medium">
+                                                                    Cards in Play ({currentGroup.cards.length} {currentGroup.cards.length === 1 ? 'card' : 'cards'})
+                                                                </div>
+                                                                <div className="flex gap-2">
+                                                                    {currentGroup.cards.map((card: Card, cardIdx: number) => (
+                                                                        <div key={cardIdx}>
+                                                                            {renderCard(card)}
                                                                         </div>
                                                                     ))}
                                                                 </div>
-                                                            )}
+                                                            </div>
                                                         </>
                                                     );
                                                 } else {
-                                                    // Old flat format - display recent cards on left, older on right
+                                                    // Old flat format - display older cards on left, recent cards on right
                                                     const cardsInLastPlay = swoopState.lastAction?.cardsPlayed || 1;
                                                     const recentCards = swoopState.playPile.slice(-cardsInLastPlay);
                                                     const olderCards = swoopState.playPile.slice(0, -cardsInLastPlay);
 
                                                     return (
                                                         <>
-                                                            {/* Most Recent Play - full size */}
-                                                            <div className="flex gap-2">
-                                                                {recentCards.map((card: Card, idx: number) => (
-                                                                    <div key={idx}>
-                                                                        {renderCard(card)}
+                                                            {/* Older cards - smaller and faded, on the left */}
+                                                            {olderCards.length > 0 && (
+                                                                <div className="flex flex-col items-center gap-2">
+                                                                    <div className="text-xs text-gray-600 font-medium">
+                                                                        Play Pile ({olderCards.length} {olderCards.length === 1 ? 'card' : 'cards'})
                                                                     </div>
-                                                                ))}
-                                                            </div>
+                                                                    <div className="flex gap-1 opacity-60 scale-75">
+                                                                        {olderCards.map((card: Card, idx: number) => (
+                                                                            <div key={idx}>
+                                                                                {renderCard(card)}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
 
                                                             {/* Separator */}
                                                             {olderCards.length > 0 && (
-                                                                <div className="w-px h-16 bg-gray-300"></div>
+                                                                <div className="w-px h-20 bg-gray-300 self-end mb-2"></div>
                                                             )}
 
-                                                            {/* Older cards - smaller and faded, on the right */}
-                                                            {olderCards.length > 0 && (
-                                                                <div className="flex gap-1 opacity-60 scale-75">
-                                                                    {olderCards.map((card: Card, idx: number) => (
+                                                            {/* Most Recent Play - full size on the right */}
+                                                            <div className="flex flex-col items-center gap-2">
+                                                                <div className="text-xs text-gray-600 font-medium">
+                                                                    Cards in Play ({recentCards.length} {recentCards.length === 1 ? 'card' : 'cards'})
+                                                                </div>
+                                                                <div className="flex gap-2">
+                                                                    {recentCards.map((card: Card, idx: number) => (
                                                                         <div key={idx}>
                                                                             {renderCard(card)}
                                                                         </div>
                                                                     ))}
                                                                 </div>
-                                                            )}
+                                                            </div>
                                                         </>
                                                     );
                                                 }
