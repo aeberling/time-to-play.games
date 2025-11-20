@@ -86,7 +86,7 @@ class GameController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'game_type' => 'required|string|in:WAR,SWOOP,OH_HELL',
+            'game_type' => 'required|string|in:WAR,SWOOP,OH_HELL,TELESTRATIONS',
             'max_players' => 'required|integer|min:2|max:8',
             'timer_config' => 'nullable|array',
             'timer_config.turn_time' => 'nullable|integer|min:10|max:300',
