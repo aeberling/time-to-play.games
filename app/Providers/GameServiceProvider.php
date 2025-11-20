@@ -7,6 +7,7 @@ use App\Games\GameRegistry;
 use App\Games\Engines\WarEngine;
 use App\Games\Engines\SwoopEngine;
 use App\Games\Engines\OhHellEngine;
+use App\Games\Engines\TelestrationEngine;
 
 /**
  * Game Service Provider
@@ -47,6 +48,9 @@ class GameServiceProvider extends ServiceProvider
         }
         if (!$registry->has('OH_HELL')) {
             $registry->register(new OhHellEngine());
+        }
+        if (!$registry->has('TELESTRATIONS')) {
+            $registry->register(new TelestrationEngine());
         }
     }
 }
