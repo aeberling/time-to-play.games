@@ -22,7 +22,7 @@ export type PageProps<
 
 // ==================== Game Types ====================
 
-export type GameType = 'WAR' | 'SWOOP' | 'OH_HELL';
+export type GameType = 'WAR' | 'SWOOP' | 'OH_HELL' | 'TELESTRATIONS';
 
 export type GameStatus = 'WAITING' | 'READY' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
 
@@ -226,7 +226,71 @@ export interface OhHellGameState {
     }>;
 }
 
-export type GameState = WarGameState | SwoopGameState | OhHellGameState;
+// Telestrations Game State
+export interface TelestrationsPage {
+    type: 'prompt' | 'drawing' | 'guess';
+    authorId?: number;
+    artistId?: number;
+    guesserId?: number;
+    text?: string;
+    imageData?: string;
+    timestamp: string;
+}
+
+export interface TelestrationsSketchbook {
+    ownerId: number;
+    currentHolderId: number;
+    pages: TelestrationsPage[];
+}
+
+export interface TelestrationsGameState {
+    players: Player[];
+    playerCount: number;
+
+    rounds: number;
+    currentRound: number;
+    currentTurn: number;
+    maxTurns: number;
+    scoringEnabled: boolean;
+
+    phase: 'INITIAL_PROMPT' | 'DRAWING' | 'GUESSING' | 'REVEAL' | 'ROUND_OVER' | 'GAME_OVER';
+    turnDeadline: string | null;
+
+    sketchbooks: TelestrationsSketchbook[];
+
+    playersReadyToContinue: boolean[];
+    submittedThisTurn: boolean[];
+
+    scores: number[];
+
+    lastAction: {
+        type: string;
+        playerIndex?: number;
+        timestamp: string;
+    };
+
+    playHistory?: Array<{
+        type: string;
+        playerIndex: number;
+        playerName: string;
+        timestamp: string;
+        sketchbookId?: number;
+    }>;
+
+    roundResults?: Array<{
+        sketchbookId: number;
+        originalPrompt: string;
+        finalGuess: string;
+        progression: TelestrationsPage[];
+        matches: Array<{
+            playerIndex: number;
+            pointsAwarded: number;
+            reason: string;
+        }>;
+    }>;
+}
+
+export type GameState = WarGameState | SwoopGameState | OhHellGameState | TelestrationsGameState;
 
 // ==================== API Response Types ====================
 
