@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
             'WAR' => 'Games/War',
             'SWOOP' => 'Games/Swoop',
             'OH_HELL' => 'Games/OhHell',
+            'TELESTRATIONS' => 'Games/Telestrations',
             default => throw new \Exception('Unknown game type'),
         };
 
