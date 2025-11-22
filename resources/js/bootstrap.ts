@@ -31,9 +31,7 @@ window.Echo = new Echo({
     wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
     wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
     forceTLS: useTLS,
-    encrypted: useTLS,
-    disableStats: true,
-    enabledTransports: useTLS ? ['wss'] : ['ws'],
+    enabledTransports: ['ws', 'wss'],
     authEndpoint: '/broadcasting/auth',
     auth: {
         headers: {
