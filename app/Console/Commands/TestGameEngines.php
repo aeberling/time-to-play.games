@@ -42,19 +42,6 @@ class TestGameEngines extends Command
             $this->newLine();
         }
 
-        // Test War engine
-        $this->info('Testing War Engine:');
-        $warEngine = $registry->get('WAR');
-        $warState = $warEngine->initializeGame([
-            ['id' => 1, 'name' => 'Player 1'],
-            ['id' => 2, 'name' => 'Player 2'],
-        ]);
-
-        $this->line("  ✓ War game initialized");
-        $this->line("  ✓ Player 1 has " . count($warState['player1Deck']) . " cards");
-        $this->line("  ✓ Player 2 has " . count($warState['player2Deck']) . " cards");
-        $this->newLine();
-
         // Test Swoop engine
         $this->info('Testing Swoop Engine:');
         $swoopEngine = $registry->get('SWOOP');

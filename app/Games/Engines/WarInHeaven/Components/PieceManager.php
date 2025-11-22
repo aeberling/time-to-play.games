@@ -21,143 +21,185 @@ class PieceManager
     }
 
     /**
-     * Move a piece from one position to another
+     * Move a token from one position to another
      *
-     * @param array $boardState Current board state
-     * @param string $from Source hex key
-     * @param string $to Destination hex key
-     * @return array Updated board state
+     * @param array $board Current board (hexes array)
+     * @param string $from Source hex coordinate (e.g., 'A5')
+     * @param string $to Destination hex coordinate
+     * @return array Updated board
      */
-    public function movePiece(array $boardState, string $from, string $to): array
+    public function movePiece(array $board, string $from, string $to): array
     {
-        $piece = $boardState['hexes'][$from]['piece'] ?? null;
+        $token = $board[$from]['occupiedBy'] ?? null;
 
-        if (!$piece) {
-            return $boardState; // No piece to move
+        if (!$token) {
+            return $board; // No token to move
         }
 
-        // Remove piece from source
-        $boardState['hexes'][$from]['piece'] = null;
+        // Remove token from source
+        $board[$from]['occupiedBy'] = null;
 
-        // Place piece at destination
-        $boardState['hexes'][$to]['piece'] = $piece;
+        // Place token at destination
+        $board[$to]['occupiedBy'] = $token;
 
-        // Mark piece as having moved this turn
-        $boardState['hexes'][$to]['piece']['hasMoved'] = true;
+        // Update token position
+        $board[$to]['occupiedBy']['position'] = $to;
 
-        return $boardState;
+        // Mark token as depleted (used action)
+        $board[$to]['occupiedBy']['isActive'] = false;
+
+        return $board;
     }
 
     /**
-     * Remove a piece from the board
+     * Deploy a new token to the board
      *
-     * @param array $boardState Current board state
-     * @param string $hexKey Hex position key
-     * @return array Updated board state
+     * @param array $board Current board
+     * @param string $to Destination hex coordinate
+     * @param array $tokenData Token data to place
+     * @return array Updated board
      */
-    public function removePiece(array $boardState, string $hexKey): array
+    public function deployToken(array $board, string $to, array $tokenData): array
     {
-        $boardState['hexes'][$hexKey]['piece'] = null;
-        return $boardState;
+        if (isset($board[$to]['occupiedBy']) && $board[$to]['occupiedBy'] !== null) {
+            // Hex already occupied
+            return $board;
+        }
+
+        // Place token
+        $board[$to]['occupiedBy'] = array_merge($tokenData, [
+            'position' => $to,
+            'isActive' => false, // Deployed tokens are depleted
+        ]);
+
+        return $board;
     }
 
     /**
-     * Get piece at a specific position
+     * Remove a token from the board (eliminated in combat)
      *
-     * @param array $boardState Current board state
-     * @param string $hexKey Hex position key
-     * @return array|null Piece data or null
+     * @param array $board Current board
+     * @param string $coordinate Hex coordinate
+     * @return array Updated board
      */
-    public function getPieceAt(array $boardState, string $hexKey): ?array
+    public function removePiece(array $board, string $coordinate): array
     {
-        return $boardState['hexes'][$hexKey]['piece'] ?? null;
+        if (isset($board[$coordinate])) {
+            $board[$coordinate]['occupiedBy'] = null;
+        }
+        return $board;
     }
 
     /**
-     * Get all pieces belonging to a faction
+     * Get token at a specific position
      *
-     * @param array $boardState Current board state
-     * @param string $faction Faction identifier
-     * @return array Array of pieces with their positions
+     * @param array $board Current board
+     * @param string $coordinate Hex coordinate
+     * @return array|null Token data or null
      */
-    public function getPiecesForFaction(array $boardState, string $faction): array
+    public function getTokenAt(array $board, string $coordinate): ?array
     {
-        $pieces = [];
+        return $board[$coordinate]['occupiedBy'] ?? null;
+    }
 
-        foreach ($boardState['hexes'] as $hexKey => $hex) {
-            if ($hex['piece'] && $hex['piece']['faction'] === $faction) {
-                $pieces[] = [
-                    'position' => $hexKey,
-                    'piece' => $hex['piece'],
+    /**
+     * Get all tokens belonging to a faction
+     *
+     * @param array $board Current board
+     * @param string $faction Faction identifier (angels/demons)
+     * @return array Array of tokens with their positions
+     */
+    public function getTokensForFaction(array $board, string $faction): array
+    {
+        $tokens = [];
+
+        foreach ($board as $coordinate => $hex) {
+            if ($hex['occupiedBy'] && $hex['occupiedBy']['faction'] === $faction) {
+                $tokens[] = [
+                    'position' => $coordinate,
+                    'token' => $hex['occupiedBy'],
                 ];
             }
         }
 
-        return $pieces;
+        return $tokens;
     }
 
     /**
-     * Get all pieces on the board
+     * Get all tokens on the board
      *
-     * @param array $boardState Current board state
-     * @return array Array of all pieces with positions
+     * @param array $board Current board
+     * @return array Array of all tokens with positions
      */
-    public function getAllPieces(array $boardState): array
+    public function getAllTokens(array $board): array
     {
-        $pieces = [];
+        $tokens = [];
 
-        foreach ($boardState['hexes'] as $hexKey => $hex) {
-            if ($hex['piece']) {
-                $pieces[] = [
-                    'position' => $hexKey,
-                    'piece' => $hex['piece'],
+        foreach ($board as $coordinate => $hex) {
+            if ($hex['occupiedBy']) {
+                $tokens[] = [
+                    'position' => $coordinate,
+                    'token' => $hex['occupiedBy'],
                 ];
             }
         }
 
-        return $pieces;
+        return $tokens;
     }
 
     /**
      * Check if a position is occupied
      *
-     * @param array $boardState Current board state
-     * @param string $hexKey Hex position key
+     * @param array $board Current board
+     * @param string $coordinate Hex coordinate
      * @return bool True if occupied
      */
-    public function isOccupied(array $boardState, string $hexKey): bool
+    public function isOccupied(array $board, string $coordinate): bool
     {
-        return !empty($boardState['hexes'][$hexKey]['piece']);
+        return isset($board[$coordinate]['occupiedBy']) && $board[$coordinate]['occupiedBy'] !== null;
     }
 
     /**
-     * Reset "hasMoved" flag for all pieces of a faction
-     * Called at the start of each turn
+     * Recharge a token (make it active again)
      *
-     * @param array $boardState Current board state
-     * @param string $faction Faction identifier
-     * @return array Updated board state
+     * @param array $board Current board
+     * @param string $coordinate Hex coordinate
+     * @return array Updated board
      */
-    public function resetMovementFlags(array $boardState, string $faction): array
+    public function rechargeToken(array $board, string $coordinate): array
     {
-        foreach ($boardState['hexes'] as $hexKey => &$hex) {
-            if ($hex['piece'] && $hex['piece']['faction'] === $faction) {
-                $hex['piece']['hasMoved'] = false;
+        if (isset($board[$coordinate]['occupiedBy'])) {
+            $board[$coordinate]['occupiedBy']['isActive'] = true;
+        }
+        return $board;
+    }
+
+    /**
+     * Count remaining tokens for a faction
+     *
+     * @param array $board Current board
+     * @param string $faction Faction identifier
+     * @return int Number of tokens
+     */
+    public function countTokens(array $board, string $faction): int
+    {
+        return count($this->getTokensForFaction($board, $faction));
+    }
+
+    /**
+     * Find token by ID on the board
+     *
+     * @param array $board Current board
+     * @param string $tokenId Token ID to find
+     * @return string|null Hex coordinate where token is located, or null
+     */
+    public function findTokenPosition(array $board, string $tokenId): ?string
+    {
+        foreach ($board as $coordinate => $hex) {
+            if ($hex['occupiedBy'] && $hex['occupiedBy']['id'] === $tokenId) {
+                return $coordinate;
             }
         }
-
-        return $boardState;
-    }
-
-    /**
-     * Count remaining pieces for a faction
-     *
-     * @param array $boardState Current board state
-     * @param string $faction Faction identifier
-     * @return int Number of pieces
-     */
-    public function countPieces(array $boardState, string $faction): int
-    {
-        return count($this->getPiecesForFaction($boardState, $faction));
+        return null;
     }
 }

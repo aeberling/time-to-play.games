@@ -4,10 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Games\GameRegistry;
-use App\Games\Engines\WarEngine;
 use App\Games\Engines\SwoopEngine;
 use App\Games\Engines\OhHellEngine;
 use App\Games\Engines\TelestrationEngine;
+use App\Games\Engines\WarInHeaven\WarInHeavenEngine;
 
 /**
  * Game Service Provider
@@ -40,9 +40,6 @@ class GameServiceProvider extends ServiceProvider
 
         // Register all game engines
         // To add a new game, just add one line here!
-        if (!$registry->has('WAR')) {
-            $registry->register(new WarEngine());
-        }
         if (!$registry->has('SWOOP')) {
             $registry->register(new SwoopEngine());
         }
@@ -51,6 +48,9 @@ class GameServiceProvider extends ServiceProvider
         }
         if (!$registry->has('TELESTRATIONS')) {
             $registry->register(new TelestrationEngine());
+        }
+        if (!$registry->has('WAR_IN_HEAVEN')) {
+            $registry->register(new WarInHeavenEngine());
         }
     }
 }
