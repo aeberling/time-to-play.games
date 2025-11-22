@@ -55,7 +55,7 @@ class SwoopEngine implements GameEngineInterface
         return [
             'minPlayers' => 3,
             'maxPlayers' => 8,
-            'description' => 'Race to get rid of all your cards with strategic swoops',
+            'description' => 'Shed your cards quickly with strategic swoops. Lowest score wins!',
             'difficulty' => 'Medium',
             'estimatedDuration' => '15-30 minutes per round',
             'requiresStrategy' => true,
