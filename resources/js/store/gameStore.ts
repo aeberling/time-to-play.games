@@ -21,6 +21,7 @@ interface GameStore {
     isReady: boolean;
     error: string | null;
     loading: boolean;
+    gameCancelled: { by: string; reason: string } | null;
 
     // Actions
     setCurrentGame: (game: Game | null) => void;
@@ -55,6 +56,7 @@ const initialState = {
     isReady: false,
     error: null,
     loading: false,
+    gameCancelled: null,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -231,6 +233,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // Use provided currentUserId or fall back to stored value
             const userId = currentUserId ?? get().currentUserId;
 
+            console.log('[GameStore] fetchGameState:', {
+                gameId,
+                userId,
+                playerCount: game.game_players.length,
+                players: game.game_players.map(p => ({ id: p.user_id, name: p.user.name, ready: p.is_ready }))
+            });
+
             // Calculate player index based on current user
             let playerIndex = -1;
             let isReady = false;
@@ -245,7 +254,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
                     // Use the player_index from the database, not array position
                     playerIndex = currentPlayer.player_index;
                     isReady = currentPlayer.is_ready || false;
+                    console.log('[GameStore] Current player found:', { userId, playerIndex, isReady });
+                } else {
+                    console.warn('[GameStore] Current player NOT found for userId:', userId);
                 }
+            } else {
+                console.warn('[GameStore] No userId available to identify current player');
             }
 
             set({
@@ -269,52 +283,90 @@ export const useGameStore = create<GameStore>((set, get) => ({
      * Subscribe to game updates via Laravel Echo
      */
     subscribeToGame: (gameId) => {
+        console.log('[WebSocket] Subscribing to game channels:', gameId);
+
         if (!window.Echo) {
-            console.error('Laravel Echo not initialized');
+            console.error('[WebSocket] Laravel Echo not initialized!');
             return;
         }
 
+        console.log('[WebSocket] Echo is available, joining channels...');
+
         // Join presence channel for player tracking
-        window.Echo.join(`game.${gameId}`)
+        const presenceChannel = window.Echo.join(`game.${gameId}`);
+
+        console.log('[WebSocket] Joined presence channel:', `game.${gameId}`);
+
+        presenceChannel
             .here((users: any[]) => {
-                console.log('Currently in game:', users);
+                console.log('[WebSocket] Currently in game:', users);
                 set({ isConnected: true });
             })
             .joining((user: any) => {
-                console.log('Player joined:', user.name);
+                console.log('[WebSocket] Player joining:', user.name);
             })
             .leaving((user: any) => {
-                console.log('Player left:', user.name);
+                console.log('[WebSocket] Player leaving:', user.name);
             })
             .listen('.player.joined', (e: any) => {
-                console.log('PlayerJoinedGame event:', e);
+                console.log('[WebSocket] PlayerJoinedGame event:', e);
                 // Refresh game data
-                get().fetchGameState(gameId);
+                const userId = get().currentUserId;
+                get().fetchGameState(gameId, userId ?? undefined);
             })
             .listen('.player.left', (e: any) => {
-                console.log('PlayerLeftGame event:', e);
+                console.log('[WebSocket] PlayerLeftGame event:', e);
                 // Refresh game data
-                get().fetchGameState(gameId);
+                const userId = get().currentUserId;
+                get().fetchGameState(gameId, userId ?? undefined);
+            })
+            .error((error: any) => {
+                console.error('[WebSocket] Presence channel error:', error);
             });
 
         // Subscribe to private channel for game state updates
-        window.Echo.private(`game.${gameId}.private`)
+        const privateChannel = window.Echo.private(`game.${gameId}.private`);
+
+        console.log('[WebSocket] Subscribed to private channel:', `game.${gameId}.private`);
+
+        privateChannel
             .listen('.game.state.updated', (e: any) => {
-                console.log('GameStateUpdated event:', e);
+                console.log('[WebSocket] GameStateUpdated event received:', e);
                 // Refresh full game data to get updated status
-                get().fetchGameState(gameId);
+                // Pass the current userId to ensure we can identify the current player
+                const userId = get().currentUserId;
+                console.log('[WebSocket] Calling fetchGameState with userId:', userId);
+                get().fetchGameState(gameId, userId ?? undefined);
             })
             .listen('.game.move.made', (e: any) => {
-                console.log('MoveMade event:', e);
+                console.log('[WebSocket] MoveMade event:', e);
                 // Refetch game state instead of using broadcasted state
                 // (to avoid Pusher payload size limits)
-                get().fetchGameState(gameId);
+                const userId = get().currentUserId;
+                get().fetchGameState(gameId, userId ?? undefined);
+            })
+            .listen('.game.cancelled', (e: any) => {
+                console.log('[WebSocket] GameCancelled event:', e);
+                // Set cancelled state so UI can show appropriate message
+                set({
+                    gameCancelled: {
+                        by: e.cancelledBy,
+                        reason: e.reason || 'Game cancelled by host'
+                    }
+                });
+            })
+            .error((error: any) => {
+                console.error('[WebSocket] Private channel error:', error);
             });
+
+        console.log('[WebSocket] All channel subscriptions complete');
 
         // Update connection status
         window.axios.post(`/api/games/${gameId}/connect`, {
             connected: true,
-        }).catch(console.error);
+        }).catch((error) => {
+            console.error('[WebSocket] Failed to update connection status:', error);
+        });
     },
 
     /**
