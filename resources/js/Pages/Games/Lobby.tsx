@@ -18,19 +18,9 @@ export default function Lobby({ auth }: PageProps) {
     const [gameTypes, setGameTypes] = useState<GameTypeInfo[]>([]);
     const [games, setGames] = useState<Game[]>([]);
     const [myGames, setMyGames] = useState<Game[]>([]);
-    const [selectedGameType, setSelectedGameType] = useState<GameType>('WAR');
-    const [maxPlayers, setMaxPlayers] = useState(2);
     const [loading, setLoading] = useState(true);
     const [loadingMyGames, setLoadingMyGames] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Oh Hell specific options
-    const [startingHandSize, setStartingHandSize] = useState(10);
-    const [endingHandSize, setEndingHandSize] = useState(1);
-
-    // Swoop specific options
-    const [scoreLimit, setScoreLimit] = useState(300);
-    const [scoringMethod, setScoringMethod] = useState<'beginner' | 'normal'>('beginner');
 
     const gameStore = useGameStore();
     const hasFetchedOnce = useRef(false);
@@ -114,23 +104,6 @@ export default function Lobby({ auth }: PageProps) {
         };
     }, []);
 
-    // Update hand sizes when max players changes for Oh Hell
-    useEffect(() => {
-        if (selectedGameType === 'OH_HELL') {
-            const maxPossibleCards = Math.floor(52 / maxPlayers);
-
-            // Adjust starting hand size if it exceeds max
-            if (startingHandSize > maxPossibleCards) {
-                setStartingHandSize(maxPossibleCards);
-            }
-
-            // Adjust ending hand size if it exceeds max
-            if (endingHandSize > maxPossibleCards) {
-                setEndingHandSize(maxPossibleCards);
-            }
-        }
-    }, [maxPlayers, selectedGameType]);
-
     const fetchGameTypes = async () => {
         try {
             const response = await window.axios.get('/api/games/types');
@@ -175,41 +148,6 @@ export default function Lobby({ auth }: PageProps) {
         }
     };
 
-    const handleCreateGame = async () => {
-        try {
-            // Build game options based on game type
-            let gameOptions = undefined;
-            if (selectedGameType === 'OH_HELL') {
-                gameOptions = {
-                    startingHandSize,
-                    endingHandSize,
-                };
-            } else if (selectedGameType === 'SWOOP') {
-                gameOptions = {
-                    scoreLimit,
-                    scoringMethod,
-                };
-            }
-
-            const response = await window.axios.post('/api/games', {
-                game_type: selectedGameType,
-                max_players: maxPlayers,
-                game_options: gameOptions,
-            });
-
-            const game = response.data.game;
-
-            // Update the store
-            gameStore.setCurrentGame(game);
-
-            // Navigate to the game page immediately
-            router.visit(`/games/${game.id}`);
-        } catch (err: any) {
-            console.error('Failed to create game:', err);
-            setError(err.response?.data?.message || 'Failed to create game');
-        }
-    };
-
     const handleJoinGame = async (gameId: number) => {
         try {
             await gameStore.joinGame(gameId);
@@ -235,253 +173,75 @@ export default function Lobby({ auth }: PageProps) {
         }
     };
 
-    const selectedGameTypeInfo = gameTypes.find((gt) => gt.type === selectedGameType);
-
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="text-4xl font-black leading-tight text-adventure-900 drop-shadow-md">
-                    Game Lobby 🎲
+                    Game Room 🎲
                 </h2>
             }
         >
-            <Head title="Game Lobby" />
+            <Head title="Game Room" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Error Display */}
                     {error && (
-                        <div className="rounded-3xl bg-gradient-to-r from-coral-200 to-coral-300 p-6 border-4 border-coral-500 shadow-lg">
+                        <div className="rounded-3xl bg-gradient-to-r from-coral-200 to-coral-300 p-6 border-4 border-coral-500 shadow-lg mb-6">
                             <p className="text-base font-bold text-adventure-900">{error}</p>
                         </div>
                     )}
 
-                    {/* Create New Game Section */}
-                    <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-quest-300">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Column: Choose Game & Your Games */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Choose a Game Section */}
+                            <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-quest-300">
                         <h3 className="text-3xl font-black text-adventure-900 mb-6">
-                            Create New Game ⚔️
+                            Choose a Game ⚔️
                         </h3>
 
-                        <div className="space-y-4">
-                            {/* Game Type Selection */}
-                            <div>
-                                <label className="block text-xl font-black text-adventure-900 mb-4">
-                                    Choose Your Game
-                                </label>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {gameTypes.map((gameType, index) => {
-                                        const colors = [
-                                            { border: 'border-coral-700', bg: 'bg-gradient-to-br from-coral-600 to-coral-700', selectedBg: 'bg-gradient-to-br from-coral-600 to-coral-700', hover: 'hover:scale-105 hover:shadow-2xl' },
-                                            { border: 'border-treasure-700', bg: 'bg-gradient-to-br from-treasure-600 to-treasure-700', selectedBg: 'bg-gradient-to-br from-treasure-600 to-treasure-700', hover: 'hover:scale-105 hover:shadow-2xl' },
-                                            { border: 'border-adventure-700', bg: 'bg-gradient-to-br from-adventure-600 to-adventure-700', selectedBg: 'bg-gradient-to-br from-adventure-600 to-adventure-700', hover: 'hover:scale-105 hover:shadow-2xl' }
-                                        ];
-                                        const colorClass = colors[index % colors.length];
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {gameTypes.map((gameType, index) => {
+                                const colors = [
+                                    { border: 'border-coral-700', bg: 'bg-gradient-to-br from-coral-600 to-coral-700', hover: 'hover:scale-105 hover:shadow-2xl' },
+                                    { border: 'border-treasure-700', bg: 'bg-gradient-to-br from-treasure-600 to-treasure-700', hover: 'hover:scale-105 hover:shadow-2xl' },
+                                    { border: 'border-adventure-700', bg: 'bg-gradient-to-br from-adventure-600 to-adventure-700', hover: 'hover:scale-105 hover:shadow-2xl' },
+                                    { border: 'border-quest-700', bg: 'bg-gradient-to-br from-quest-600 to-quest-700', hover: 'hover:scale-105 hover:shadow-2xl' }
+                                ];
+                                const colorClass = colors[index % colors.length];
 
-                                        return (
-                                            <button
-                                                key={gameType.type}
-                                                onClick={() => {
-                                                    setSelectedGameType(gameType.type);
-                                                    setMaxPlayers(gameType.config.minPlayers);
-                                                }}
-                                                className={`p-6 border-6 rounded-2xl text-left transition-all transform ${
-                                                    selectedGameType === gameType.type
-                                                        ? `${colorClass.border} ${colorClass.selectedBg} scale-105 shadow-2xl`
-                                                        : 'border-gray-300 bg-white hover:border-gray-400'
-                                                } ${colorClass.hover}`}
-                                            >
-                                                <h4 className={`font-black text-2xl ${selectedGameType === gameType.type ? 'text-white drop-shadow-lg' : 'text-adventure-900'}`}>
-                                                    {gameType.name}
-                                                </h4>
-                                                <p className={`text-base font-bold mt-2 leading-relaxed ${selectedGameType === gameType.type ? 'text-white drop-shadow-md' : 'text-adventure-700'}`}>
-                                                    {gameType.config.description}
-                                                </p>
-                                                <div className={`mt-3 flex items-center gap-4 text-sm font-bold ${selectedGameType === gameType.type ? 'text-white drop-shadow-md' : 'text-adventure-800'}`}>
-                                                    <span>
-                                                        {gameType.config.minPlayers}-
-                                                        {gameType.config.maxPlayers} players
-                                                    </span>
-                                                    <span className="font-black">
-                                                        {gameType.config.difficulty}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                                const infoRoutes: Record<string, string> = {
+                                    'SWOOP': '/games/swoop/info',
+                                    'OH_HELL': '/games/oh-hell/info',
+                                    'TELESTRATIONS': '/games/telestrations/info',
+                                    'WAR_IN_HEAVEN': '/games/war-in-heaven/info',
+                                };
 
-                            {/* Player Count Selection */}
-                            {selectedGameTypeInfo && (
-                                <div className="bg-gradient-to-r from-adventure-50 to-quest-50 rounded-2xl p-6 border-4 border-adventure-300">
-                                    <label className="block text-lg font-black text-adventure-900 mb-3">
-                                        Max Players: <span className="text-quest-600">{maxPlayers}</span>
-                                    </label>
-                                    <input
-                                        type="range"
-                                        min={selectedGameTypeInfo.config.minPlayers}
-                                        max={selectedGameTypeInfo.config.maxPlayers}
-                                        value={maxPlayers}
-                                        onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                                        className="w-full h-3 bg-adventure-300 rounded-lg appearance-none cursor-pointer"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Oh Hell Specific Options */}
-                            {selectedGameType === 'OH_HELL' && (
-                                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <h4 className="font-medium text-gray-900">Game Options</h4>
-
-                                    {/* Starting Hand Size */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Starting Hand Size: {startingHandSize} cards
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={1}
-                                            max={Math.floor(52 / maxPlayers)}
-                                            value={startingHandSize}
-                                            onChange={(e) => setStartingHandSize(parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            First round will be dealt {startingHandSize} cards
+                                return (
+                                    <button
+                                        key={gameType.type}
+                                        onClick={() => router.visit(infoRoutes[gameType.type])}
+                                        className={`p-6 border-6 rounded-2xl text-left transition-all transform ${colorClass.border} ${colorClass.bg} ${colorClass.hover} shadow-xl`}
+                                    >
+                                        <h4 className="font-black text-2xl text-white drop-shadow-lg mb-3">
+                                            {gameType.name}
+                                        </h4>
+                                        <p className="text-base font-bold text-white/90 drop-shadow-md leading-relaxed mb-4">
+                                            {gameType.config.description}
                                         </p>
-                                    </div>
-
-                                    {/* Ending Hand Size */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Ending Hand Size: {endingHandSize} cards
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={1}
-                                            max={Math.floor(52 / maxPlayers)}
-                                            value={endingHandSize}
-                                            onChange={(e) => setEndingHandSize(parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Last round will be dealt {endingHandSize} cards
-                                        </p>
-                                    </div>
-
-                                    {/* Game Summary */}
-                                    <div className="p-3 bg-white rounded border border-gray-200">
-                                        <p className="text-sm text-gray-700">
-                                            <strong>Total Rounds:</strong> {Math.abs(endingHandSize - startingHandSize) + 1}
-                                        </p>
-                                        <p className="text-sm text-gray-700 mt-1">
-                                            <strong>Progression:</strong>{' '}
-                                            {startingHandSize < endingHandSize
-                                                ? `Ascending (${startingHandSize} → ${endingHandSize})`
-                                                : startingHandSize > endingHandSize
-                                                ? `Descending (${startingHandSize} → ${endingHandSize})`
-                                                : `Fixed (${startingHandSize} cards all rounds)`}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Swoop Specific Options */}
-                            {selectedGameType === 'SWOOP' && (
-                                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <h4 className="font-medium text-gray-900">Game Options</h4>
-
-                                    {/* Scoring Method */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Scoring Method
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setScoringMethod('beginner')}
-                                                className={`p-3 border-2 rounded-lg text-left transition-all ${
-                                                    scoringMethod === 'beginner'
-                                                        ? 'border-indigo-500 bg-indigo-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                <div className="font-semibold text-sm">Beginner</div>
-                                                <div className="text-xs text-gray-600 mt-1">
-                                                    Numbers/Ace: 5 pts<br />
-                                                    Face cards: 10 pts<br />
-                                                    10s & Jokers: 50 pts
-                                                </div>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setScoringMethod('normal')}
-                                                className={`p-3 border-2 rounded-lg text-left transition-all ${
-                                                    scoringMethod === 'normal'
-                                                        ? 'border-indigo-500 bg-indigo-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                <div className="font-semibold text-sm">Normal</div>
-                                                <div className="text-xs text-gray-600 mt-1">
-                                                    Traditional scoring<br />
-                                                    (Face value & bonuses)
-                                                </div>
-                                            </button>
+                                        <div className="flex items-center justify-between text-sm font-bold text-white drop-shadow-md">
+                                            <span>
+                                                {gameType.config.minPlayers}-
+                                                {gameType.config.maxPlayers} players
+                                            </span>
+                                            <span className="font-black">
+                                                {gameType.config.difficulty}
+                                            </span>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            {scoringMethod === 'beginner'
-                                                ? 'Simplified scoring: Numbers (2-9) and Aces are 5 points, face cards (J, Q, K) are 10 points, 10s and Jokers are 50 points.'
-                                                : 'Traditional scoring: Numbers worth face value (2-9), Aces and face cards worth 10, 10s and Jokers worth 50.'}
-                                        </p>
-                                    </div>
-
-                                    {/* Score Limit */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Score Limit: {scoreLimit} points
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={50}
-                                            max={500}
-                                            step={50}
-                                            value={scoreLimit}
-                                            onChange={(e) => setScoreLimit(parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Game ends when a player reaches {scoreLimit} points. The player with the lowest score wins.
-                                        </p>
-                                    </div>
-
-                                    {/* Game Summary */}
-                                    <div className="p-3 bg-white rounded border border-gray-200">
-                                        <p className="text-sm text-gray-700">
-                                            <strong>Win Condition:</strong> Lowest score when any player reaches {scoreLimit} points
-                                        </p>
-                                        <p className="text-sm text-gray-700 mt-1">
-                                            <strong>Game Length:</strong>{' '}
-                                            {scoreLimit <= 100
-                                                ? 'Quick (1-3 rounds)'
-                                                : scoreLimit <= 250
-                                                ? 'Medium (3-5 rounds)'
-                                                : scoreLimit <= 400
-                                                ? 'Long (5-8 rounds)'
-                                                : 'Extended (8+ rounds)'}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Create Button */}
-                            <button
-                                onClick={handleCreateGame}
-                                disabled={gameStore.loading}
-                                className="w-full bg-gradient-to-br from-quest-500 to-quest-600 text-white py-5 px-8 rounded-full hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-black text-2xl shadow-2xl border-6 border-white transition transform"
-                            >
-                                {gameStore.loading ? 'Creating...' : 'Create Game! 🎉'}
-                            </button>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -595,18 +355,21 @@ export default function Lobby({ auth }: PageProps) {
                             )}
                         </div>
                     )}
+                        </div>
 
-                    {/* Available Games Section */}
-                    <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-treasure-300">
+                        {/* Right Column: Available Games */}
+                        <div className="lg:col-span-1">
+                            {/* Available Games Section */}
+                            <div className="bg-white p-8 shadow-2xl rounded-3xl border-8 border-treasure-300 sticky top-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-3xl font-black text-adventure-900">
+                            <h3 className="text-2xl font-black text-adventure-900">
                                 Available Games 🌟
                             </h3>
                             <button
                                 onClick={fetchGames}
-                                className="text-base font-bold text-adventure-700 hover:text-adventure-900 hover:scale-110 transition transform px-4 py-2 rounded-full border-4 border-adventure-300 bg-adventure-50"
+                                className="text-sm font-bold text-adventure-700 hover:text-adventure-900 hover:scale-110 transition transform px-3 py-1 rounded-full border-4 border-adventure-300 bg-adventure-50"
                             >
-                                Refresh
+                                ↻
                             </button>
                         </div>
 
@@ -705,6 +468,8 @@ export default function Lobby({ auth }: PageProps) {
                                 })}
                             </div>
                         )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -25,6 +25,7 @@ export default function Telestrations({ auth, gameId }: TelestrationsProps) {
         isReady,
         error,
         loading,
+        gameCancelled,
         fetchGameState,
         subscribeToGame,
         unsubscribeFromGame,
@@ -648,6 +649,29 @@ export default function Telestrations({ auth, gameId }: TelestrationsProps) {
 
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
                 <div className="max-w-7xl mx-auto px-4">
+                    {/* Game Cancelled Overlay */}
+                    {gameCancelled && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                                <div className="text-center">
+                                    <div className="text-6xl mb-4">⚠️</div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                        Game Cancelled
+                                    </h2>
+                                    <p className="text-gray-600 mb-6">
+                                        This game was cancelled by {gameCancelled.by}.
+                                    </p>
+                                    <button
+                                        onClick={() => router.visit('/dashboard')}
+                                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-lg"
+                                    >
+                                        Back to Game Room
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {isWaiting ? (
                         <WaitingRoom />
                     ) : (

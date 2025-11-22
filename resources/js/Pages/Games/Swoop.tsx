@@ -26,6 +26,7 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
         isReady,
         error,
         loading,
+        gameCancelled,
         fetchGameState,
         subscribeToGame,
         unsubscribeFromGame,
@@ -707,6 +708,29 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
 
             <div className="py-2 min-h-screen">
                 <div className="mx-auto max-w-full px-4">
+                    {/* Game Cancelled Overlay */}
+                    {gameCancelled && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                                <div className="text-center">
+                                    <div className="text-6xl mb-4">⚠️</div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                        Game Cancelled
+                                    </h2>
+                                    <p className="text-gray-600 mb-6">
+                                        This game was cancelled by {gameCancelled.by}.
+                                    </p>
+                                    <button
+                                        onClick={handleLeaveGame}
+                                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-lg"
+                                    >
+                                        Back to Game Room
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Action Buttons - Top Right Corner */}
                     <div className="flex justify-end gap-3 mb-2">
                         {canCancelGame && (
@@ -789,7 +813,18 @@ export default function Swoop({ auth, gameId }: SwoopProps) {
                                     <div className="flex gap-2 flex-wrap">
                                         {currentGame.game_players.map((player) => {
                                             // Use local isReady state for current user, server state for others
-                                            const playerIsReady = player.user_id === auth.user.id ? isReady : player.is_ready;
+                                            const isCurrentUser = player.user_id === auth.user.id;
+                                            const playerIsReady = isCurrentUser ? isReady : player.is_ready;
+
+                                            console.log('[WaitingRoom] Player:', {
+                                                name: player.user.display_name || player.user.name,
+                                                userId: player.user_id,
+                                                authUserId: auth.user.id,
+                                                isCurrentUser,
+                                                localIsReady: isReady,
+                                                serverIsReady: player.is_ready,
+                                                displayReady: playerIsReady
+                                            });
 
                                             return (
                                                 <div

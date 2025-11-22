@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { PageProps, Game, GameTypeInfo } from '@/types';
+import { PageProps, Game } from '@/types';
 
 interface OnlineUser {
     id: number;
@@ -13,7 +13,6 @@ interface OnlineUser {
 
 export default function Dashboard({ auth }: PageProps) {
     const [myGames, setMyGames] = useState<Game[]>([]);
-    const [gameTypes, setGameTypes] = useState<GameTypeInfo[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -42,19 +41,17 @@ export default function Dashboard({ auth }: PageProps) {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [gamesRes, typesRes, usersRes] = await Promise.all([
+            const [gamesRes, usersRes] = await Promise.all([
                 window.axios.get('/api/games', {
                     params: {
                         user_id: auth.user.id,
                         exclude_completed: true,
                     },
                 }),
-                window.axios.get('/api/games/types'),
                 window.axios.get('/api/users/online'),
             ]);
 
             setMyGames(gamesRes.data.data);
-            setGameTypes(typesRes.data.games);
             setOnlineUsers(usersRes.data.users.filter((u: OnlineUser) => u.id !== auth.user.id));
         } catch (err) {
             console.error('Failed to fetch dashboard data:', err);
@@ -76,17 +73,17 @@ export default function Dashboard({ auth }: PageProps) {
         <AuthenticatedLayout
             header={
                 <h2 className="text-4xl font-black leading-tight text-adventure-900 drop-shadow-md">
-                    Your Adventure Dashboard
+                    Player's Corner
                 </h2>
             }
         >
-            <Head title="Dashboard" />
+            <Head title="Player's Corner" />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left Column: Current Games & New Games */}
-                        <div className="lg:col-span-2 space-y-6">
+                        {/* Left Column: Current Games */}
+                        <div className="lg:col-span-2">
                             {/* Your Current Games */}
                             <div className="bg-white shadow-2xl rounded-3xl p-8 border-8 border-adventure-300">
                                 <div className="flex items-center justify-between mb-6">
@@ -115,16 +112,12 @@ export default function Dashboard({ auth }: PageProps) {
                                             href="/games/lobby"
                                             className="inline-block bg-gradient-to-br from-quest-500 to-quest-600 text-white px-8 py-4 rounded-full hover:scale-110 transition transform font-black text-lg shadow-lg border-4 border-white"
                                         >
-                                            Start Your Adventure!
+                                            Go to Game Room!
                                         </Link>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         {myGames.map((game) => {
-                                            const gameTypeInfo = gameTypes.find(
-                                                (gt) => gt.type === game.game_type
-                                            );
-
                                             return (
                                                 <div
                                                     key={game.id}
@@ -135,7 +128,7 @@ export default function Dashboard({ auth }: PageProps) {
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-3">
                                                                 <h4 className="font-black text-2xl text-adventure-900">
-                                                                    {gameTypeInfo?.name || game.game_type}
+                                                                    {game.name || game.game_type.replace(/_/g, ' ')}
                                                                 </h4>
                                                                 <span
                                                                     className={`px-3 py-1 text-sm font-black rounded-full border-4 ${
@@ -158,59 +151,6 @@ export default function Dashboard({ auth }: PageProps) {
                                                         <div className="text-xl font-black text-coral-600">
                                                             {game.status === 'IN_PROGRESS' ? 'Play →' : 'View →'}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* New Games to Try */}
-                            <div className="bg-white shadow-2xl rounded-3xl p-8 border-8 border-treasure-300">
-                                <h3 className="text-3xl font-black text-adventure-900 mb-6">
-                                    Games to Try ✨
-                                </h3>
-
-                                {loading ? (
-                                    <div className="text-center py-8 text-adventure-700 font-bold text-xl">
-                                        Loading...
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {gameTypes.map((gameType, index) => {
-                                            const colors = [
-                                                'from-treasure-600 to-treasure-700 border-treasure-800',
-                                                'from-quest-600 to-quest-700 border-quest-800',
-                                                'from-coral-600 to-coral-700 border-coral-800'
-                                            ];
-                                            const colorClass = colors[index % colors.length];
-
-                                            return (
-                                                <div
-                                                    key={gameType.type}
-                                                    className={`bg-gradient-to-br ${colorClass} rounded-2xl p-6 border-6 hover:scale-105 transition-transform transform shadow-lg`}
-                                                >
-                                                    <h4 className="font-black text-2xl text-white mb-2 drop-shadow-lg">
-                                                        {gameType.name}
-                                                    </h4>
-                                                    <p className="text-base text-white font-bold mb-4 leading-relaxed drop-shadow-md">
-                                                        {gameType.config.description}
-                                                    </p>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="text-sm text-white font-bold drop-shadow-md">
-                                                            <span className="font-black">{gameType.config.difficulty}</span>
-                                                            <span className="mx-2">•</span>
-                                                            <span>
-                                                                {gameType.config.minPlayers}-{gameType.config.maxPlayers} players
-                                                            </span>
-                                                        </div>
-                                                        <Link
-                                                            href="/games/lobby"
-                                                            className="text-base font-black text-white bg-white/30 hover:bg-white/40 px-4 py-2 rounded-full transition border-2 border-white shadow-lg"
-                                                        >
-                                                            Play
-                                                        </Link>
                                                     </div>
                                                 </div>
                                             );
@@ -273,7 +213,7 @@ export default function Dashboard({ auth }: PageProps) {
                                         href="/games/lobby"
                                         className="block w-full bg-gradient-to-br from-quest-500 to-quest-600 text-white text-center px-6 py-4 rounded-full hover:scale-105 transition transform font-black text-lg shadow-lg border-4 border-white"
                                     >
-                                        Go to Lobby 🎲
+                                        Go to Game Room 🎲
                                     </Link>
                                 </div>
                             </div>

@@ -31,13 +31,13 @@ export default function Authenticated({
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
                                 >
-                                    Dashboard
+                                    Player's Corner
                                 </NavLink>
                                 <NavLink
                                     href="/games/lobby"
                                     active={route().current('games.lobby')}
                                 >
-                                    Game Lobby
+                                    Game Room
                                 </NavLink>
                             </div>
                         </div>
@@ -141,13 +141,13 @@ export default function Authenticated({
                             href={route('dashboard')}
                             active={route().current('dashboard')}
                         >
-                            Dashboard
+                            Player's Corner
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href="/games/lobby"
                             active={route().current('games.lobby')}
                         >
-                            Game Lobby
+                            Game Room
                         </ResponsiveNavLink>
                     </div>
 
