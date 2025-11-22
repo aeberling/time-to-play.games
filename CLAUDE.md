@@ -1,2 +1,3 @@
 - Only push changes to git when I ask you to
 - When I ask you to plan or "create a plan", create a .md file in the /reference folder or appropriate subfolder if it is related to a specific game.
+- When you create a game, follow the conventions of the platform referencing '/Users/adam/Desktop/CODING/time-to-play.games/reference/archive/COMPLEX_GAME_ARCHITECTURE.md'

@@ -1,0 +1,109 @@
+# Game Name Suffixes
+
+This list contains whimsical fantasy creature names used as suffixes when generating game names.
+Format: `[Game Name] + [Random Suffix from this list]`
+
+## The List
+
+- Goblin-Giggles
+- Manticrumb
+- Dice Sprite
+- Sneakbeast
+- Gloombug
+- Pocket Wyrm
+- Trollmoss
+- Sparkbadger
+- Myth Nibble
+- Gremlin Dust
+- Wobblefang
+- Frostgob
+- Shiny Orc
+- Noodle Imp
+- Weirdling
+- Snarkwolf
+- Crumblet
+- Gnomekin
+- Puffgriff
+- Hex Beetle
+- Ember Pup
+- Moss Pixie
+- Sock Dragon
+- Bookwyrm
+- Trinket Fox
+- Rune Toad
+- Moon Mutt
+- Pebble Troll
+- Sproutling
+- Fumble Imp
+- Charmpuff
+- Spellmote
+- Blink Bat
+- Whim Wisp
+- Puffling
+- Wandlet
+- Moon Sip
+- Glintfox
+- Thorn Imp
+- Fizzsprite
+- Mist Mutt
+- Wicklebug
+- Glowtwing
+- Fog Nibble
+- Wisp Toad
+- Rune Pup
+- Whirlflet
+- Sparkshrew
+- Chimble
+- Quill Snip
+- Tatterpix
+- Mirthling
+- Snicklebat
+- Glow Nook
+- Ember Sprig
+- Flitfang
+- Charm Beetle
+- Blinkling
+- Snort Pixie
+- Nimbleroot
+- Gobblemite
+- Mystic Moth
+- Bramble Imp
+- Fey Shard
+- Starlit Pup
+- Whiskermage
+- Cinder Beetle
+- Glitterbog
+- Hobbitish
+- Rune Sprout
+- Flare Mite
+- Oddling
+- Frost Nib
+- Tanglefox
+- Dew Wisp
+- Charm Pup
+- Puffshrew
+- Glimmer Toad
+- Nibblebat
+- Twitch Imp
+- Shimmerbug
+- Mossling
+- Bogglepuff
+- Whistle Wyrm
+- Wink Rat
+- Gritling
+- Glow Sprout
+- Pebble Imp
+- Chitterfox
+- Drift Mote
+- Moon Shrew
+- Charm Wisp
+- Frost Pup
+- Riddlebat
+- Fogling
+- Spell Sprout
+- Twiddle Imp
+- Grumblepix
+- Star Beetle
+
+## Total Count
+100 unique suffixes
