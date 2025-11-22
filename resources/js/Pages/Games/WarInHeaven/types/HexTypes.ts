@@ -77,10 +77,25 @@ export const POINTY_ORIENTATION: HexOrientation = {
 
 export type HexType = 'standard' | 'deploy' | 'gate';
 export type Faction = 'angels' | 'demons';
+export type HexCoordinate = string; // e.g., 'A1', 'B5', etc.
+export type TokenSubtype = 'commander' | 'ally' | 'troop';
+
+export interface TokenData {
+    id: string;
+    cardId: string;
+    name?: string;
+    faction: Faction;
+    subtype: TokenSubtype;
+    attack: number;
+    defense: number;
+    position?: string;
+    icon?: string;
+    isActive: boolean;
+}
 
 export interface HexState {
-    coordinate: string;
+    coordinate: HexCoordinate;
     type: HexType;
     owner?: Faction; // For deploy spaces
-    occupiedBy: string | null; // Token ID or null
+    occupiedBy: TokenData | null; // Token data or null
 }

@@ -22,7 +22,7 @@ export type PageProps<
 
 // ==================== Game Types ====================
 
-export type GameType = 'WAR' | 'SWOOP' | 'OH_HELL' | 'TELESTRATIONS';
+export type GameType = 'SWOOP' | 'OH_HELL' | 'TELESTRATIONS' | 'WAR_IN_HEAVEN';
 
 export type GameStatus = 'WAITING' | 'READY' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
 
@@ -109,32 +109,6 @@ export interface Game {
 }
 
 // ==================== Game State Types ====================
-
-// War Game State
-export interface WarGameState {
-    players: Player[];
-    player1Deck: Card[];
-    player2Deck: Card[];
-    cardsInPlay: {
-        player1: Card[];
-        player2: Card[];
-    };
-    phase: 'FLIP' | 'WAR' | 'GAME_OVER';
-    waitingFor: 'PLAYER_1' | 'PLAYER_2' | 'BOTH' | 'NONE';
-    turnCount: number;
-    warDepth: number;
-    lastAction: {
-        type: string;
-        playerIndex?: number;
-        cards?: Card[];
-        winner?: number;
-        timestamp?: number;
-        playedCards?: {
-            player1: Card[];
-            player2: Card[];
-        };
-    };
-}
 
 // Swoop Game State
 export interface SwoopGameState {
@@ -290,7 +264,192 @@ export interface TelestrationsGameState {
     }>;
 }
 
-export type GameState = WarGameState | SwoopGameState | OhHellGameState | TelestrationsGameState;
+// War in Heaven Game State
+export interface WarInHeavenGameState {
+    gameType: 'WAR_IN_HEAVEN';
+    status: GameStatus;
+
+    // Players
+    players: Array<{
+        userId: number;
+        faction: 'angels' | 'demons';
+        playerIndex: number;
+        isConnected: boolean;
+    }>;
+    currentTurn: number;
+    phase: 'recharge' | 'action' | 'combat' | 'end';
+    round: number;
+    actionsRemaining: number;
+    rechargesRemaining: number;
+
+    // Board state - hexes keyed by coordinate (e.g., 'A1', 'B5')
+    board: Record<string, {
+        coordinate: string;
+        type: 'standard' | 'deploy' | 'gate';
+        owner?: 'angels' | 'demons';
+        occupiedBy: {
+            id: string;
+            cardId: string;
+            faction: 'angels' | 'demons';
+            subtype: 'commander' | 'troop' | 'ally';
+            attack: number;
+            defense: number;
+            position: string;
+            isActive: boolean;
+        } | null;
+    }>;
+
+    // Card state - cards are templates/definitions, not token instances
+    cards: {
+        angels: {
+            deck: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            hand: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            deployed: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            discarded: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+        };
+        demons: {
+            deck: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            hand: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            deployed: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+            discarded: Array<{
+                id: string;
+                name: string;
+                cost: number;
+                attack: number;
+                defense: number;
+                subtype: 'commander' | 'ally' | 'troop';
+                faction: 'angels' | 'demons';
+                tokenCount: number;
+                cardImageUrl?: string;
+                iconUrl?: string;
+                specialAbility?: string | null;
+                specialText?: string;
+                flavorText?: string;
+            }>;
+        };
+    };
+
+    // Move history
+    moveHistory: Array<{
+        turn: number;
+        player: number;
+        action: string;
+        data: any;
+        timestamp: number;
+    }>;
+
+    // Victory
+    victoryCondition: string | null;
+    winner: number | null;
+
+    // Config
+    config: {
+        boardSize: number;
+        turnTimeLimit: number;
+        victoryPointsToWin: number;
+        startingHandSize: number;
+    };
+}
+
+export type GameState = WarGameState | SwoopGameState | OhHellGameState | TelestrationsGameState | WarInHeavenGameState;
 
 // ==================== API Response Types ====================
 

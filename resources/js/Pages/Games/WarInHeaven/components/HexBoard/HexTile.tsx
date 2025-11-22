@@ -9,6 +9,8 @@ interface HexTileProps {
   y: number;
   isSelected: boolean;
   isValidMove: boolean;
+  isAttacker?: boolean;
+  isCombatTarget?: boolean;
   showCoordinate: boolean;
   onClick: () => void;
   onMouseEnter: () => void;
@@ -37,6 +39,8 @@ export const HexTile: React.FC<HexTileProps> = ({
   y,
   isSelected,
   isValidMove,
+  isAttacker = false,
+  isCombatTarget = false,
   showCoordinate,
   onClick,
   onMouseEnter,
@@ -61,6 +65,8 @@ export const HexTile: React.FC<HexTileProps> = ({
   };
   // Determine hex fill color based on type
   const getFillColor = (): string => {
+    if (isCombatTarget) return '#FFB3B3'; // Light red for combat target
+    if (isAttacker) return '#FFE59E'; // Light yellow/gold for attacker
     if (isDragOver && hexState.type === 'deploy') return '#C8E6C8'; // Light green for valid drop zone
     if (isSelected) return '#FFE59E'; // Light yellow for selection
     if (isValidMove) return '#B8E6B8'; // Light green for valid moves
@@ -78,6 +84,8 @@ export const HexTile: React.FC<HexTileProps> = ({
 
   // Determine stroke color
   const getStrokeColor = (): string => {
+    if (isCombatTarget) return '#F44336'; // Red for combat target
+    if (isAttacker) return '#FF9800'; // Orange for attacker
     if (isSelected) return '#FFB200'; // Gold for selection
     if (isValidMove) return '#4CAF50'; // Green for valid moves
 
@@ -94,6 +102,8 @@ export const HexTile: React.FC<HexTileProps> = ({
 
   // Determine stroke width
   const getStrokeWidth = (): number => {
+    if (isCombatTarget) return 4;
+    if (isAttacker) return 3;
     if (isSelected) return 3;
     if (isValidMove) return 2;
     return hexState.type === 'deploy' || hexState.type === 'gate' ? 1.5 : 1;

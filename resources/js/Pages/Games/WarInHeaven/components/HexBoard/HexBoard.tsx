@@ -12,6 +12,11 @@ interface HexBoardProps {
   onHexHover: (coordinate: string | null) => void;
   onDrop?: (coordinate: string) => void;
   showCoordinates?: boolean;
+  selectedAttackers?: string[];
+  combatTarget?: string | null;
+  hoveredHex?: string | null;
+  isMyTurn?: boolean;
+  myFaction?: 'angels' | 'demons';
 }
 
 // Board layout definition - which hexes exist per row
@@ -35,6 +40,11 @@ export const HexBoard: React.FC<HexBoardProps> = ({
   onHexHover,
   onDrop,
   showCoordinates = false,
+  selectedAttackers = [],
+  combatTarget = null,
+  hoveredHex = null,
+  isMyTurn = false,
+  myFaction = 'angels',
 }) => {
   // Calculate board dimensions
   const boardWidth = 5.5 * Math.sqrt(3) * HEX_SIZE; // ~380px at HEX_SIZE=40
@@ -87,6 +97,8 @@ export const HexBoard: React.FC<HexBoardProps> = ({
                   y={y}
                   isSelected={selectedHex === coordinate}
                   isValidMove={validMoves.includes(coordinate)}
+                  isAttacker={selectedAttackers.includes(coordinate)}
+                  isCombatTarget={combatTarget === coordinate}
                   showCoordinate={showCoordinates}
                   onClick={() => onHexClick(coordinate)}
                   onMouseEnter={() => onHexHover(coordinate)}
