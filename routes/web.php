@@ -97,16 +97,33 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('Games/Lobby');
     })->name('games.lobby');
 
+    // Game Info Pages
+    Route::get('/games/swoop/info', function () {
+        return Inertia::render('Games/SwoopInfo');
+    })->name('games.swoop.info');
+
+    Route::get('/games/oh-hell/info', function () {
+        return Inertia::render('Games/OhHellInfo');
+    })->name('games.oh-hell.info');
+
+    Route::get('/games/telestrations/info', function () {
+        return Inertia::render('Games/TelestrationsInfo');
+    })->name('games.telestrations.info');
+
+    Route::get('/games/war-in-heaven/info', function () {
+        return Inertia::render('Games/WarInHeavenInfo');
+    })->name('games.war-in-heaven.info');
+
     Route::get('/games/{id}', function ($id) {
         // Fetch game to determine which component to render
         $game = \App\Models\Game::findOrFail($id);
 
         // Route to appropriate game component based on type
         $component = match($game->game_type) {
-            'WAR' => 'Games/War',
             'SWOOP' => 'Games/Swoop',
             'OH_HELL' => 'Games/OhHell',
             'TELESTRATIONS' => 'Games/Telestrations',
+            'WAR_IN_HEAVEN' => 'Games/WarInHeaven',
             default => throw new \Exception('Unknown game type'),
         };
 

@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\GameController;
 use App\Http\Controllers\Api\GamePlayerController;
 use App\Http\Controllers\Api\GameMoveController;
-use App\Http\Controllers\Api\GameTestController;
 use App\Http\Controllers\Api\UserController;
 
 /*
@@ -55,11 +54,5 @@ Route::middleware('auth')->group(function () {
 
         // Game moves
         Route::post('/{gameId}/move', [GameMoveController::class, 'store']);
-
-        // Test/Debug endpoints (development only)
-        Route::prefix('/{gameId}/test')->group(function () {
-            Route::post('/setup-war', [GameTestController::class, 'setupWarScenario']);
-            Route::post('/set-state', [GameTestController::class, 'setGameState']);
-        });
     });
 });

@@ -86,7 +86,7 @@ class GameController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'game_type' => 'required|string|in:WAR,SWOOP,OH_HELL,TELESTRATIONS',
+            'game_type' => 'required|string|in:SWOOP,OH_HELL,TELESTRATIONS,WAR_IN_HEAVEN',
             'max_players' => 'required|integer|min:2|max:8',
             'timer_config' => 'nullable|array',
             'timer_config.turn_time' => 'nullable|integer|min:10|max:300',
@@ -222,6 +222,13 @@ class GameController extends Controller
 
         // Mark game as abandoned
         $game->update(['status' => 'ABANDONED']);
+
+        // Broadcast cancellation to all players in the game
+        $cancelledBy = $user->display_name ?? $user->username ?? 'Host';
+        broadcast(new \App\Events\GameCancelled($id, $cancelledBy));
+
+        // Broadcast lobby update so game is removed from lobby
+        broadcast(new \App\Events\LobbyGameUpdated($game));
 
         return response()->json([
             'message' => 'Game cancelled successfully',

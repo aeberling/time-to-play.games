@@ -334,8 +334,18 @@ class GameService
 
         $gamePlayer->update(['is_ready' => $ready]);
 
+        // Broadcast ready status change to other players in the game
+        $game = Game::with('gamePlayers.user')->findOrFail($gameId);
+        try {
+            broadcast(new GameStateUpdated($gameId, $game->current_state ? json_decode($game->current_state, true) : []));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast ready status update', [
+                'game_id' => $gameId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // Check if all players are ready
-        $game = Game::findOrFail($gameId);
         $allReady = $game->gamePlayers()->where('is_ready', false)->count() === 0;
 
         if ($allReady && $game->status === 'READY') {

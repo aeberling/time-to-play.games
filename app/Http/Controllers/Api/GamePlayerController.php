@@ -38,6 +38,12 @@ class GamePlayerController extends Controller
             $game = Game::with(['gamePlayers.user'])->findOrFail($gameId);
             broadcast(new LobbyGameUpdated($game));
 
+            // Broadcast to game's private channel so waiting room updates immediately
+            broadcast(new \App\Events\GameStateUpdated(
+                $gameId,
+                $game->current_state ? json_decode($game->current_state, true) : []
+            ));
+
             return response()->json([
                 'message' => 'Joined game successfully',
                 'game_player' => $gamePlayer,
@@ -61,6 +67,15 @@ class GamePlayerController extends Controller
 
             $this->gameService->removePlayerFromGame($gameId, $user->id);
 
+            // Broadcast to game's private channel so waiting room updates immediately
+            $game = Game::with(['gamePlayers.user'])->find($gameId);
+            if ($game) {
+                broadcast(new \App\Events\GameStateUpdated(
+                    $gameId,
+                    $game->current_state ? json_decode($game->current_state, true) : []
+                ));
+            }
+
             return response()->json([
                 'message' => 'Left game successfully',
             ]);
@@ -83,6 +98,10 @@ class GamePlayerController extends Controller
             $ready = $request->input('ready', true);
 
             $this->gameService->setPlayerReady($gameId, $user->id, $ready);
+
+            // Broadcast game update to lobby so it shows updated ready status
+            $game = Game::with(['gamePlayers.user'])->findOrFail($gameId);
+            broadcast(new LobbyGameUpdated($game));
 
             return response()->json([
                 'message' => $ready ? 'Marked as ready' : 'Marked as not ready',
